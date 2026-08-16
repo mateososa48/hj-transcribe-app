@@ -36,3 +36,5 @@ eval/results/
 
 # Real clinical material dropped in by hand — never commit (SPEC constraint 7)
 HJ report examples/
+.vercel
+.env*

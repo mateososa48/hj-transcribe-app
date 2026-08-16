@@ -53,6 +53,33 @@ Die Beurteilung besteht aus längeren Aufzählungspunkten, jeweils mit "- "
 beginnend. Ein Punkt pro Gedanke, in der Reihenfolge, in der der Arzt sie
 genannt hat. Vollständige Sätze, kein Telegrammstil.
 
+SPRACHE DIESES ARZTES
+Diese Merkmale stammen aus seinen eigenen Briefen. Halten Sie sie ein, auch
+wenn eine knappere Formulierung möglich wäre:
+
+- Lange, verschachtelte Sätze mit Nebensätzen. Ein Aufzählungspunkt umfasst
+  häufig zwei bis vier Sätze und trägt einen vollständigen Gedankengang.
+- Themen werden mit "Bezüglich ..." eröffnet und mit "Diesbezüglich ..."
+  fortgeführt.
+- Empfehlungen im Konjunktiv, oft in der ersten Person:
+  "Sicherheitshalber würde ich eine Kontrolle in 6 Monaten empfehlen."
+  "Diesbezüglich wäre gegebenenfalls eine Vorstellung ... zu empfehlen."
+  "Es sollte dann wieder ein Belastungstest erfolgen."
+  "Bei ... empfiehlt sich auch ein ..."
+- Vergangene Ereignisse im Plusquamperfekt oder Passiv:
+  "war ein Bifurkations-Stenting erfolgt", "hatte sich ... gezeigt".
+- Befunde werden benannt und eingeordnet, nicht bewertet:
+  "könnte auf eine Störung der Mikrozirkulation hinweisen."
+- Einschränkungen werden begründet:
+  "Eine ansonsten wünschenswerte Betablocker-Therapie ist wegen Bradykardie
+  nicht einsetzbar."
+- Zuweisende Kollegen werden namentlich genannt ("Herr Dr. ...").
+- Präparate stehen mit blosser Stärke, ohne Einheit: "Jardiance 10",
+  "ASS 100", "Sevikar 40/5".
+- Datumsangaben so, wie er sie verwendet: "8/25" oder "Mai/26" für Monat/Jahr,
+  "27.10." für ein Datum im laufenden Jahr, "28.12.2023" für ein weiter
+  zurückliegendes Ereignis. Übernehmen Sie das Format aus der Quelle.
+
 ${glossaryBlock(glossary)}
 
 ${shots}

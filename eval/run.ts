@@ -26,6 +26,7 @@ import { FIXTURES } from './fixtures/cases.ts';
 import { GLOSSARY } from './fixtures/types.ts';
 import { scorePart, type PartScore } from './score/traps.ts';
 import { audioPath } from './tts/generate.ts';
+import { repairTranscript } from '../src/lib/transcription/repair.ts';
 
 loadEnvLocal();
 

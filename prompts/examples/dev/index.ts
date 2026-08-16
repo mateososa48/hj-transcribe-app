@@ -27,17 +27,20 @@ Belastbar bis etwa hundert Watt in der Ergometrie ohne Ischämiezeichen. Die
 Ejektionsfraktion hat sich erholt auf fünfundfünfzig Prozent, vorher waren es
 achtundvierzig. Medikation unverändert weiter, ASS und Ticagrelor bis Februar
 zweitausendsechsundzwanzig. Nächste Kontrolle in sechs Monaten.`,
-    beurteilung: `- Bei dem Patienten besteht ein Zustand nach Hinterwandinfarkt 02/25. Aktuell
-  ist er beschwerdefrei; eine Angina pectoris und eine Belastungsdyspnoe werden
-  verneint.
-- In der Ergometrie zeigte sich eine Belastbarkeit bis 100 Watt ohne
-  Ischämiezeichen.
-- Echokardiographisch hat sich die linksventrikuläre Funktion erholt: die LVEF
+    // Cadence modelled on his own letters: "Bezüglich ..." to open, subjunctive
+    // recommendations in the first person, pluperfect for what already happened.
+    beurteilung: `- Bezüglich der koronaren Herzkrankheit war im Februar bei Nachweis eines
+  Hinterwandinfarktes eine Revaskularisation erfolgt. Der Patient ist
+  zwischenzeitlich beschwerdefrei; eine Angina pectoris und eine
+  Belastungsdyspnoe werden verneint.
+- Die hier durchgeführte Ergometrie war bis 100 Watt ohne Ischämiezeichen
+  unauffällig.
+- Echokardiographisch hat sich die linksventrikuläre Funktion erholt, die LVEF
   liegt aktuell bei 55 % gegenüber 48 % in der Voruntersuchung.
-- Die duale Thrombozytenaggregationshemmung mit ASS und Ticagrelor führen wir
-  unverändert bis 02/26 fort.
-- Eine Wiedervorstellung zur Verlaufskontrolle haben wir in sechs Monaten
-  vereinbart.`,
+- Die ASS-Therapie sollte auf Dauer, die Ticagrelor-Therapie bis 2/26 erfolgen.
+  In diesem Zeitraum empfiehlt sich auch eine PPI-Therapie.
+- Sicherheitshalber würde ich eine Wiedervorstellung mit erneutem Belastungstest
+  in 6 Monaten empfehlen.`,
   },
   {
     transkript: `Die Patientin stellt sich vor wegen zunehmender Luftnot. NYHA zwei bis
@@ -46,14 +49,16 @@ Prozent reduziert. Wir haben Torasemid auf zwanzig Milligramm erhöht und
 Sacubitril Valsartan neu angesetzt, neunundvierzig zu einundfünfzig Milligramm
 zweimal täglich. Gewicht bitte täglich kontrollieren. Kaliumkontrolle in einer
 Woche. Ein aktuelles Labor liegt mir heute nicht vor.`,
-    beurteilung: `- Die Patientin berichtet über eine zunehmende Belastungsdyspnoe, aktuell im
-  Stadium NYHA II-III. Klinisch bestehen beidseitige Beinödeme.
-- Echokardiographisch zeigt sich eine hochgradig eingeschränkte
-  linksventrikuläre Funktion mit einer LVEF von 30 %.
-- Wir haben die Therapie angepasst: Torasemid wurde auf 20 mg erhöht,
-  Sacubitril/Valsartan 49/51 mg zweimal täglich neu angesetzt.
-- Wir haben die Patientin gebeten, das Gewicht täglich zu kontrollieren.
-- Eine Kaliumkontrolle sollte in einer Woche erfolgen.
+    beurteilung: `- Bezüglich der Herzinsuffizienz berichtet die Patientin über eine zunehmende
+  Belastungsdyspnoe, aktuell im Stadium NYHA II-III. Klinisch bestehen
+  beidseitige Beinödeme.
+- Echokardiographisch hatte sich eine hochgradig eingeschränkte
+  linksventrikuläre Funktion mit einer LVEF von 30 % gezeigt.
+- Die Therapie wurde entsprechend angepasst: Torasemid wurde auf 20 erhöht,
+  Sacubitril/Valsartan 49/51 zweimal täglich neu angesetzt. Diesbezüglich
+  sollte eine Kaliumkontrolle in einer Woche erfolgen.
+- Ich habe die Patientin gebeten, das Gewicht täglich zu kontrollieren und sich
+  bei einer Zunahme von mehr als zwei Kilogramm umgehend vorzustellen.
 - [FEHLT: aktuelle Laborwerte lagen bei der Vorstellung nicht vor]`,
   },
 ];
