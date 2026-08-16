@@ -134,8 +134,12 @@ export function WerkbankLayout({ children }: { children: ReactNode }) {
             );
           })()}
         </header>
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-10">
-          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col">{children}</div>
+        {/* Left-aligned, not centred: with a sidebar already anchoring the left
+            edge, a centred column leaves a lopsided gutter and reads as a
+            document rather than a workspace. The record screen is the one
+            exception — it centres itself. */}
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-10 py-10">
+          <div className="flex w-full max-w-3xl flex-1 flex-col">{children}</div>
         </main>
       </div>
     </div>

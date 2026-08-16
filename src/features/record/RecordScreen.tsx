@@ -216,15 +216,25 @@ export function RecordScreen({
 
       {/* Pipeline status. Deliberately plain language: "wird nachgeholt" tells
           him nothing is lost, which is the only thing he needs to know. */}
-      {recording.segmentCount > 0 || queue.pending > 0 || queue.failed > 0 ? (
+      {/* Outstanding transcription work is worth showing even on an idle
+          screen — it is how he knows nothing has been lost. */}
+      {recording.segmentCount > 0 || queue.pending > 0 || queue.running > 0 || queue.failed > 0 ? (
         <>
           <Separator className="max-w-md" />
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Badge variant="secondary">
-              {recording.segmentCount} Abschnitt{recording.segmentCount === 1 ? '' : 'e'}{' '}
-              aufgenommen
-            </Badge>
-            {queue.done > 0 ? <Badge variant="secondary">{queue.done} übertragen</Badge> : null}
+            {/* Session counters only once this session has produced something —
+                "0 Abschnitte aufgenommen" on a fresh screen is noise, and the
+                cumulative "übertragen" count belongs to the session in hand,
+                not to every letter ever recorded. */}
+            {recording.segmentCount > 0 ? (
+              <>
+                <Badge variant="secondary">
+                  {recording.segmentCount} Abschnitt{recording.segmentCount === 1 ? '' : 'e'}{' '}
+                  aufgenommen
+                </Badge>
+                {queue.done > 0 ? <Badge variant="secondary">{queue.done} übertragen</Badge> : null}
+              </>
+            ) : null}
             {queue.pending > 0 || queue.running > 0 ? (
               <Badge variant="outline">
                 <Spinner className="size-3.5" />
