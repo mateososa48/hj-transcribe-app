@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Secrets — never commit. Keys live only on HJ's machine.
+.env
+.env.local
+.env.*.local
+
+# --- Patient data / real clinical material: NEVER commit (SPEC constraint 7) ---
+# Real anonymised letters used as few-shot examples
+prompts/examples/real/
+# Real Word template from the practice
+templates/real/
+# Any recorded audio
+*.wav
+*.m4a
+*.aiff
+*.webm
+*.mp3
+
+# Generated eval artefacts (synthetic, but large and reproducible)
+eval/audio/
+eval/results/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Playwright MCP scratch output
+.playwright-mcp/
+
+# Real clinical material dropped in by hand — never commit (SPEC constraint 7)
+HJ report examples/
