@@ -5,7 +5,20 @@ import {
   extractFehltMarkers,
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
-import { DraftError, type DraftProvider, type DraftRequest, type DraftResponse } from './draft-types.ts';
+import {
+  buildTranslationSystemPrompt,
+  buildTranslationUserPrompt,
+  checkTranslation,
+  parseTranslation,
+} from '../../../prompts/translate.ts';
+import type {
+  DraftProvider,
+  DraftRequest,
+  DraftResponse,
+  TranslateRequest,
+  TranslateResponse,
+} from './draft-types.ts';
+import { chatCompletion } from './openai-compatible.ts';
 
 /**
  * Vercel AI Gateway — a MODEL-SELECTION tool, not the production path.
@@ -16,11 +29,11 @@ import { DraftError, type DraftProvider, type DraftRequest, type DraftResponse }
  * third processor into the data path, needs its own DPA, and contradicts the
  * constraint the whole architecture was built around.
  *
- * It earns its place for exactly one job: trying 327 models behind one key to
- * find which writes the best German cardiology prose. Once that question is
- * settled, the winning model should be called DIRECTLY through the Anthropic or
- * Mistral adapter — both already built — and this provider disabled before HJ
- * ever records a real patient.
+ * It earns its place for exactly one job: trying many models behind one key to
+ * find which writes the best German cardiology prose. Once that is settled, the
+ * winning model should be called DIRECTLY through the Anthropic or Mistral
+ * adapter — both already built — and this provider disabled before HJ ever
+ * records a real patient.
  *
  * Browser-direct CORS verified 2026-08-16 (echoes request origin).
  */
@@ -28,8 +41,8 @@ import { DraftError, type DraftProvider, type DraftRequest, type DraftResponse }
 const ENDPOINT = 'https://ai-gateway.vercel.sh/v1/chat/completions';
 
 /**
- * Curated shortlist for the comparison. The gateway exposes 327 models; these
- * are the ones plausibly good at long-form clinical German. `euHosted` here
+ * Curated shortlist for the comparison. The gateway exposes 300+ models; these
+ * are the ones plausibly good at long-form clinical German. `euCapable`
  * describes the MODEL's own residency — the gateway hop is US regardless.
  */
 export const GATEWAY_MODELS = [
@@ -45,13 +58,6 @@ export const GATEWAY_MODELS = [
 
 export const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-sonnet-5';
 
-interface ChatResponse {
-  model?: string;
-  choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
-  usage?: { prompt_tokens?: number; completion_tokens?: number };
-  error?: { message?: string };
-}
-
 export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL): DraftProvider {
   return {
     id: 'gateway',
@@ -60,59 +66,47 @@ export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL
 
     async draftBeurteilung(request: DraftRequest): Promise<DraftResponse> {
       const started = Date.now();
-      const system = buildStableSystemPrompt(request.examples, request.glossary);
+      const result = await chatCompletion({
+        endpoint: ENDPOINT,
+        apiKey,
+        model,
+        providerId: 'gateway',
+        system: buildStableSystemPrompt(request.examples, request.glossary),
+        user: buildUserPrompt(request),
+        ...(request.signal ? { signal: request.signal } : {}),
+      });
 
-      let response: Response;
-      try {
-        response = await fetch(ENDPOINT, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            max_tokens: 4_000,
-            messages: [
-              { role: 'system', content: system },
-              { role: 'user', content: buildUserPrompt(request) },
-            ],
-          }),
-          ...(request.signal ? { signal: request.signal } : {}),
-        });
-      } catch (error) {
-        throw new DraftError('gateway', 'Das AI Gateway ist nicht erreichbar.', error);
-      }
-
-      if (!response.ok) {
-        const body = await response.text().catch(() => '');
-        throw new DraftError(
-          'gateway',
-          `AI Gateway: HTTP ${response.status}${body ? ` — ${body.slice(0, 250)}` : ''}`,
-        );
-      }
-
-      const json = (await response.json()) as ChatResponse;
-      if (json.error?.message) throw new DraftError('gateway', `AI Gateway: ${json.error.message}`);
-
-      const raw = json.choices?.[0]?.message?.content ?? '';
-      const { text, wellFormed } = parseBeurteilung(raw);
-
+      const { text, wellFormed } = parseBeurteilung(result.raw);
       return {
         text,
         wellFormed,
         fehlt: extractFehltMarkers(text),
-        model: json.model ?? model,
+        model: result.model,
         promptVersion: BEURTEILUNG_PROMPT_VERSION,
         latencyMs: Date.now() - started,
-        usage: {
-          ...(json.usage?.prompt_tokens !== undefined
-            ? { inputTokens: json.usage.prompt_tokens }
-            : {}),
-          ...(json.usage?.completion_tokens !== undefined
-            ? { outputTokens: json.usage.completion_tokens }
-            : {}),
-        },
+        ...(result.usage ? { usage: result.usage } : {}),
+      };
+    },
+
+    async translate(request: TranslateRequest): Promise<TranslateResponse> {
+      const started = Date.now();
+      const result = await chatCompletion({
+        endpoint: ENDPOINT,
+        apiKey,
+        model,
+        providerId: 'gateway',
+        system: buildTranslationSystemPrompt(request.target),
+        user: buildTranslationUserPrompt(request.text, request.target),
+        ...(request.signal ? { signal: request.signal } : {}),
+      });
+
+      const { text, wellFormed } = parseTranslation(result.raw);
+      return {
+        text,
+        wellFormed,
+        check: checkTranslation(request.text, text),
+        model: result.model,
+        latencyMs: Date.now() - started,
       };
     },
   };

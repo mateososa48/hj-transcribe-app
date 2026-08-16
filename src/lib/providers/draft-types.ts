@@ -1,4 +1,5 @@
 import type { BeurteilungExample } from '../../../prompts/examples/dev/index.ts';
+import type { TargetLanguage, TranslationCheck } from '../../../prompts/translate.ts';
 
 /**
  * Drafting provider contract.
@@ -40,11 +41,30 @@ export interface DraftResponse {
   };
 }
 
+export interface TranslateRequest {
+  text: string;
+  target: TargetLanguage;
+  signal?: AbortSignal;
+}
+
+export interface TranslateResponse {
+  text: string;
+  wellFormed: boolean;
+  /**
+   * Structural verification of what must be copied verbatim. A translation
+   * that quietly dropped a dose reads perfectly — this is how we catch it.
+   */
+  check: TranslationCheck;
+  model: string;
+  latencyMs: number;
+}
+
 export interface DraftProvider {
   readonly id: DraftProviderId;
   readonly label: string;
   readonly euHosted: boolean;
   draftBeurteilung(request: DraftRequest): Promise<DraftResponse>;
+  translate(request: TranslateRequest): Promise<TranslateResponse>;
 }
 
 /** `model` is only meaningful for multi-model providers (the gateway). */

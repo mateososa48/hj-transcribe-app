@@ -5,15 +5,28 @@ import {
   extractFehltMarkers,
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
-import { DraftError, type DraftProvider, type DraftRequest, type DraftResponse } from './draft-types.ts';
+import {
+  buildTranslationSystemPrompt,
+  buildTranslationUserPrompt,
+  checkTranslation,
+  parseTranslation,
+} from '../../../prompts/translate.ts';
+import type {
+  DraftProvider,
+  DraftRequest,
+  DraftResponse,
+  TranslateRequest,
+  TranslateResponse,
+} from './draft-types.ts';
+import { chatCompletion } from './openai-compatible.ts';
 
 /**
- * Mistral drafting adapter — the EU-resident option.
+ * Mistral — the EU-resident drafting option.
  *
  * This exists so SPEC constraint 2 ("EU AI endpoints") is actually satisfiable.
  * If the EU-only rule is upheld, this is the shipping default and Anthropic is
  * disabled; if the rule is relaxed under a DPA, this stays selectable. Which
- * one produces better German cardiology prose is an eval question, not an
+ * produces better German cardiology prose is an eval question, not an
  * assumption — see docs/providers.md.
  *
  * CORS verified browser-direct 2026-08-15 (`access-control-allow-origin: *`).
@@ -21,12 +34,6 @@ import { DraftError, type DraftProvider, type DraftRequest, type DraftResponse }
 
 const ENDPOINT = 'https://api.mistral.ai/v1/chat/completions';
 const MODEL = 'mistral-large-latest';
-
-interface ChatResponse {
-  model?: string;
-  choices?: Array<{ message?: { content?: string } }>;
-  usage?: { prompt_tokens?: number; completion_tokens?: number };
-}
 
 export function createMistralDraft(apiKey: string): DraftProvider {
   return {
@@ -36,57 +43,47 @@ export function createMistralDraft(apiKey: string): DraftProvider {
 
     async draftBeurteilung(request: DraftRequest): Promise<DraftResponse> {
       const started = Date.now();
-      const system = buildStableSystemPrompt(request.examples, request.glossary);
+      const result = await chatCompletion({
+        endpoint: ENDPOINT,
+        apiKey,
+        model: MODEL,
+        providerId: 'mistral',
+        system: buildStableSystemPrompt(request.examples, request.glossary),
+        user: buildUserPrompt(request),
+        ...(request.signal ? { signal: request.signal } : {}),
+      });
 
-      let response: Response;
-      try {
-        response = await fetch(ENDPOINT, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: MODEL,
-            max_tokens: 4_000,
-            messages: [
-              { role: 'system', content: system },
-              { role: 'user', content: buildUserPrompt(request) },
-            ],
-          }),
-          ...(request.signal ? { signal: request.signal } : {}),
-        });
-      } catch (error) {
-        throw new DraftError('mistral', 'Mistral ist nicht erreichbar.', error);
-      }
-
-      if (!response.ok) {
-        const body = await response.text().catch(() => '');
-        throw new DraftError(
-          'mistral',
-          `Mistral: HTTP ${response.status}${body ? ` — ${body.slice(0, 200)}` : ''}`,
-        );
-      }
-
-      const json = (await response.json()) as ChatResponse;
-      const raw = json.choices?.[0]?.message?.content ?? '';
-      const { text, wellFormed } = parseBeurteilung(raw);
-
+      const { text, wellFormed } = parseBeurteilung(result.raw);
       return {
         text,
         wellFormed,
         fehlt: extractFehltMarkers(text),
-        model: json.model ?? MODEL,
+        model: result.model,
         promptVersion: BEURTEILUNG_PROMPT_VERSION,
         latencyMs: Date.now() - started,
-        usage: {
-          ...(json.usage?.prompt_tokens !== undefined
-            ? { inputTokens: json.usage.prompt_tokens }
-            : {}),
-          ...(json.usage?.completion_tokens !== undefined
-            ? { outputTokens: json.usage.completion_tokens }
-            : {}),
-        },
+        ...(result.usage ? { usage: result.usage } : {}),
+      };
+    },
+
+    async translate(request: TranslateRequest): Promise<TranslateResponse> {
+      const started = Date.now();
+      const result = await chatCompletion({
+        endpoint: ENDPOINT,
+        apiKey,
+        model: MODEL,
+        providerId: 'mistral',
+        system: buildTranslationSystemPrompt(request.target),
+        user: buildTranslationUserPrompt(request.text, request.target),
+        ...(request.signal ? { signal: request.signal } : {}),
+      });
+
+      const { text, wellFormed } = parseTranslation(result.raw);
+      return {
+        text,
+        wellFormed,
+        check: checkTranslation(request.text, text),
+        model: result.model,
+        latencyMs: Date.now() - started,
       };
     },
   };

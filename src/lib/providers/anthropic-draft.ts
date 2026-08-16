@@ -7,7 +7,20 @@ import {
   extractFehltMarkers,
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
-import { DraftError, type DraftProvider, type DraftRequest, type DraftResponse } from './draft-types.ts';
+import {
+  buildTranslationSystemPrompt,
+  buildTranslationUserPrompt,
+  checkTranslation,
+  parseTranslation,
+} from '../../../prompts/translate.ts';
+import {
+  DraftError,
+  type DraftProvider,
+  type DraftRequest,
+  type DraftResponse,
+  type TranslateRequest,
+  type TranslateResponse,
+} from './draft-types.ts';
 
 /**
  * Anthropic drafting adapter.
@@ -100,6 +113,45 @@ export function createAnthropicDraft(apiKey: string): DraftProvider {
           error instanceof Anthropic.APIError
             ? `Anthropic: ${error.status ?? ''} ${error.message}`.trim()
             : 'Der Entwurf konnte nicht erstellt werden.',
+          error,
+        );
+      }
+    },
+
+    async translate(request: TranslateRequest): Promise<TranslateResponse> {
+      const started = Date.now();
+      try {
+        const message = await client.messages.create(
+          {
+            model: MODEL,
+            max_tokens: MAX_TOKENS,
+            system: buildTranslationSystemPrompt(request.target),
+            messages: [
+              { role: 'user', content: buildTranslationUserPrompt(request.text, request.target) },
+            ],
+          },
+          request.signal ? { signal: request.signal } : {},
+        );
+
+        const raw = message.content
+          .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+          .map((block) => block.text)
+          .join('\n');
+
+        const { text, wellFormed } = parseTranslation(raw);
+        return {
+          text,
+          wellFormed,
+          check: checkTranslation(request.text, text),
+          model: message.model,
+          latencyMs: Date.now() - started,
+        };
+      } catch (error) {
+        throw new DraftError(
+          'anthropic',
+          error instanceof Anthropic.APIError
+            ? `Anthropic: ${error.status ?? ''} ${error.message}`.trim()
+            : 'Die Übersetzung konnte nicht erstellt werden.',
           error,
         );
       }

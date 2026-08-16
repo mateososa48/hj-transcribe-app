@@ -10,7 +10,7 @@
  * in exactly the vocabulary that must not drift.
  */
 
-export const PROMPT_VERSION = '2026-08-16.2';
+export const PROMPT_VERSION = '2026-08-16.3';
 
 /**
  * The non-negotiable rules. Ordered by consequence: the first two are the ones

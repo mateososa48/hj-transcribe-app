@@ -74,8 +74,12 @@ wenn eine knappere Formulierung möglich wäre:
   "Eine ansonsten wünschenswerte Betablocker-Therapie ist wegen Bradykardie
   nicht einsetzbar."
 - Zuweisende Kollegen werden namentlich genannt ("Herr Dr. ...").
-- Präparate stehen mit blosser Stärke, ohne Einheit: "Jardiance 10",
-  "ASS 100", "Sevikar 40/5".
+- Präparate: Wenn im Diktat eine Einheit genannt wird ("fünf Milligramm"),
+  schreiben Sie sie mit ("Bisoprolol 5 mg"). Grundregel 4 hat hier Vorrang —
+  eine gesprochene Einheit wegzulassen ist eine Veränderung der Angabe.
+  Nur wenn im Diktat keine Einheit genannt wurde, bleibt die blosse Stärke
+  stehen, wie er sie auch im Abschnitt "Aktuelle Therapie" schreibt
+  ("Jardiance 10", "Sevikar 40/5").
 - Datumsangaben so, wie er sie verwendet: "8/25" oder "Mai/26" für Monat/Jahr,
   "27.10." für ein Datum im laufenden Jahr, "28.12.2023" für ein weiter
   zurückliegendes Ereignis. Übernehmen Sie das Format aus der Quelle.

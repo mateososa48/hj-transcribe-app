@@ -22,6 +22,7 @@ import { db, SECTION_LABELS, type LetterDocument } from '@/lib/db.ts';
 import { extractFehltMarkers } from '../../../prompts/beurteilung.ts';
 import { applyApprovalRetention, approveDocument, saveSection } from '@/lib/draft/generate.ts';
 import { logAudit } from '@/lib/db.ts';
+import { TranslationPanel } from './TranslationPanel';
 
 const AUTOSAVE_MS = 800;
 
@@ -150,7 +151,10 @@ export function LetterEditor({ documentId, onRegenerate, regenerating }: LetterE
         }}
         readOnly={approved}
         aria-label="Zusammenfassende Beurteilung"
-        className="min-h-[26rem] text-base leading-relaxed"
+        // The base textarea already sets field-sizing:content, so it grows with
+        // the text. A tall min-height would defeat that and leave a large empty
+        // box under a two-line draft.
+        className="min-h-56 text-base leading-relaxed"
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -212,14 +216,23 @@ export function LetterEditor({ documentId, onRegenerate, regenerating }: LetterE
       </div>
 
       {approved ? (
-        <>
-          <Separator />
-          <p className="text-sm text-muted-foreground">
-            Der Brief ist freigegeben und wird nicht mehr verändert. Für Korrekturen erstellen Sie
-            bitte einen neuen Entwurf.
-          </p>
-        </>
+        <p className="text-sm text-muted-foreground">
+          Der Brief ist freigegeben und wird nicht mehr verändert. Für Korrekturen erstellen Sie
+          bitte einen neuen Entwurf.
+        </p>
       ) : null}
+
+      <Separator />
+
+      <TranslationPanel
+        documentId={documentId}
+        approved={approved}
+        {...(doc.translations ? { translations: doc.translations } : { translations: undefined })}
+        onTranslated={async () => {
+          const updated = await db.documents.get(documentId);
+          if (updated) setDoc(updated);
+        }}
+      />
     </div>
   );
 }

@@ -109,6 +109,21 @@ export interface LetterDocument {
   originalDraft?: Record<SectionKey, string>;
   approvedAt?: number;
   exportedAt?: number;
+  /**
+   * Translations of the Beurteilung, keyed by language code. Stored rather than
+   * regenerated so a translation he has already read cannot silently change
+   * underneath him on a re-render.
+   */
+  translations?: Record<string, TranslationRecord>;
+}
+
+export interface TranslationRecord {
+  text: string;
+  /** Structural check at generation time: what failed to copy across verbatim. */
+  missingNumbers: string[];
+  missingDosing: string[];
+  createdAt: number;
+  model: string;
 }
 
 export type GlossarySource = 'manual' | 'learned';
@@ -147,6 +162,7 @@ export type AuditEventType =
   | 'draft.generated'
   | 'draft.edited'
   | 'draft.approved'
+  | 'draft.translated'
   | 'draft.exported'
   | 'draft.copied'
   | 'audio.deleted'
