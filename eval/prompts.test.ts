@@ -96,6 +96,24 @@ test('the ICD/GOÄ prohibition is explicit', () => {
   assert.match(CORE_RULES, /ICD-\s*oder\s*GOÄ-Codes/);
 });
 
+test('the rules cover the failure that shipped on 2026-08-16', () => {
+  // A recorded conversation produced a whole-draft refusal instead of a letter,
+  // and the refusal arrived as a paragraph inside a [FEHLT: …] marker — the only
+  // channel the prompt gave the model for addressing the doctor. Each of these
+  // is load-bearing; deleting one brings the behaviour back.
+  assert.match(CORE_RULES, /Gespräch mit\s*\n?\s*dem Patienten/, 'a conversation must be a legitimate source');
+  assert.match(CORE_RULES, /Eine\s*\n?\s*Frage des Arztes ist für sich keine Angabe/, 'a question is not a datum');
+  assert.match(CORE_RULES, /niemals "Schwindel wird\s*\n?\s*verneint"/, 'no negation may be read off an unanswered question');
+  assert.match(CORE_RULES, /Höchstens acht Wörter/, 'markers must stay short');
+  assert.match(CORE_RULES, /kein\s*\n?\s*Kommentarfeld/, 'a marker is not a comment field');
+  assert.match(CORE_RULES, /EINE EINZIGE VERWERTBARE ANGABE GENÜGT/, 'partial input still gets a letter');
+  assert.match(CORE_RULES, /kein verwertbares Diktat, bitte neu aufnehmen/, 'refusal has one fixed shape');
+  // Rule 5 must forbid upgrading lay language into a diagnosis.
+  assert.match(CORE_RULES, /"hohes Cholesterin" wird nicht "Hypercholesterinämie"/);
+  // The prompt itself must not teach Swiss orthography.
+  assert.doesNotMatch(CORE_RULES, /\bblosse\b|\bausserdem\b|\beinschliesslich\b/);
+});
+
 test('the output contract names the tag the parser looks for', () => {
   const prompt = stable();
   assert.ok(prompt.includes(`<${BEURTEILUNG_TAG}>`));
