@@ -136,3 +136,32 @@ export function parseBeurteilung(raw: string): { text: string; wellFormed: boole
 export function extractFehltMarkers(text: string): string[] {
   return [...text.matchAll(/\[FEHLT:([^\]]*)\]/gi)].map((m) => (m[1] ?? '').trim());
 }
+
+/**
+ * What would actually reach the patient's letter: the draft with every
+ * [FEHLT: …] marker and the bullet scaffolding around it removed.
+ *
+ * A marker is a note to the doctor, not letter text. Counting it as content is
+ * how a draft that says nothing but "this dictation cannot be assessed" gets
+ * released and copied into a letter — which is exactly what happened on
+ * 2026-08-16.
+ */
+export function letterSubstance(text: string): string {
+  return text
+    .replace(/\[FEHLT:[^\]]*\]/gi, ' ')
+    // Bullets, dashes and the punctuation left stranded once a marker that was
+    // the whole bullet is gone.
+    .replace(/^[\s•\-–—*.,;:]+$/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Whether there is enough left to be a letter at all.
+ *
+ * The threshold is deliberately low — this blocks "nothing but markers", not
+ * "a short draft". Anything above it is the doctor's call, not the app's.
+ */
+export function hasReleasableContent(text: string): boolean {
+  return letterSubstance(text).length >= 30;
+}

@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { db, SECTION_LABELS, type LetterDocument } from '@/lib/db.ts';
-import { extractFehltMarkers } from '../../../prompts/beurteilung.ts';
+import { extractFehltMarkers, hasReleasableContent } from '../../../prompts/beurteilung.ts';
 import { applyApprovalRetention, approveDocument, saveSection } from '@/lib/draft/generate.ts';
 import { logAudit } from '@/lib/db.ts';
 import { TranslationPanel } from './TranslationPanel';
@@ -76,6 +76,9 @@ export function LetterEditor({ documentId, onRegenerate, regenerating }: LetterE
   const approved = doc.status !== 'entwurf';
   const fehlt = extractFehltMarkers(text);
   const edited = doc.originalDraft ? text.trim() !== doc.originalDraft.beurteilung.trim() : false;
+  // Nothing but [FEHLT: …] markers is not a letter. Releasing it would let a
+  // note to the doctor be copied into a patient's letter verbatim.
+  const releasable = hasReleasableContent(text);
 
   async function handleApprove() {
     // Flush any pending keystrokes before freezing the document.
@@ -137,8 +140,9 @@ export function LetterEditor({ documentId, onRegenerate, regenerating }: LetterE
             ))}
           </ul>
           <p className="text-sm text-muted-foreground">
-            Diese Angaben standen nicht im Diktat. Bitte ergänzen Sie sie oder entfernen Sie die
-            Markierung.
+            {releasable
+              ? 'Diese Angaben standen nicht im Diktat. Bitte ergänzen Sie sie oder entfernen Sie die Markierung.'
+              : 'Aus diesem Diktat konnte kein Brieftext erstellt werden — es besteht nur aus diesen Hinweisen. Bitte nehmen Sie neu auf, oder schreiben Sie den Text hier selbst. Freigeben ist erst möglich, wenn Brieftext vorhanden ist.'}
           </p>
         </div>
       ) : null}
@@ -158,7 +162,46 @@ export function LetterEditor({ documentId, onRegenerate, regenerating }: LetterE
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        {!approved ? (
+        {/* Three cases, because releasing is the one irreversible step:
+            nothing to release -> blocked; gaps still open -> confirm, since the
+            markers would go into the letter word for word; clean -> straight
+            through, no ceremony. */}
+        {!approved && !releasable ? (
+          <Button size="lg" disabled>
+            <Check aria-hidden />
+            Freigeben
+          </Button>
+        ) : !approved && fehlt.length > 0 ? (
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button size="lg">
+                  <Check aria-hidden />
+                  Freigeben
+                </Button>
+              }
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Noch {fehlt.length} offene Markierung{fehlt.length === 1 ? '' : 'en'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Der Entwurf enthält noch {fehlt.length} Stelle
+                  {fehlt.length === 1 ? '' : 'n'} mit <span className="font-semibold">[FEHLT: …]</span>
+                  . Diese Markierungen stehen wörtlich im Text und werden mitkopiert. Nach der
+                  Freigabe lässt sich der Brief nicht mehr ändern.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Zurück zum Entwurf</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void handleApprove()}>
+                  Trotzdem freigeben
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : !approved ? (
           <Button size="lg" onClick={() => void handleApprove()}>
             <Check aria-hidden />
             Freigeben

@@ -229,9 +229,11 @@ export class WaveEngine {
         ? Math.min(1, b.level * 1.35)
         : 0.06 + 0.34 * this.signal.envelope;
 
-    const rate = target > this.wake ? 4.5 : 1.4;
+    // Attack stays brisk so a syllable still registers immediately; it is the
+    // drift, not the response, that read as too fast.
+    const rate = target > this.wake ? 3.6 : 1.1;
     this.wake += (target - this.wake) * Math.min(1, dt * rate);
-    this.wakeLag += (this.wake - this.wakeLag) * Math.min(1, dt * 8);
+    this.wakeLag += (this.wake - this.wakeLag) * Math.min(1, dt * 5);
 
     gl.useProgram(this.prog);
     gl.uniform2f(this.u.uRes!, this.canvas.width, this.canvas.height);

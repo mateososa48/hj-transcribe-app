@@ -126,7 +126,7 @@ void main(){
   float wake = clamp(uWake, 0.0, 1.0);
   float rest = 1.0 - wake;
 
-  float idleBreath = 0.030 + 0.016 * sin(t * 0.9) * sin(t * 0.41 + 1.0);
+  float idleBreath = 0.030 + 0.016 * sin(t * 0.38) * sin(t * 0.17 + 1.0);
   float amp    = mix(idleBreath, 0.20 + 0.34 * uLow, wake) * uPresence;
 
   float lag    = clamp(uWakeLag, 0.0, 1.0);
@@ -134,7 +134,7 @@ void main(){
   float harm   = mix(0.10, 0.34 + 0.22 * uHigh, wake);
 
   float xN    = p.x / max(aspect, 1.0);
-  float drift = t * mix(0.9, 2.1, wake);
+  float drift = t * mix(0.30, 0.72, wake);
   float ends  = exp(-pow(xN * 1.55, 2.0));
 
   vec3 col = ribbon(p, aspect, amp, spread, drift, harm, uMid, uLevel, 1.0);
