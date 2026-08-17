@@ -18,7 +18,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { discardSession, markSessionRecovered } from '@/lib/session/recording-session.ts';
 import { assembleTranscript } from '@/lib/transcription/queue.ts';
 import { useSettingsStore } from '@/store/settings-store';
-import { RecordingOrb, type OrbState } from './RecordingOrb';
+import type { OrbState } from './RecordingOrb';
+import { RecordingWave } from './RecordingWave';
 import {
   recordingSession,
   transcriptionQueue,
@@ -70,10 +71,11 @@ export function RecordScreen({
           <EmptyMedia variant="icon">
             <KeyRound aria-hidden />
           </EmptyMedia>
-          <EmptyTitle className="text-lg">Noch kein Zugangsschlüssel hinterlegt</EmptyTitle>
+          <EmptyTitle className="text-lg">Kein Zugang zur Spracherkennung</EmptyTitle>
           <EmptyDescription>
-            Für die Spracherkennung fehlt der Zugangsschlüssel. Ohne ihn kann eine Aufnahme zwar
-            gespeichert, aber nicht in Text umgewandelt werden.
+            Für den gewählten Anbieter ist kein Zugang hinterlegt. Eine Aufnahme wird zwar
+            gespeichert, kann aber nicht in Text umgewandelt werden. In den Einstellungen sehen Sie,
+            welcher Zugang fehlt.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -173,7 +175,7 @@ export function RecordScreen({
         </p>
       </div>
 
-      <RecordingOrb level={recording.level} state={orbState} />
+      <RecordingWave level={recording.level} state={orbState} />
 
       {recording.inputWarning ? (
         <div

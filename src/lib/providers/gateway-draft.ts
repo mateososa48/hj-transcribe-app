@@ -56,7 +56,7 @@ export const GATEWAY_MODELS = [
   { id: 'mistral/mistral-medium-3.5', label: 'Mistral Medium 3.5 (EU-Modell)', euCapable: true },
 ] as const;
 
-export const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-sonnet-5';
+export const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-opus-5';
 
 export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL): DraftProvider {
   return {

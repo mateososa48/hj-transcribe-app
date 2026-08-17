@@ -17,6 +17,44 @@ export interface MicLevelSnapshot {
   silent: boolean;
   /** ms the input has been continuously below the silence threshold. */
   silentForMs: number;
+  /** 0..1 energy per band. Drives the recording wave. See BANDS below. */
+  low: number;
+  mid: number;
+  high: number;
+}
+
+/**
+ * Bands in Hz, not in thirds of the FFT array.
+ *
+ * An FFT is linear in Hz but hearing is logarithmic: splitting the bins evenly
+ * puts almost the whole speech range into the lowest third and leaves the other
+ * two reading near zero on a voice. These ranges are roughly fundamental /
+ * vowel formants / sibilance, which is what makes a spoken sentence visibly
+ * move all three.
+ */
+export const BANDS = {
+  low: [60, 320],
+  mid: [320, 1600],
+  high: [1600, 6000],
+} as const;
+
+/**
+ * The FFT bins covering [loHz, hiHz), as a half-open [from, to) range.
+ *
+ * Pulled out of the class so the mapping can be tested without an AudioContext.
+ * This is the step that is easy to get wrong: splitting the bin array into
+ * thirds looks equivalent and is not.
+ */
+export function binRange(
+  loHz: number,
+  hiHz: number,
+  binHz: number,
+  binCount: number,
+): [number, number] {
+  if (!binHz || binCount <= 0) return [0, 0];
+  const from = Math.max(0, Math.floor(loHz / binHz));
+  const to = Math.min(binCount, Math.ceil(hiHz / binHz));
+  return to <= from ? [0, 0] : [from, to];
 }
 
 export interface MicLevelOptions {
@@ -36,6 +74,9 @@ export class MicLevelMonitor {
   private analyser: AnalyserNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private buffer: Float32Array<ArrayBuffer> | null = null;
+  private freq: Uint8Array<ArrayBuffer> | null = null;
+  private binHz = 0;
+  private bands = { low: 0, mid: 0, high: 0 };
   private raf = 0;
 
   private smoothed = 0;
@@ -58,6 +99,8 @@ export class MicLevelMonitor {
     // the per-frame cost negligible.
     this.analyser.fftSize = 1024;
     this.buffer = new Float32Array(new ArrayBuffer(this.analyser.fftSize * 4));
+    this.freq = new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount));
+    this.binHz = this.context.sampleRate / this.analyser.fftSize;
     this.source = this.context.createMediaStreamSource(this.stream);
     this.source.connect(this.analyser);
     // Deliberately NOT connected to the destination — monitoring the mic
@@ -79,6 +122,7 @@ export class MicLevelMonitor {
     const rms = Math.sqrt(sumSquares / buffer.length);
 
     this.smoothed += (rms - this.smoothed) * this.opts.smoothing;
+    this.readBands();
 
     const now = performance.now();
     if (rms < this.opts.silenceThreshold) {
@@ -93,9 +137,32 @@ export class MicLevelMonitor {
     this.raf = requestAnimationFrame(this.tick);
   };
 
+  /** Mean magnitude of the bins covering [loHz, hiHz), normalised to 0..1. */
+  private bandEnergy(loHz: number, hiHz: number): number {
+    const freq = this.freq;
+    if (!freq) return 0;
+    const [from, to] = binRange(loHz, hiHz, this.binHz, freq.length);
+    if (to <= from) return 0;
+    let sum = 0;
+    for (let i = from; i < to; i++) sum += freq[i]!;
+    return sum / (to - from) / 255;
+  }
+
+  private readBands(): void {
+    const { analyser, freq } = this;
+    if (!analyser || !freq) return;
+    analyser.getByteFrequencyData(freq);
+    this.bands = {
+      low: this.bandEnergy(...BANDS.low),
+      mid: this.bandEnergy(...BANDS.mid),
+      high: this.bandEnergy(...BANDS.high),
+    };
+  }
+
   snapshot(): MicLevelSnapshot {
     const silentForMs = this.silentSince === null ? 0 : performance.now() - this.silentSince;
     return {
+      ...this.bands,
       // Perceptual curve: raw RMS barely moves the needle for speech, which
       // makes the indicator look dead when it is working correctly.
       level: Math.min(1, Math.sqrt(this.smoothed) * 3),
@@ -119,6 +186,8 @@ export class MicLevelMonitor {
     this.analyser = null;
     this.source = null;
     this.buffer = null;
+    this.freq = null;
+    this.bands = { low: 0, mid: 0, high: 0 };
     this.listeners.clear();
   }
 }

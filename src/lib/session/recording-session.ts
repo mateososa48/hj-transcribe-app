@@ -53,6 +53,16 @@ export class RecordingSession {
   private wakeLock: ScreenWakeLock | null = null;
   private unsubscribeLevel: (() => void) | null = null;
 
+  /**
+   * Per-frame microphone data, deliberately outside React state.
+   *
+   * The visual indicator wants all three frequency bands at 60 fps. Pushing
+   * that through the store would re-render the whole screen sixty times a
+   * second for something only one canvas reads, so subscribers get it directly
+   * and the store keeps a coarse `level` for the non-WebGL fallback.
+   */
+  private readonly audioListeners = new Set<(s: MicLevelSnapshot | null) => void>();
+
   getState(): RecordingState {
     return this.state;
   }
@@ -61,6 +71,17 @@ export class RecordingSession {
     this.listeners.add(listener);
     listener(this.state);
     return () => this.listeners.delete(listener);
+  }
+
+  /** Returns null while nothing is recording — never a simulated value. */
+  subscribeAudio(listener: (s: MicLevelSnapshot | null) => void): () => void {
+    this.audioListeners.add(listener);
+    listener(this.monitor ? this.monitor.snapshot() : null);
+    return () => this.audioListeners.delete(listener);
+  }
+
+  private emitAudio(snapshot: MicLevelSnapshot | null): void {
+    for (const listener of this.audioListeners) listener(snapshot);
   }
 
   private set(patch: Partial<RecordingState>): void {
@@ -106,7 +127,13 @@ export class RecordingSession {
     this.monitor = new MicLevelMonitor(stream);
     this.monitor.start();
     this.unsubscribeLevel = this.monitor.subscribe((snapshot: MicLevelSnapshot) => {
-      if (this.state.status === 'recording') this.set({ level: snapshot.level });
+      if (this.state.status !== 'recording') return;
+      this.emitAudio(snapshot);
+      // Coarse: the store value only feeds the fallback indicator, and a
+      // re-render per frame is not worth two decimal places.
+      if (Math.abs(snapshot.level - this.state.level) > 0.04) {
+        this.set({ level: snapshot.level });
+      }
     });
 
     this.recorder = new SegmentRecorder(stream, this.monitor, {
@@ -199,6 +226,9 @@ export class RecordingSession {
     this.unsubscribeLevel = null;
     this.monitor?.stop();
     this.monitor = null;
+    // Tell the indicator the live signal is gone, so it stops claiming to hear
+    // something the moment the microphone is released.
+    this.emitAudio(null);
     await this.wakeLock?.release();
     this.wakeLock = null;
     for (const track of this.stream?.getTracks() ?? []) track.stop();

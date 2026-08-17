@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, HardDrive, Languages, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertTriangle, HardDrive, KeyRound, Languages, ShieldCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -33,7 +33,6 @@ import {
 import { clearAllData, type AudioRetention, type LlmProviderId } from '@/lib/settings';
 import { formatBytes } from '@/lib/storage';
 import { useSettingsStore } from '@/store/settings-store';
-import { ApiKeyField } from './ApiKeyField';
 
 type AsrId = Exclude<TranscriptionProviderId, 'corti'>;
 
@@ -75,6 +74,39 @@ function Section({
   );
 }
 
+/**
+ * Access status, replacing the old "enter your own key" field.
+ *
+ * The keys now ship with the app, so there is nothing for HJ to type — but
+ * "where does my access come from" still has to be answerable on screen, and a
+ * missing key at build time has to be visible rather than showing up later as a
+ * failed transcription.
+ */
+function KeyStatus({ present, label }: { present: boolean; label: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border px-4 py-3">
+      <KeyRound className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
+      <div className="space-y-1">
+        <div className="flex items-center gap-2.5">
+          <span className="text-sm font-medium">{label}</span>
+          {present ? (
+            <Badge variant="secondary">Hinterlegt</Badge>
+          ) : (
+            <Badge variant="outline" className="text-destructive">
+              Fehlt
+            </Badge>
+          )}
+        </div>
+        <p className="max-w-[68ch] text-sm text-muted-foreground">
+          {present
+            ? 'Der Zugang ist in der Anwendung fest hinterlegt. Sie müssen nichts eingeben.'
+            : 'Für diesen Anbieter ist kein Zugang hinterlegt. Bitte geben Sie Bescheid — das lässt sich nur beim Erstellen der Anwendung ändern.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** EU / non-EU is a decision HJ has to be able to see, not one buried in a doc. */
 function RegionBadge({ euHosted }: { euHosted: boolean }) {
   return euHosted ? (
@@ -87,7 +119,6 @@ function RegionBadge({ euHosted }: { euHosted: boolean }) {
 export function SettingsPage() {
   const { settings, apiKeys, storage } = useSettingsStore();
   const update = useSettingsStore((s) => s.update);
-  const setApiKey = useSettingsStore((s) => s.setApiKey);
   const enablePersistence = useSettingsStore((s) => s.enablePersistence);
   const hydrate = useSettingsStore((s) => s.hydrate);
 
@@ -121,7 +152,7 @@ export function SettingsPage() {
       <Section
         icon={Languages}
         title="Spracherkennung"
-        description="Wandelt Ihre Aufnahme in Text um. Der Zugangsschlüssel gehört Ihnen und wird nur auf diesem Computer gespeichert."
+        description="Wandelt Ihre Aufnahme in Text um. Der Zugang ist bereits eingerichtet."
       >
         <FieldGroup>
           <Field>
@@ -153,12 +184,9 @@ export function SettingsPage() {
             ) : null}
           </Field>
 
-          <ApiKeyField
-            id="asr-key"
-            label="Zugangsschlüssel Spracherkennung"
-            hint={asrMeta?.keyHint ?? ''}
-            currentKey={apiKeys[settings.asrProviderId]}
-            onSave={(key) => setApiKey(settings.asrProviderId, key)}
+          <KeyStatus
+            label="Zugang Spracherkennung"
+            present={Boolean(apiKeys[settings.asrProviderId])}
           />
         </FieldGroup>
       </Section>
@@ -194,12 +222,9 @@ export function SettingsPage() {
             </div>
           </Field>
 
-          <ApiKeyField
-            id="llm-key"
-            label="Zugangsschlüssel Textentwurf"
-            hint={llmMeta.keyHint}
-            currentKey={apiKeys[settings.llmProviderId]}
-            onSave={(key) => setApiKey(settings.llmProviderId, key)}
+          <KeyStatus
+            label="Zugang Textentwurf"
+            present={Boolean(apiKeys[settings.llmProviderId])}
           />
         </FieldGroup>
       </Section>
@@ -303,7 +328,7 @@ export function SettingsPage() {
       <Section
         icon={AlertTriangle}
         title="Alle Daten löschen"
-        description="Entfernt alle Aufnahmen, Transkripte, Entwürfe, Begriffe und Zugangsschlüssel unwiderruflich von diesem Computer."
+        description="Entfernt alle Aufnahmen, Transkripte, Entwürfe und Begriffe unwiderruflich von diesem Computer."
       >
         <AlertDialog>
           <AlertDialogTrigger
@@ -317,7 +342,7 @@ export function SettingsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Wirklich alle Daten löschen?</AlertDialogTitle>
               <AlertDialogDescription>
-                Alle Aufnahmen, Transkripte, Entwürfe und Zugangsschlüssel werden entfernt. Das
+                Alle Aufnahmen, Transkripte und Entwürfe werden entfernt. Das
                 lässt sich nicht rückgängig machen. Tippen Sie zur Bestätigung{' '}
                 <span className="font-semibold text-foreground">LÖSCHEN</span> ein.
               </AlertDialogDescription>

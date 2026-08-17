@@ -1,3 +1,4 @@
+import { BUILT_IN_KEYS } from './config.ts';
 import type { TranscriptionProviderId } from './providers/index.ts';
 import { db, logAudit } from './db.ts';
 
@@ -37,7 +38,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   // Gateway by default while we are still choosing a model. Switch to a direct
   // provider before real patient use — see gateway-draft.ts.
   llmProviderId: 'gateway',
-  llmModel: 'anthropic/claude-sonnet-5',
+  llmModel: 'anthropic/claude-opus-5',
   // Pilot default, chosen deliberately over the SPEC value: keeping the audio
   // until HJ deletes it makes a bad transcript diagnosable while we are still
   // tuning. Revisit before real patient use — 'afterApproval' is the intended
@@ -76,7 +77,28 @@ export async function saveSettings(patch: Partial<AppSettings>): Promise<AppSett
  */
 export type ApiKeyMap = Partial<Record<TranscriptionProviderId | LlmProviderId, string>>;
 
+/**
+ * Keys in use, with the build-time pair as the base layer.
+ *
+ * A key stored on this machine still wins, so switching to per-machine keys
+ * later needs no code change — just enter one.
+ */
 export async function loadApiKeys(): Promise<ApiKeyMap> {
+  const row = await db.settings.get(KEYS_KEY);
+  const stored = (row?.value as ApiKeyMap | undefined) ?? {};
+  const merged: ApiKeyMap = { ...(BUILT_IN_KEYS as ApiKeyMap) };
+  for (const [provider, key] of Object.entries(stored)) {
+    if (key) merged[provider as keyof ApiKeyMap] = key;
+  }
+  // Drop empty entries so "is a key present?" checks stay simple.
+  for (const k of Object.keys(merged) as Array<keyof ApiKeyMap>) {
+    if (!merged[k]) delete merged[k];
+  }
+  return merged;
+}
+
+/** Keys explicitly entered on this machine, ignoring the build-time pair. */
+export async function loadStoredApiKeys(): Promise<ApiKeyMap> {
   const row = await db.settings.get(KEYS_KEY);
   return (row?.value as ApiKeyMap | undefined) ?? {};
 }
