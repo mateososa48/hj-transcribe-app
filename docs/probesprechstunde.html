@@ -1,0 +1,547 @@
+<title>Probesprechstunde</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --paper: #ffffff;
+    --surface: #fafafa;
+    --ink: #141414;
+    --ink-soft: #545454;
+    --ink-faint: #8a8a8a;
+    --rule: #e6e6e6;
+    --rule-strong: #d0d0d0;
+
+    /* The four spectral samples the recording ribbon is drawn from.
+       Using the app's own dispersion palette rather than inventing one. */
+    --s-blue: #4230ff;
+    --s-violet: #a52bd8;
+    --s-rose: #d92a68;
+    --s-amber: #b4700f;
+
+    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    --measure: 34rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0e0e0f;
+      --surface: #171718;
+      --ink: #f0efee;
+      --ink-soft: #a9a7a4;
+      --ink-faint: #77756f;
+      --rule: #262627;
+      --rule-strong: #38383a;
+
+      --s-blue: #8b80ff;
+      --s-violet: #d888f5;
+      --s-rose: #ff7fa6;
+      --s-amber: #e8b25c;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0e0e0f;
+    --surface: #171718;
+    --ink: #f0efee;
+    --ink-soft: #a9a7a4;
+    --ink-faint: #77756f;
+    --rule: #262627;
+    --rule-strong: #38383a;
+
+    --s-blue: #8b80ff;
+    --s-violet: #d888f5;
+    --s-rose: #ff7fa6;
+    --s-amber: #e8b25c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 4.5rem 1.5rem 8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4.5rem;
+  }
+
+  /* ---- masthead ---------------------------------------------------- */
+
+  .masthead { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .rule-spectral {
+    height: 2px;
+    border: 0;
+    margin: 0;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      var(--s-blue) 18%,
+      var(--s-violet) 38%,
+      var(--s-rose) 60%,
+      var(--s-amber) 80%,
+      transparent 100%);
+    opacity: .85;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.5rem;
+    font-size: .8rem;
+    color: var(--ink-faint);
+  }
+  .meta b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---- sections ---------------------------------------------------- */
+
+  section { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    letter-spacing: -0.015em;
+    font-weight: 600;
+    margin: 0;
+    padding-bottom: .65rem;
+    border-bottom: 1px solid var(--rule-strong);
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    font-weight: 650;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  p { margin: 0; max-width: var(--measure); text-wrap: pretty; }
+  .lede { color: var(--ink-soft); }
+
+  /* ---- setup steps: a real ordered procedure ----------------------- */
+
+  ol.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 1.1rem; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    font-variant-numeric: tabular-nums;
+    font-size: .85rem;
+    font-weight: 650;
+    color: var(--ink-faint);
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    width: 1.7rem; height: 1.7rem;
+    display: grid; place-items: center;
+    margin-top: .1rem;
+  }
+  ol.steps p { max-width: 46rem; }
+
+  /* ---- question list ----------------------------------------------- */
+
+  ul.asks { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+  ul.asks > li {
+    padding: .95rem 0;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: .35rem 2rem;
+    align-items: baseline;
+  }
+  ul.asks > li:last-child { border-bottom: 1px solid var(--rule); }
+  .ask { font-family: var(--serif); font-size: 1.08rem; }
+  .why { font-size: .85rem; color: var(--ink-faint); }
+
+  @media (max-width: 46rem) {
+    ul.asks > li { grid-template-columns: 1fr; }
+  }
+
+  /* ---- the dictation itself ---------------------------------------- */
+
+  .dictation { display: flex; flex-direction: column; gap: 2.25rem; }
+
+  .block { display: grid; grid-template-columns: 9.5rem 1fr; gap: 1.5rem; align-items: start; }
+  @media (max-width: 52rem) { .block { grid-template-columns: 1fr; gap: .6rem; } }
+
+  .block-label { display: flex; flex-direction: column; gap: .2rem; padding-top: .35rem; }
+  .block-label .n {
+    font-size: .75rem; font-weight: 650; letter-spacing: .08em;
+    color: var(--ink-faint); font-variant-numeric: tabular-nums;
+  }
+  .block-label .name { font-size: .95rem; font-weight: 600; }
+
+  .say {
+    font-family: var(--serif);
+    font-size: 1.22rem;
+    line-height: 1.72;
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--rule-strong);
+  }
+  .say + .note { margin-top: .75rem; margin-left: 1.25rem; }
+
+  mark.trap {
+    background: none;
+    color: inherit;
+    box-shadow: inset 0 -0.42em 0 color-mix(in oklab, var(--s-rose) 20%, transparent);
+    border-radius: 1px;
+    padding: 0 .05em;
+  }
+
+  .note {
+    font-family: var(--sans);
+    font-size: .85rem;
+    color: var(--ink-soft);
+    max-width: 44rem;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+
+  /* ---- checks ------------------------------------------------------ */
+
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  .scroller { overflow-x: auto; }
+  th, td { text-align: left; padding: .7rem .9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); font-weight: 650; border-bottom-color: var(--rule-strong); }
+  td.expect { font-family: var(--serif); font-size: 1.02rem; white-space: nowrap; }
+  td.fail { color: var(--ink-soft); }
+  tr:last-child td { border-bottom: 0; }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 1.15rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    max-width: 46rem;
+  }
+  .callout h3 { color: var(--s-rose); }
+
+  a { color: inherit; text-decoration-color: var(--rule-strong); text-underline-offset: .18em; }
+  a:hover { text-decoration-color: currentColor; }
+  a:focus-visible { outline: 2px solid var(--s-violet); outline-offset: 3px; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: .88em;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: .08em .35em;
+    border-radius: 3px;
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <hr class="rule-spectral" />
+    <h1>Probesprechstunde</h1>
+    <p class="standfirst">
+      A mock consultation for testing the Arztbrief-Assistent end to end: questions to ask a
+      stand-in patient, a word-for-word German dictation to speak into the app, and the exact
+      strings the finished draft has to contain.
+    </p>
+    <div class="meta">
+      <span><b>App</b> hj-transcribe-app.vercel.app</span>
+      <span><b>Dictation</b> ~2 minutes</span>
+      <span><b>Full run</b> ~10 minutes</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Before you start</h2>
+    <ol class="steps">
+      <li>
+        <p>
+          Open the app in <b>Chrome or Safari</b> and allow microphone access when asked. Firefox
+          records fine but produces a different container format — test there separately, not first.
+        </p>
+      </li>
+      <li>
+        <p>
+          Go to <b>Einstellungen</b> and check that both rows say <b>Hinterlegt</b>. If either says
+          <b>Fehlt</b>, the build is missing a key and nothing downstream will work.
+        </p>
+      </li>
+      <li>
+        <p>
+          Sit about where a doctor sits: <b>50–80&nbsp;cm from the laptop</b>, normal speaking volume.
+          Do not lean into the microphone. The whole point is to find out whether it copes with the
+          real distance.
+        </p>
+      </li>
+      <li>
+        <p>
+          Press <b>Aufnahme starten</b> and watch the ribbon. It should bloom into colour as soon as
+          you speak and settle back when you stop. If it stays a flat grey thread while you talk, the
+          microphone is not reaching the app — stop and fix that before going further.
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Part one · Play the consultation</h2>
+    <p class="lede">
+      Sit someone opposite you and work through these. You are not testing the app yet — you are
+      generating something real to dictate afterwards. Let them answer however they like; the
+      messier the answers, the better the test.
+    </p>
+
+    <ul class="asks">
+      <li><span class="ask">Wie ist es Ihnen seit dem letzten Mal ergangen?</span><span class="why">Opens the Anamnese. Everything else hangs off this.</span></li>
+      <li><span class="ask">Haben Sie Druck oder Schmerzen in der Brust? Bei Belastung oder in Ruhe?</span><span class="why">The core cardiac question. Note whether it is exertional.</span></li>
+      <li><span class="ask">Wie viele Stockwerke schaffen Sie, ohne stehen zu bleiben?</span><span class="why">Turns "gut" into a number you can dictate.</span></li>
+      <li><span class="ask">Bekommen Sie Luftnot? Nachts? Mit wie vielen Kissen schlafen Sie?</span><span class="why">Heart-failure signs, and a number again.</span></li>
+      <li><span class="ask">Spüren Sie Herzstolpern oder Herzrasen?</span><span class="why">Arrhythmia. Ask how long and how it stops.</span></li>
+      <li><span class="ask">Ist Ihnen schwindlig geworden, oder waren Sie kurz weg?</span><span class="why">Syncope — the answer that changes the plan.</span></li>
+      <li><span class="ask">Schwellen Ihre Beine an, vor allem abends?</span><span class="why">Oedema. Ask whether the socks leave a mark.</span></li>
+      <li><span class="ask">Welche Medikamente nehmen Sie zurzeit, und in welcher Dosierung?</span><span class="why">Have them read from the box. This is where the dosing traps come from.</span></li>
+      <li><span class="ask">Vertragen Sie alles gut? Muskelschmerzen?</span><span class="why">Statin tolerance — a routine line in his letters.</span></li>
+      <li><span class="ask">Rauchen Sie? Wie sieht es mit Bewegung aus?</span><span class="why">Risk factors, and gives the Prozedere something to say.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Part two · The dictation</h2>
+    <p class="lede">
+      Read this aloud at a normal pace, in one recording. Pause naturally between blocks — the app
+      cuts its segments on the silences, so a real pause is a feature, not a problem. The
+      <mark class="trap">underlined</mark> phrases are deliberate traps; say them exactly as written.
+    </p>
+
+    <div class="dictation">
+
+      <div class="block">
+        <div class="block-label"><span class="n">01</span><span class="name">Anrede</span></div>
+        <div>
+          <div class="say">
+            Sehr geehrter Herr Kollege, wir berichten Ihnen über unseren gemeinsamen Patienten,
+            Herrn Werner Baumgartner, geboren am vierzehnten März neunzehnhundertachtundfünfzig,
+            der sich am heutigen Tage in unserer kardiologischen Sprechstunde vorstellte.
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label"><span class="n">02</span><span class="name">Diagnosen</span></div>
+        <div>
+          <div class="say">
+            Diagnosen. Erstens, koronare Herzkrankheit, Zustand nach Nicht-ST-Hebungsinfarkt
+            im März zweitausendfünfundzwanzig mit Implantation eines medikamentenbeschichteten
+            Stents in den Ramus interventricularis anterior. Zweitens, arterielle Hypertonie.
+            Drittens, Hyperlipoproteinämie.
+          </div>
+          <p class="note">
+            <b>Watch:</b> "Zustand nach" should come back as <code>Z.n.</code> and keep its full
+            stops. The stent name is the kind of long compound that separates a good transcription
+            from a bad one.
+          </p>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label"><span class="n">03</span><span class="name">Anamnese</span></div>
+        <div>
+          <div class="say">
+            Anamnese. Der Patient berichtet über eine deutliche Besserung seiner Belastbarkeit.
+            Er schafft zwei Stockwerke ohne Pause. <mark class="trap">Angina pectoris wird
+            verneint.</mark> <mark class="trap">Kein Hinweis auf Palpitationen oder
+            Synkopen.</mark> Beinödeme bestehen nicht. Die Medikation wird gut vertragen,
+            insbesondere ohne Myalgien.
+          </div>
+          <p class="note">
+            <b>Watch:</b> both negations must survive word for word. A draft that turns
+            "wird verneint" into "besteht" is the single most dangerous failure this app can have.
+          </p>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label"><span class="n">04</span><span class="name">Befund</span></div>
+        <div>
+          <div class="say">
+            Befund. Blutdruck einhundertdreißig zu achtzig Millimeter Quecksilbersäule,
+            Herzfrequenz vierundsechzig pro Minute, regelmäßig. Im Ruhe-EKG Sinusrhythmus,
+            keine Erregungsrückbildungsstörungen. Echokardiographisch normal große Herzhöhlen,
+            Ejektionsfraktion fünfundfünfzig Prozent, <mark class="trap">kein Hinweis auf
+            regionale Wandbewegungsstörungen.</mark> Die Belastungsuntersuchung bis
+            einhundertfünfzig Watt blieb ohne Ischämiezeichen.
+          </div>
+          <p class="note">
+            <b>Watch:</b> every number. <code>130/80&nbsp;mmHg</code>, <code>64/min</code>,
+            <code>55&nbsp;%</code>, <code>150&nbsp;Watt</code>. A transposed digit here is a wrong
+            letter.
+          </p>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label"><span class="n">05</span><span class="name">Therapie</span></div>
+        <div>
+          <div class="say">
+            Therapie. <mark class="trap">Acetylsalicylsäure einhundert Milligramm, eins null
+            null.</mark> <mark class="trap">Bisoprolol fünf Milligramm, eins null null.</mark>
+            Atorvastatin vierzig Milligramm, null null eins. <mark class="trap">Ramipril fünf
+            Milligramm, eins null.</mark>
+          </div>
+          <p class="note">
+            <b>This block is the whole safety test.</b> "eins null null" is a dosing schedule and
+            must become <code>1-0-0</code>, never the number <code>100</code>. The last line is
+            deliberately incomplete — a three-times-a-day schedule with only two slots dictated —
+            and the app must flag it rather than guess the missing dose.
+          </p>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-label"><span class="n">06</span><span class="name">Prozedere</span></div>
+        <div>
+          <div class="say">
+            Prozedere. Wir empfehlen die Fortführung der bestehenden Medikation sowie eine
+            Kontrolle der Blutfette in drei Monaten. Eine Wiedervorstellung in unserer
+            Sprechstunde ist in sechs Monaten vorgesehen. Bei erneuten Beschwerden bitten wir um
+            kurzfristige Wiedervorstellung.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Part three · What the draft has to say</h2>
+    <p class="lede">
+      Open the letter and check these one at a time. Anything in the right-hand column means stop
+      and tell me — those are bugs, not rough edges.
+    </p>
+
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr><th>Must read</th><th>Where</th><th>Failure to report</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="expect">ASS 100 mg 1-0-0</td>
+            <td>Therapie</td>
+            <td class="fail">Any form of <code>100 100</code>, or the schedule collapsed into a number</td>
+          </tr>
+          <tr>
+            <td class="expect">Bisoprolol 5 mg 1-0-0</td>
+            <td>Therapie</td>
+            <td class="fail"><code>Bisoprolol 5 mg 100</code> — reads as a hundred-milligram dose</td>
+          </tr>
+          <tr>
+            <td class="expect">Atorvastatin 40 mg 0-0-1</td>
+            <td>Therapie</td>
+            <td class="fail">Slots reordered, or the strength changed</td>
+          </tr>
+          <tr>
+            <td class="expect">[FEHLT: …]</td>
+            <td>Therapie, Ramipril</td>
+            <td class="fail">A completed <code>1-0-1</code> or <code>1-0-0</code> — the app invented a dose</td>
+          </tr>
+          <tr>
+            <td class="expect">verneint / Kein Hinweis auf</td>
+            <td>Anamnese, Befund</td>
+            <td class="fail">Any negation dropped, softened, or reversed</td>
+          </tr>
+          <tr>
+            <td class="expect">130/80 mmHg · 64/min · 55 %</td>
+            <td>Befund</td>
+            <td class="fail">A digit changed anywhere</td>
+          </tr>
+          <tr>
+            <td class="expect">Z.n. NSTEMI 03/2025</td>
+            <td>Diagnosen</td>
+            <td class="fail">Full stops stripped from <code>Z.n.</code></td>
+          </tr>
+          <tr>
+            <td class="expect">no ICD or GOÄ codes anywhere</td>
+            <td>whole letter</td>
+            <td class="fail">Any billing or coding suggestion — it must never do this</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <h3>If a dosing scheme is wrong</h3>
+      <p class="note">
+        Screenshot the letter, then send me the <b>Erkannter Text</b> from the recording screen as
+        well. The two together tell me whether the speech recognition or the drafting step broke it,
+        and those are fixed in completely different places.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Two shorter runs</h2>
+
+    <h3>Thirty-second smoke test</h3>
+    <div class="say">
+      Befund. Blutdruck einhundertvierzig zu neunzig, Herzfrequenz zweiundsiebzig pro Minute.
+      Therapie. Bisoprolol fünf Milligramm, eins null null. Angina pectoris wird verneint.
+    </div>
+    <p class="note">
+      Everything that can go badly wrong, in three sentences. Use this after every change I deploy.
+    </p>
+
+    <h3>Translation</h3>
+    <p>
+      With a finished draft on screen, open <b>Übersetzung</b>, pick English, and translate. Then
+      check the same three things: the numbers are identical, the dosing schemes are identical, and
+      no <code>[FEHLT]</code> marker has disappeared. The app checks this itself and will warn you
+      — the point of testing is to find out whether the warning is right.
+    </p>
+
+    <div class="callout">
+      <h3>One thing to know while testing</h3>
+      <p class="note">
+        The draft is written by a model reached through the Vercel AI Gateway, which sits between
+        the browser and the model. That is fine for finding out which model writes the best German,
+        and it is <b>not</b> the configuration to put in front of a real patient. Use invented
+        patients only — the name and date of birth above are made up, and yours should be too.
+      </p>
+    </div>
+  </section>
+
+</div>

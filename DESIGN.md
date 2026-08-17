@@ -69,6 +69,21 @@ something.
 Strategy: **Restrained.** Accent is used for primary action, current selection,
 and state indicators only. Never for decoration.
 
+### The one exception: the recording ribbon
+
+The recording indicator is drawn in four spectral colours — blue, violet, rose,
+amber. This is the only chromatic thing in the product and it is deliberate.
+
+It is not a brand hue and it is not decoration: the colours *are* the reading.
+The same wave is drawn four times, each copy phase-shifted; where the wave is
+flat the copies overlap and cancel toward neutral, and where it bends hard they
+separate and the edge fringes into a rainbow. So the colour appearing at all
+means the microphone is picking up shape, and how far it separates is the high
+band — sibilance — made visible. Nothing else in the app may borrow this
+palette; the moment it appears on a button it stops meaning anything.
+
+Definitions live in `src/features/record/wave/shaders.ts`.
+
 ### Semantic state vocabulary
 
 Defined once, used everywhere. Every state carries a **text label** as well as a
@@ -169,7 +184,7 @@ Purposeful and short. Motion conveys **state change**, never decoration.
 
 ---
 
-## 7. The recording state (spec'd now, built in P1)
+## 7. The recording state
 
 This is the only place in the product with real visual presence, because it is
 the only place where being unmissable outranks being calm.
@@ -177,9 +192,7 @@ the only place where being unmissable outranks being calm.
 Requirements, from SPEC:
 
 - **Big timer**, live elapsed time, readable across the room.
-- **Live input level** driven by `useMicLevel()` (AnalyserNode), rendered by a
-  self-contained orb component taking a `level` prop. The visual will be swapped
-  later — keep the contract narrow.
+- **Live input level**, driven by real microphone data.
 - **Loud error state** if input goes silent or the device dies. Silence during a
   dictation must be impossible to miss.
 - Recording is a **whole-screen state**, not a small badge. He should be able to
@@ -187,6 +200,31 @@ Requirements, from SPEC:
 
 Explicitly not: a pulsing microphone as decoration, chat bubbles, waveform eye
 candy that doesn't reflect real input.
+
+### How it is built (P1, ribbon since 2026-08-16)
+
+`RecordingWave` renders a WebGL2 ribbon — one fragment shader, one full-screen
+triangle, no geometry or framebuffers. It reads the stream the recorder already
+opened: `MicLevelMonitor` reports three frequency bands **grouped by Hz**
+(60–320 / 320–1600 / 1600–6000), not by even thirds of the FFT array, which is
+the difference between a wave that moves on a voice and one that barely twitches.
+Low sets amplitude, high sets colour separation, level sets brightness. Per-frame
+audio goes through `recordingSession.subscribeAudio()` and never through React.
+
+Three rules it must keep:
+
+1. **While recording it is never simulated.** Real input or a flat line. The
+   ambient idle animation exists so the panel is not empty when nothing is
+   running, and it is damped hard so waiting and hearing are told apart at a
+   glance — a resting grey thread versus a ribbon in full colour.
+2. **Reduced motion silences drift, not response.** The idle animation stops and
+   the loop stops drawing; a live signal still moves it. An indicator that cannot
+   move cannot do its job.
+3. **It degrades.** No WebGL2 falls back to `RecordingOrb`, the ring-and-core
+   indicator, which takes the same `level` prop.
+
+For tuning: in dev, `?wave=low,mid,high,level` pins the ribbon to a pose without
+a microphone. The branch is stripped from production builds.
 
 ---
 
