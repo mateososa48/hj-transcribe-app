@@ -1,7 +1,7 @@
 import { MicLevelMonitor, type MicLevelSnapshot } from '@/lib/audio/mic-level.ts';
 import { SegmentRecorder } from '@/lib/audio/recorder.ts';
 import { ScreenWakeLock } from '@/lib/audio/wake-lock.ts';
-import { db, logAudit, newId, type Session } from '@/lib/db.ts';
+import { db, newId, type Session, type SessionKind } from '@/lib/db.ts';
 
 /**
  * Owns one recording sitting end to end: microphone, level monitoring, segment
@@ -24,6 +24,8 @@ export type RecordingStatus =
 export interface RecordingState {
   status: RecordingStatus;
   sessionId: string | null;
+  /** Which feature this recording belongs to. Decides the prompt used later. */
+  kind: SessionKind | null;
   startedAt: number | null;
   /** Segments persisted so far. */
   segmentCount: number;
@@ -36,6 +38,7 @@ export interface RecordingState {
 const INITIAL: RecordingState = {
   status: 'idle',
   sessionId: null,
+  kind: null,
   startedAt: null,
   segmentCount: 0,
   level: 0,
@@ -89,7 +92,7 @@ export class RecordingSession {
     for (const listener of this.listeners) listener(this.state);
   }
 
-  async start(label?: string): Promise<void> {
+  async start(kind: SessionKind, label?: string): Promise<void> {
     if (this.state.status === 'recording' || this.state.status === 'requesting-mic') return;
 
     this.set({ ...INITIAL, status: 'requesting-mic' });
@@ -116,12 +119,12 @@ export class RecordingSession {
 
     const session: Session = {
       id: newId(),
+      kind,
       startedAt: Date.now(),
       status: 'recording',
       ...(label ? { label } : {}),
     };
     await db.sessions.add(session);
-    await logAudit('session.started', { sessionId: session.id });
 
     this.stream = stream;
     this.monitor = new MicLevelMonitor(stream);
@@ -156,6 +159,7 @@ export class RecordingSession {
     this.set({
       status: 'recording',
       sessionId: session.id,
+      kind,
       startedAt: session.startedAt,
       segmentCount: 0,
       error: null,
@@ -205,10 +209,6 @@ export class RecordingSession {
 
     if (sessionId) {
       await db.sessions.update(sessionId, { status: 'stopped', endedAt: Date.now() });
-      await logAudit('session.ended', {
-        sessionId,
-        detail: `${this.state.segmentCount} Abschnitte`,
-      });
     }
 
     this.set({ status: 'stopped', level: 0 });
@@ -253,12 +253,10 @@ export async function findRecoverableSessions(): Promise<Session[]> {
 
 export async function markSessionRecovered(sessionId: string): Promise<void> {
   await db.sessions.update(sessionId, { status: 'stopped', endedAt: Date.now() });
-  await logAudit('session.recovered', { sessionId });
 }
 
 export async function discardSession(sessionId: string): Promise<void> {
   await db.segments.where('sessionId').equals(sessionId).delete();
   await db.transcripts.where('sessionId').equals(sessionId).delete();
   await db.sessions.delete(sessionId);
-  await logAudit('audio.deleted', { sessionId, detail: 'Sitzung verworfen' });
 }

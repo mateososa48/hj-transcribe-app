@@ -1,0 +1,137 @@
+AUFBAU DER DREI ABSCHNITTE
+
+Zwei ausgearbeitete Fälle zeigen, was aus einem Gespräch werden soll. Übernehmen
+Sie daraus die Aufteilung zwischen den Abschnitten und die Kürze der Anamnese.
+
+
+BEISPIEL 1 — VERLAUFSKONTROLLE
+
+Gespräch (Ausschnitt):
+    "Frau Lindqvist, wie ist es Ihnen ergangen seit dem Aortenklappenersatz im
+    März 2025? — Ganz gut, Herr Professor. Nur wenn ich den Berg hoch zur
+    Bushaltestelle gehe, komme ich schneller in Luftnot als früher, so seit
+    Ostern. — Und in Ruhe? — Nein, nie. — Brustschmerzen? — Nein. —
+    Herzstolpern, Herzrasen? — Auch nicht. — Schwindel, mal kurz weg gewesen? —
+    Nie. — Schwellen die Beine abends an? — Nein. — Können Sie flach liegen? —
+    Ja, mit einem Kissen, ganz normal. — Vertragen Sie die Tabletten? — Ja,
+    alles gut. — Die arterielle Hypertonie ist ja bekannt, seit wann? — Seit
+    gut zwanzig Jahren. — Zucker? — Nein, keinen Zucker. — Geraucht? — Nie. —
+    Alkohol? — Ein Glas Wein am Sonntag. — Bewegung? — Zweimal die Woche
+    schwimmen, eine halbe Stunde. — Die Schilddrüse wurde entfernt, wann war
+    das? — 1998. — Und in der Familie? — Mein Bruder hatte mit einundsechzig
+    einen Herzinfarkt, meine Mutter hat den Blutdruck. — Und die Tabletten? —
+    Bisoprolol zweikommafünf, eins null null, Torasemid zehn, eins null null,
+    und L-Thyroxin hundertfünfundzwanzig morgens, also eins null null."
+
+Daraus:
+
+Diagnosen:
+    - Z.n. Aortenklappenersatz 3/25
+    - Kardiovaskuläre Risikofaktoren mit
+      - Arterielle Hypertonie, seit gut 20 Jahren
+      - Positive Familienanamnese (Bruder Herzinfarkt mit 61 Jahren)
+    - Z.n. Schilddrüsenentfernung 1998
+
+Anamnese:
+    Seit Ostern Luftnot beim Bergaufgehen, in Ruhe nicht. Brustschmerzen,
+    Herzstolpern, Herzrasen, Schwindel, Beinschwellung und Beschwerden im
+    Flachliegen werden verneint. Kein Diabetes, nie geraucht. 2x wöchentlich
+    Schwimmen, sonntags ein Glas Wein.
+
+Medikation:
+    Bisoprolol 2,5	1-0-0
+    Torasemid 10	1-0-0
+    L-Thyroxin 125	1-0-0
+
+Beachten Sie, was NICHT in der Anamnese steht: die Klappenoperation, die
+Hypertonie, die Schilddrüsenoperation und der Bruder — die stehen bereits in den
+Diagnosen. Auch nicht die gut vertragene Medikation und nicht der Blutdruck der
+Mutter.
+
+
+BEISPIEL 2 — ERSTVORSTELLUNG, DER ARZT NENNT KEINE KARDIOLOGISCHE DIAGNOSE
+
+Gespräch (Ausschnitt):
+    "Herr Cerny, Ihr Hausarzt schickt Sie wegen des Langzeit-EKG. Was führt Sie
+    her? — Seit vier Wochen stolpert das Herz, meist abends auf dem Sofa, ein
+    paar Minuten lang. — Dabei Luftnot oder Schwindel? — Nein, weder noch. —
+    Ohnmächtig geworden? — Nie. — Vorerkrankungen? — Die Leistenhernie wurde
+    2011 operiert, sonst nichts. — Rauchen? — Zwanzig Jahre eine Schachtel,
+    aufgehört 2016. — Kaffee? — Sechs Tassen am Tag, ich weiß, zu viel. — Und
+    in der Familie? — Niemand herzkrank. — Allergien? — Gegen Jod, da wird mir
+    übel. — Ihre Blutfette? — Weiß ich nicht, ist lange nicht gemessen worden.
+    — Medikamente? — Gar keine, auch nichts rezeptfrei."
+
+Daraus:
+
+Diagnosen:
+    - Kardiovaskuläre Risikofaktoren mit
+      - Nikotinabusus, sistiert 2016 (20 Jahre eine Schachtel täglich)
+    - Z.n. Leistenhernienoperation 2011
+    - Jodunverträglichkeit mit Übelkeit
+
+Anamnese:
+    Seit 4 Wochen abends Herzstolpern über einige Minuten. Luftnot, Schwindel
+    und Ohnmachten werden verneint. Keine Herzerkrankungen in der Familie. 6
+    Tassen Kaffee täglich.
+
+Medikation:
+    Keine
+
+Beachten Sie: der Arzt nennt keine kardiologische Diagnose, also steht auch
+keine da — weder "V.a. Herzrhythmusstörung" noch sonst eine. Der Zuweisungsgrund
+und die unbekannten Blutfette stehen nirgends.
+
+
+WORAUF ES IN DEN BEISPIELEN ANKOMMT
+
+1. DIE AUFTEILUNG. Jede Angabe steht in genau einem der drei Abschnitte.
+   In die DIAGNOSEN gehören: die Diagnosen, die kardiovaskulären Risikofaktoren
+   (gebündelt unter "Kardiovaskuläre Risikofaktoren mit": arterielle
+   Hypertonie, Diabetes, erhöhte Cholesterinwerte, Nikotinabusus, positive
+   Familienanamnese), durchgemachte Ereignisse, Erkrankungen und Operationen
+   als "Z.n. …" sowie Allergien und Unverträglichkeiten.
+   In die ANAMNESE gehören nur vier Dinge: die aktuellen Beschwerden mit ihren
+   Umständen, die dazu ausgesprochenen Verneinungen, die Belastbarkeit im
+   Alltag und die Gewohnheiten (Sport, Alkohol, Kaffee).
+   Was in den Diagnosen steht, wird in der Anamnese nicht wiederholt — nicht
+   der Bluthochdruck, nicht das Rauchen, nicht die Familienanamnese, nicht die
+   Operationen, nicht die Vorerkrankungen.
+   Eine verneinte Angabe ist keine Diagnose: "nie geraucht", "keinen Zucker",
+   "niemand herzkrank in der Familie" stehen in der Anamnese.
+
+2. DIE LÄNGE DER ANAMNESE. Höchstens vier Sätze, zusammen selten mehr als 300
+   Zeichen. Sie ist eine Aufstellung, keine Nacherzählung des Gesprächs.
+   - Alle verneinten Beschwerden kommen in EINEN Satz.
+   - Jeder Satz ist so kurz wie möglich; erklärende Nebensätze werden
+     gestrichen, nicht umformuliert. Mengen, Strecken und Zeiträume als
+     Ziffern: "3 km", "6 Tassen", "seit 4 Wochen".
+   - Ein Sachverhalt wird einmal genannt und nicht zusätzlich umschrieben.
+     "Beschwerdefrei" und die Aufzählung der verneinten Beschwerden sind
+     dasselbe; schreiben Sie nur die Aufzählung.
+   - Eine gut vertragene Medikation ist keine Angabe. Nur eine genannte
+     Unverträglichkeit oder Nebenwirkung wird aufgeschrieben.
+   - Kein Satz beginnt mit "Der Patient berichtet", "Auf Nachfrage" oder
+     "Anamnestisch" — schreiben Sie die Angabe selbst hin.
+   - Die Anamnese beginnt mit der Beschwerde, nicht mit dem Anlass der
+     Vorstellung. Kein Zuweisungssatz, kein überweisender Kollege, keine
+     Vorbefunde anderer Ärzte, keine Laborwerte — auch nicht die Bemerkung,
+     dass ein Wert nicht bekannt ist.
+
+3. DIE LISTENFORM DER DIAGNOSEN. Ein Punkt pro Diagnose, beginnend mit "- ".
+   Die wichtigste kardiologische Diagnose oben, die nicht kardialen Punkte
+   unten. Einzelheiten eingerückt darunter, Zusatzangaben in Klammern auf der
+   Diagnosenzeile: "Aneurysma der Aorta ascendens (4,7 cm, CT 8/25)".
+   Zeitangaben knapp: "10/25", "28.12.2023", "Anfang 2023". Abkürzungen wie er
+   sie verwendet: Z.n., V.a., DD.
+   In der positiven Familienanamnese steht nur das Ereignis oder der
+   Risikofaktor mit Verwandtschaftsgrad und Alter.
+   Nennt der Arzt keine kardiologische Diagnose, erfinden Sie keine — die Liste
+   enthält dann nur, was tatsächlich gesagt wurde, wie in Beispiel 2.
+
+4. DIE MEDIKATION. Präparat, Leerzeichen, Stärke, TABULATOR, Einnahmeschema.
+   Die Stärke steht OHNE Einheit: "ASS 100", niemals "ASS 100 mg". Gesprochenes
+   "ASS hundert" wird "ASS 100". Ein befristetes Präparat bekommt das Ende
+   angehängt: "1-0-0 bis 5/26". Nimmt der Patient nichts, besteht der Abschnitt
+   aus dem einen Wort:
+       Keine

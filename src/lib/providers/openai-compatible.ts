@@ -49,7 +49,16 @@ export async function chatCompletion(opts: ChatOptions): Promise<ChatResult> {
       ...(opts.signal ? { signal: opts.signal } : {}),
     });
   } catch (error) {
-    throw new DraftError(opts.providerId, 'Der Dienst ist nicht erreichbar.', error);
+    // A browser cannot tell these apart: an offline machine and an error
+    // response served without CORS headers both surface as the same TypeError.
+    // The gateway returns 402 "insufficient_funds" that way, so a dead account
+    // looks exactly like a dead network. Say both rather than guess wrong.
+    throw new DraftError(
+      opts.providerId,
+      'Der Dienst ist nicht erreichbar. Bitte prüfen Sie die Internetverbindung — ' +
+        'oder das Guthaben des Zugangs, falls die Verbindung steht.',
+      error,
+    );
   }
 
   if (!response.ok) {

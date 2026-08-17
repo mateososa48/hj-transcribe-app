@@ -93,7 +93,7 @@ color — color is never the only signal.
 |---|---|---|
 | Neutral / idle | `muted-foreground` | Waiting, not started |
 | In progress | `foreground` + Spinner | Transcribing, drafting |
-| Success / approved | `foreground` + check icon | Freigegeben, exported |
+| Success / copied | `foreground` + check icon | "Kopiert" on a section |
 | Warning / queued | `muted` surface | "wird nachgeholt" retry queue |
 | Error / destructive | `destructive` | Failed transcription, dead mic, delete |
 | **Recording** | dedicated, see §7 | The one place with real color presence |
@@ -189,44 +189,37 @@ Purposeful and short. Motion conveys **state change**, never decoration.
 This is the only place in the product with real visual presence, because it is
 the only place where being unmissable outranks being calm.
 
-Requirements, from SPEC:
-
 - **Big timer**, live elapsed time, readable across the room.
 - **Live input level**, driven by real microphone data.
 - **Loud error state** if input goes silent or the device dies. Silence during a
-  dictation must be impossible to miss.
-- Recording is a **whole-screen state**, not a small badge. He should be able to
-  tell from two metres away whether it is recording.
+  30-minute consultation is unrecoverable.
+- The start/stop button must sit **above the fold on a 700px viewport** — his PC
+  is old and its window is short. Measured, not assumed: currently 697px.
 
-Explicitly not: a pulsing microphone as decoration, chat bubbles, waveform eye
-candy that doesn't reflect real input.
+Explicitly not: a pulsing microphone as decoration, waveform eye candy that does
+not reflect real input.
 
-### How it is built (P1, ribbon since 2026-08-16)
+### How it is built
 
 `RecordingWave` renders a WebGL2 ribbon — one fragment shader, one full-screen
-triangle, no geometry or framebuffers. It reads the stream the recorder already
-opened: `MicLevelMonitor` reports three frequency bands **grouped by Hz**
-(60–320 / 320–1600 / 1600–6000), not by even thirds of the FFT array, which is
-the difference between a wave that moves on a voice and one that barely twitches.
-Low sets amplitude, high sets colour separation, level sets brightness. Per-frame
-audio goes through `recordingSession.subscribeAudio()` and never through React.
+triangle. It reads the stream the recorder already opened: `MicLevelMonitor`
+reports three frequency bands **grouped by Hz** (60-320 / 320-1600 / 1600-6000),
+not by even thirds of the FFT array, which is the difference between a wave that
+moves on a voice and one that barely twitches. Per-frame audio goes through
+`recordingSession.subscribeAudio()` and never through React.
 
 Three rules it must keep:
 
 1. **While recording it is never simulated.** Real input or a flat line. The
-   ambient idle animation exists so the panel is not empty when nothing is
-   running, and it is damped hard so waiting and hearing are told apart at a
-   glance — a resting grey thread versus a ribbon in full colour.
-2. **Reduced motion silences drift, not response.** The idle animation stops and
-   the loop stops drawing; a live signal still moves it. An indicator that cannot
-   move cannot do its job.
-3. **It degrades.** No WebGL2 falls back to `RecordingOrb`, the ring-and-core
-   indicator, which takes the same `level` prop.
+   idle ambience exists so the panel is not empty, and is damped hard so waiting
+   and hearing are told apart at a glance.
+2. **Reduced motion silences drift, not response.** The idle animation stops; a
+   live signal still moves it.
+3. **It degrades.** No WebGL2 falls back to `RecordingOrb`, same `level` prop.
 
 For tuning: in dev, `?wave=low,mid,high,level` pins the ribbon to a pose without
 a microphone. The branch is stripped from production builds.
 
----
 
 ## 8. German microcopy
 
@@ -272,3 +265,36 @@ Two constraints are enforced by the build, not by discipline:
   that file, so every exfiltration path is visible in one diff.
 - **No analytics, error reporting, or CDN** is possible under that policy —
   `default-src 'self'`, `script-src 'self'`.
+
+---
+
+## 8. The shape of the app (rebuilt 2026-08-17)
+
+The app does two things and owns neither the letter nor the patient record.
+
+    Start ──▶ Aufnahme ──▶ Ergebnis ──▶ (he pastes into Word)
+
+**Two features, one pipeline.** `Gespräch aufnehmen` records the consultation
+and produces Diagnosen, Anamnese and Medikation — the sections he currently
+writes on paper and then types. `Beurteilung diktieren` replaces the dictation
+machine for the summary. Everything from the microphone to the transcript is
+shared; only the prompt and the number of output sections differ.
+
+**Copy per section, not per letter.** The three blocks land in three different
+places in his Word template. One Copy button for all of them would hand the
+splitting work back to him.
+
+**Word wins.** There is no in-app letter, no approval state machine, no .docx
+export. He lives in Word; an editor built here would compete with it and lose,
+and his own note says the app can only ever produce about 75% of a report.
+
+**What was deleted, and why it is not coming back by accident**: the six-section
+document model, the Entwurf/Freigegeben state machine, the audit log, the
+glossary and template tables, the retention settings, the translation feature,
+the three-layout comparison, four ASR adapters and one LLM adapter. All of it is
+in git history. None of it survived the question "does this save him a minute?"
+
+**One setting is load-bearing**: persistent storage. His notes are explicit —
+"persistence very good and reliable, or he could lose the info from a whole
+patient" — so a segment is written to IndexedDB before any network call, and an
+interrupted session is offered back.

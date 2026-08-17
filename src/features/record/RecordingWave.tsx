@@ -122,7 +122,7 @@ export function RecordingWave({ state, level, className }: RecordingWaveProps) {
       role="img"
       aria-label={label}
       className={cn(
-        'h-56 w-full max-w-[38rem] select-none',
+        'h-44 w-full max-w-[36rem] select-none',
         // Dimmed rather than recoloured when something is wrong: the red alert
         // beneath carries the message, and tinting the ribbon would fight the
         // one thing it is meant to show.

@@ -1,21 +1,15 @@
 import type { BeurteilungExample } from '../../../prompts/examples/dev/index.ts';
-import type { TargetLanguage, TranslationCheck } from '../../../prompts/translate.ts';
+import type { GespraechSection } from '../../../prompts/gespraech.ts';
 
 /**
- * Drafting provider contract.
+ * Drafting provider contract — one method per feature.
  *
- * `verify()` from the SPEC interface is deliberately absent until P4 builds the
- * verification pass — declaring a method nobody implements just produces stubs
- * that throw. It lands here when there is something real behind it.
- */
-
-/**
- * `gateway` is the Vercel AI Gateway — a proxy, kept for model comparison only.
+ * `gateway` is the Vercel AI Gateway, a proxy kept for model comparison only.
  * See gateway-draft.ts for why it must not ship to HJ as-is.
  */
-export type DraftProviderId = 'anthropic' | 'mistral' | 'gateway';
+export type DraftProviderId = 'anthropic' | 'gateway';
 
-export interface DraftRequest {
+export interface BeurteilungRequest {
   transcript: string;
   vorbrief?: string;
   glossary: string[];
@@ -23,12 +17,17 @@ export interface DraftRequest {
   signal?: AbortSignal;
 }
 
-export interface DraftResponse {
-  /** The parsed Beurteilung section. */
-  text: string;
+export interface GespraechRequest {
+  transcript: string;
+  vorbrief?: string;
+  glossary: string[];
+  signal?: AbortSignal;
+}
+
+interface DraftMeta {
   /** False when the model did not honour the output contract. */
   wellFormed: boolean;
-  /** [FEHLT: …] markers found in the draft. */
+  /** [FEHLT: …] markers found, for the review checklist. */
   fehlt: string[];
   model: string;
   promptVersion: string;
@@ -41,30 +40,22 @@ export interface DraftResponse {
   };
 }
 
-export interface TranslateRequest {
+/** The dictation feature: one section. */
+export interface BeurteilungResponse extends DraftMeta {
   text: string;
-  target: TargetLanguage;
-  signal?: AbortSignal;
 }
 
-export interface TranslateResponse {
-  text: string;
-  wellFormed: boolean;
-  /**
-   * Structural verification of what must be copied verbatim. A translation
-   * that quietly dropped a dose reads perfectly — this is how we catch it.
-   */
-  check: TranslationCheck;
-  model: string;
-  latencyMs: number;
+/** The consultation feature: three sections from one pass. */
+export interface GespraechResponse extends DraftMeta {
+  sections: Record<GespraechSection, string>;
 }
 
 export interface DraftProvider {
   readonly id: DraftProviderId;
   readonly label: string;
   readonly euHosted: boolean;
-  draftBeurteilung(request: DraftRequest): Promise<DraftResponse>;
-  translate(request: TranslateRequest): Promise<TranslateResponse>;
+  draftBeurteilung(request: BeurteilungRequest): Promise<BeurteilungResponse>;
+  draftGespraech(request: GespraechRequest): Promise<GespraechResponse>;
 }
 
 /** `model` is only meaningful for multi-model providers (the gateway). */

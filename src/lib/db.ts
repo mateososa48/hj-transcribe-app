@@ -1,5 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
 
+import { GESPRAECH_SECTIONS, GESPRAECH_SECTION_LABELS } from '../../prompts/gespraech.ts';
+
 /**
  * All persistence for the app. IndexedDB only — there is no server, by design
  * (SPEC constraint 1). Everything here lives on HJ's machine.
@@ -8,21 +10,48 @@ import Dexie, { type EntityTable } from 'dexie';
  * AI endpoints, and only the fields those endpoints need.
  */
 
+/**
+ * The two things the app does.
+ *
+ * `gespraech` records the consultation and produces the sections he currently
+ * types off a paper note. `beurteilung` replaces the dictation machine for the
+ * summary. Everything downstream of the microphone is shared; only the prompt
+ * and the shape of the result differ.
+ */
+export type SessionKind = 'gespraech' | 'beurteilung';
+
+export const SESSION_KIND_LABELS: Record<SessionKind, string> = {
+  gespraech: 'Gespräch',
+  beurteilung: 'Beurteilung',
+};
+
+/** The sections each kind produces, in the order they appear in his letter. */
+export const KIND_SECTIONS: Record<SessionKind, readonly string[]> = {
+  gespraech: GESPRAECH_SECTIONS,
+  beurteilung: ['beurteilung'],
+};
+
+export const SECTION_LABELS: Record<string, string> = {
+  ...GESPRAECH_SECTION_LABELS,
+  beurteilung: 'Zusammenfassende Beurteilung',
+};
+
 export type SessionStatus = 'recording' | 'stopped' | 'abandoned';
 
 /** One recording sitting. Survives a crash so it can be offered for recovery. */
 export interface Session {
   id: string;
+  kind: SessionKind;
   startedAt: number;
   endedAt?: number;
   status: SessionStatus;
   /**
-   * A local scratch label so HJ can tell unfinished sessions apart on recovery
-   * ("Sitzung vom 14:32"). NOT the patient name — the patient identity lives on
-   * the document, entered deliberately, not captured incidentally from audio.
+   * A local scratch label so HJ can tell recordings apart in the list
+   * ("Gespräch, 14:32"). NOT the patient name — no patient identity is ever
+   * captured incidentally from audio.
    */
   label?: string;
-  documentId?: string;
+  resultId?: string;
 }
 
 export type TranscriptionStatus = 'pending' | 'running' | 'done' | 'failed';
@@ -30,7 +59,7 @@ export type TranscriptionStatus = 'pending' | 'running' | 'done' | 'failed';
 /**
  * One rotated recorder segment: a self-contained, independently playable file.
  * Written the moment it exists, before any network call — SPEC constraint 6
- * ("a recording must be unlosable").
+ * ("a recording must be unlosable"). A 30-minute consultation is a lot to lose.
  */
 export interface Segment {
   id: string;
@@ -49,7 +78,7 @@ export interface Segment {
    * the queue filters in memory, and the pending set is tiny.
    */
   nextAttemptAt?: number;
-  /** Set when the audio blob is dropped under the retention policy. */
+  /** Set when the audio blob is dropped after he deletes the recording. */
   audioDeletedAt?: number;
 }
 
@@ -62,143 +91,53 @@ export interface Transcript {
   createdAt: number;
 }
 
-/** The six sections of HJ's Word template, in his order. */
-export type SectionKey =
-  | 'kopf'
-  | 'diagnosen'
-  | 'anamnese'
-  | 'befunde'
-  | 'beurteilung'
-  | 'therapie';
-
-export const SECTION_ORDER: SectionKey[] = [
-  'kopf',
-  'diagnosen',
-  'anamnese',
-  'befunde',
-  'beurteilung',
-  'therapie',
-];
-
-export const SECTION_LABELS: Record<SectionKey, string> = {
-  kopf: 'Kopf',
-  diagnosen: 'Diagnosen',
-  anamnese: 'Anamnese / Vorgeschichte',
-  befunde: 'Befunde / Messwerte',
-  beurteilung: 'Zusammenfassende Beurteilung',
-  therapie: 'Aktuelle Therapie',
-};
-
-export type DocumentStatus = 'entwurf' | 'freigegeben' | 'exportiert';
-
-export interface LetterDocument {
+/**
+ * What came out of one recording: text he can read, correct and copy.
+ *
+ * `sections` is the working copy he edits; `original` is what the model
+ * actually returned. Keeping both costs nothing and is the only signal we will
+ * ever have for how his voice differs from the model's — it cannot be
+ * reconstructed after he has edited over it.
+ */
+export interface Result {
   id: string;
-  sessionId?: string;
+  sessionId: string;
+  kind: SessionKind;
   createdAt: number;
   updatedAt: number;
-  status: DocumentStatus;
-  sections: Record<SectionKey, string>;
-  /** Previous letter pasted in as context (SPEC feature C). */
-  vorbrief?: string;
-  /**
-   * The model's own draft, kept alongside the edited text. The
-   * (source, draft, approved) triple is the only training signal we will ever
-   * get for HJ's voice, and it cannot be reconstructed later — so capture it
-   * from day one even though nothing consumes it until the learning loop.
-   */
-  originalDraft?: Record<SectionKey, string>;
-  approvedAt?: number;
-  exportedAt?: number;
-  /**
-   * Translations of the Beurteilung, keyed by language code. Stored rather than
-   * regenerated so a translation he has already read cannot silently change
-   * underneath him on a re-render.
-   */
-  translations?: Record<string, TranslationRecord>;
-}
-
-export interface TranslationRecord {
-  text: string;
-  /** Structural check at generation time: what failed to copy across verbatim. */
-  missingNumbers: string[];
-  missingDosing: string[];
-  createdAt: number;
+  sections: Record<string, string>;
+  original: Record<string, string>;
   model: string;
+  promptVersion: string;
+  wellFormed: boolean;
+  /** Previous letter he pasted in, used for carrying diagnoses forward. */
+  vorbrief?: string;
 }
 
-export type GlossarySource = 'manual' | 'learned';
-
-export interface GlossaryEntry {
-  id: string;
-  term: string;
-  /** Optional canonical spelling, when HJ always writes it a particular way. */
-  preferred?: string;
-  category: 'medikament' | 'abkuerzung' | 'arzt' | 'sonstiges';
-  source: GlossarySource;
-  createdAt: number;
-}
-
-/** The doctor's real .docx template. Stored as a blob; never committed. */
-export interface TemplateRecord {
-  id: string;
-  name: string;
-  blob: Blob;
-  createdAt: number;
-  isDefault: boolean;
-}
-
-/** Key/value settings, including API keys. Single-user, single machine. */
+/** Key/value settings. Single-user, single machine. */
 export interface SettingRecord {
   key: string;
   value: unknown;
   updatedAt: number;
 }
 
-export type AuditEventType =
-  | 'session.started'
-  | 'session.ended'
-  | 'session.recovered'
-  | 'transcript.created'
-  | 'draft.generated'
-  | 'draft.edited'
-  | 'draft.approved'
-  | 'draft.translated'
-  | 'draft.exported'
-  | 'draft.copied'
-  | 'audio.deleted'
-  | 'data.cleared'
-  | 'settings.changed';
-
-/**
- * Append-only audit trail (SPEC constraint 4). Local only.
- * Must never contain patient content — event types and ids only, so the log
- * itself is not a second copy of the record.
- */
-export interface AuditEvent {
-  id: string;
-  at: number;
-  type: AuditEventType;
-  documentId?: string;
-  sessionId?: string;
-  /** Short, non-clinical detail: section key, provider id, count. */
-  detail?: string;
-}
-
 export class ArztbriefDB extends Dexie {
   sessions!: EntityTable<Session, 'id'>;
   segments!: EntityTable<Segment, 'id'>;
   transcripts!: EntityTable<Transcript, 'id'>;
-  documents!: EntityTable<LetterDocument, 'id'>;
-  glossary!: EntityTable<GlossaryEntry, 'id'>;
-  templates!: EntityTable<TemplateRecord, 'id'>;
+  results!: EntityTable<Result, 'id'>;
   settings!: EntityTable<SettingRecord, 'key'>;
-  audit!: EntityTable<AuditEvent, 'id'>;
 
   constructor() {
     super('arztbrief');
+
+    // v1 modelled a whole six-section letter with an approval state machine.
+    // The app no longer owns the letter — he does, in Word — so v2 drops the
+    // document, glossary, template and audit stores and replaces them with a
+    // flat result per recording. Recordings and their audio carry across
+    // untouched; that is the data worth keeping.
     this.version(1).stores({
       sessions: 'id, startedAt, status',
-      // [sessionId+index] keeps segment ordering cheap during assembly.
       segments: 'id, sessionId, transcriptionStatus, [sessionId+index]',
       transcripts: 'id, sessionId, segmentId',
       documents: 'id, sessionId, status, updatedAt',
@@ -207,26 +146,34 @@ export class ArztbriefDB extends Dexie {
       settings: 'key',
       audit: 'id, at, type, documentId',
     });
+
+    this.version(2)
+      .stores({
+        sessions: 'id, kind, startedAt, status',
+        segments: 'id, sessionId, transcriptionStatus, [sessionId+index]',
+        transcripts: 'id, sessionId, segmentId',
+        results: 'id, sessionId, kind, updatedAt',
+        settings: 'key',
+        documents: null,
+        glossary: null,
+        templates: null,
+        audit: null,
+      })
+      .upgrade(async (tx) => {
+        // Sessions predate `kind`; everything recorded before this release was
+        // a dictated summary.
+        await tx
+          .table('sessions')
+          .toCollection()
+          .modify((s: Partial<Session>) => {
+            s.kind ??= 'beurteilung';
+          });
+      });
   }
 }
 
 export const db = new ArztbriefDB();
 
-function newId(): string {
+export function newId(): string {
   return crypto.randomUUID();
 }
-
-/** Append an audit entry. Never throws into the caller's path. */
-export async function logAudit(
-  type: AuditEventType,
-  fields: Omit<Partial<AuditEvent>, 'id' | 'at' | 'type'> = {},
-): Promise<void> {
-  try {
-    await db.audit.add({ id: newId(), at: Date.now(), type, ...fields });
-  } catch (err) {
-    // An audit write must not break recording or drafting.
-    console.error('audit write failed', err);
-  }
-}
-
-export { newId };

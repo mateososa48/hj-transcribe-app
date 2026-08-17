@@ -16,14 +16,10 @@
 
 export const ASR_ORIGINS = {
   'assemblyai-eu': 'https://api.eu.assemblyai.com',
-  elevenlabs: 'https://api.elevenlabs.io',
-  voxtral: 'https://api.mistral.ai',
-  openai: 'https://api.openai.com',
 } as const;
 
 export const LLM_ORIGINS = {
   anthropic: 'https://api.anthropic.com',
-  mistral: 'https://api.mistral.ai',
   /**
    * Vercel AI Gateway. A PROXY — allowed here only so models can be compared
    * during development. Remove this entry before HJ uses the app with real

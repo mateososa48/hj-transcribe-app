@@ -8,12 +8,12 @@
  * path that ships, or a green eval proves nothing about the app.
  */
 
-export type TranscriptionProviderId =
-  | 'corti'
-  | 'assemblyai-eu'
-  | 'elevenlabs'
-  | 'voxtral'
-  | 'openai';
+/**
+ * One entry, deliberately. The others were built, compared on German
+ * cardiology audio, and removed once AssemblyAI won — see providers/index.ts.
+ * The union stays a union so adding one back is a one-line change.
+ */
+export type TranscriptionProviderId = 'assemblyai-eu';
 
 export interface TranscriptWord {
   text: string;

@@ -1,11 +1,11 @@
-import { db, logAudit, newId, type Segment } from '@/lib/db.ts';
+import { db, newId, type Segment } from '@/lib/db.ts';
 import {
   ProviderError,
   TRANSCRIPTION_PROVIDERS,
   type TranscriptionProvider,
-  type TranscriptionProviderId,
 } from '@/lib/providers/index.ts';
 import { loadApiKeys, loadSettings } from '@/lib/settings.ts';
+import { CARDIOLOGY_KEYTERMS } from './keyterms.ts';
 import { repairTranscript } from './repair.ts';
 
 /**
@@ -101,7 +101,7 @@ export class TranscriptionQueue {
 
   private async resolveProvider(): Promise<TranscriptionProvider | null> {
     const [settings, keys] = await Promise.all([loadSettings(), loadApiKeys()]);
-    const id = settings.asrProviderId as Exclude<TranscriptionProviderId, 'corti'>;
+    const id = settings.asrProviderId;
     const factory = TRANSCRIPTION_PROVIDERS[id];
     const key = keys[id];
     if (!factory || !key) return null;
@@ -161,8 +161,10 @@ export class TranscriptionQueue {
     this.set({ running: this.state.running + 1 });
 
     try {
-      const keyterms = (await db.glossary.toArray()).map((g) => g.preferred ?? g.term);
-      const chunk = await provider.transcribeSegment(segment.blob, { language: 'de', keyterms });
+      const chunk = await provider.transcribeSegment(segment.blob, {
+        language: 'de',
+        keyterms: CARDIOLOGY_KEYTERMS,
+      });
 
       await db.transcripts.add({
         id: newId(),
@@ -182,12 +184,6 @@ export class TranscriptionQueue {
         delete s.lastError;
         delete s.nextAttemptAt;
       });
-      await logAudit('transcript.created', {
-        sessionId: segment.sessionId,
-        detail: provider.id,
-      });
-
-      await this.applyAudioRetention(segment.id);
       this.set({ lastError: null });
     } catch (error) {
       const attempts = segment.attempts + 1;
@@ -208,16 +204,6 @@ export class TranscriptionQueue {
     }
   }
 
-  /** Drop the audio blob if the retention setting says to. */
-  private async applyAudioRetention(segmentId: string): Promise<void> {
-    const { audioRetention } = await loadSettings();
-    if (audioRetention !== 'afterTranscription') return;
-    await db.segments.where('id').equals(segmentId).modify((s) => {
-      delete s.blob;
-      s.audioDeletedAt = Date.now();
-    });
-    await logAudit('audio.deleted', { detail: 'nach Übertragung' });
-  }
 }
 
 /** Assemble a session's transcripts into one text, in segment order. */

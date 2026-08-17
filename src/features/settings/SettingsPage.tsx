@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, HardDrive, KeyRound, Languages, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, HardDrive, KeyRound, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -15,228 +15,60 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-  ASR_PROVIDER_META,
-  LLM_PROVIDER_META,
-  type TranscriptionProviderId,
-} from '@/lib/providers';
-import { clearAllData, type AudioRetention, type LlmProviderId } from '@/lib/settings';
+import { ASR_PROVIDER_META, LLM_PROVIDER_META } from '@/lib/providers';
+import { clearAllData } from '@/lib/settings';
 import { formatBytes } from '@/lib/storage';
 import { useSettingsStore } from '@/store/settings-store';
 
-type AsrId = Exclude<TranscriptionProviderId, 'corti'>;
-
-const ASR_ITEMS: Record<string, string> = Object.fromEntries(
-  Object.entries(ASR_PROVIDER_META).map(([id, m]) => [id, m.label]),
-);
-const LLM_ITEMS: Record<string, string> = Object.fromEntries(
-  Object.entries(LLM_PROVIDER_META).map(([id, m]) => [id, m.label]),
-);
-
-const RETENTION_ITEMS: Record<AudioRetention, string> = {
-  keep: 'Aufbewahren, bis ich sie lösche',
-  afterApproval: 'Nach der Freigabe löschen',
-  afterTranscription: 'Direkt nach der Übertragung löschen',
-};
-
-function Section({
-  icon: Icon,
-  title,
-  description,
-  children,
-}: {
-  icon: typeof HardDrive;
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="space-y-5">
-      <div className="space-y-1.5">
-        <h2 className="flex items-center gap-2.5 text-lg font-semibold">
-          <Icon className="size-5 text-muted-foreground" aria-hidden />
-          {title}
-        </h2>
-        <p className="max-w-[68ch] text-sm text-muted-foreground">{description}</p>
-      </div>
-      {children}
-    </section>
-  );
-}
-
 /**
- * Access status, replacing the old "enter your own key" field.
+ * Almost nothing, on purpose.
  *
- * The keys now ship with the app, so there is nothing for HJ to type — but
- * "where does my access come from" still has to be answerable on screen, and a
- * missing key at build time has to be visible rather than showing up later as a
- * failed transcription.
+ * The provider pickers, retention policies and key fields are gone: he has one
+ * machine, one microphone and one key pair, and every setting was a way to
+ * break the app by accident. What is left is what he might act on — whether the
+ * browser has promised to keep his recordings — plus an honest statement of
+ * where his audio and text are sent.
  */
-function KeyStatus({ present, label }: { present: boolean; label: string }) {
-  return (
-    <div className="flex items-start gap-3 rounded-lg border border-border px-4 py-3">
-      <KeyRound className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
-      <div className="space-y-1">
-        <div className="flex items-center gap-2.5">
-          <span className="text-sm font-medium">{label}</span>
-          {present ? (
-            <Badge variant="secondary">Hinterlegt</Badge>
-          ) : (
-            <Badge variant="outline" className="text-destructive">
-              Fehlt
-            </Badge>
-          )}
-        </div>
-        <p className="max-w-[68ch] text-sm text-muted-foreground">
-          {present
-            ? 'Der Zugang ist in der Anwendung fest hinterlegt. Sie müssen nichts eingeben.'
-            : 'Für diesen Anbieter ist kein Zugang hinterlegt. Bitte geben Sie Bescheid — das lässt sich nur beim Erstellen der Anwendung ändern.'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/** EU / non-EU is a decision HJ has to be able to see, not one buried in a doc. */
-function RegionBadge({ euHosted }: { euHosted: boolean }) {
-  return euHosted ? (
-    <Badge variant="secondary">EU-Server</Badge>
-  ) : (
-    <Badge variant="outline">Server außerhalb der EU</Badge>
-  );
-}
-
-export function SettingsPage() {
+export function SettingsPage({ onBack }: { onBack: () => void }) {
   const { settings, apiKeys, storage } = useSettingsStore();
-  const update = useSettingsStore((s) => s.update);
   const enablePersistence = useSettingsStore((s) => s.enablePersistence);
   const hydrate = useSettingsStore((s) => s.hydrate);
-
   const [confirmText, setConfirmText] = useState('');
 
-  const asrMeta = ASR_PROVIDER_META[settings.asrProviderId as AsrId];
-  const llmMeta = LLM_PROVIDER_META[settings.llmProviderId];
-
-  async function handlePersist() {
-    const granted = await enablePersistence();
-    if (granted) toast.success('Dauerhafte Speicherung ist aktiv.');
-    else toast.error('Der Browser hat die dauerhafte Speicherung nicht gewährt.');
-  }
-
-  async function handleClearAll() {
-    await clearAllData();
-    await hydrate();
-    setConfirmText('');
-    toast.success('Alle Daten wurden gelöscht.');
-  }
+  const asr = ASR_PROVIDER_META[settings.asrProviderId];
+  const llm = LLM_PROVIDER_META[settings.llmProviderId];
+  const keysPresent = Boolean(apiKeys[settings.asrProviderId]) && Boolean(apiKeys[settings.llmProviderId]);
 
   return (
     <div className="space-y-12 pb-16">
+      <Button variant="ghost" size="lg" onClick={onBack}>
+        <ArrowLeft aria-hidden />
+        Zurück
+      </Button>
+
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Einstellungen</h1>
         <p className="max-w-[68ch] text-muted-foreground">
-          Alle Angaben bleiben auf diesem Computer. Es gibt keinen Server und kein Konto.
+          Alle Aufnahmen und Texte bleiben auf diesem Computer. Es gibt keinen Server und kein
+          Konto.
         </p>
       </div>
 
-      <Section
-        icon={Languages}
-        title="Spracherkennung"
-        description="Wandelt Ihre Aufnahme in Text um. Der Zugang ist bereits eingerichtet."
-      >
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="asr-provider">Anbieter</FieldLabel>
-            <div className="flex items-center gap-3">
-              <Select
-                items={ASR_ITEMS}
-                value={settings.asrProviderId}
-                onValueChange={(value) => void update({ asrProviderId: value as AsrId })}
-              >
-                <SelectTrigger id="asr-provider" className="h-10 w-[22rem]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(ASR_PROVIDER_META).map(([id, meta]) => (
-                    <SelectItem key={id} value={id}>
-                      {meta.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <RegionBadge euHosted={asrMeta?.euHosted ?? false} />
-            </div>
-            {asrMeta && !asrMeta.euHosted ? (
-              <FieldDescription>
-                Bei diesem Anbieter verlassen die Audiodaten die EU. Für Patientendaten ist ein
-                EU-Anbieter vorzuziehen.
-              </FieldDescription>
-            ) : null}
-          </Field>
+      <section className="space-y-5">
+        <div className="space-y-1.5">
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold">
+            <HardDrive className="size-5 text-muted-foreground" aria-hidden />
+            Speicher
+          </h2>
+          <p className="max-w-[68ch] text-sm text-muted-foreground">
+            Aufnahmen und Texte liegen im Speicher dieses Browsers. Mit der dauerhaften Speicherung
+            darf der Browser sie nicht selbstständig löschen.
+          </p>
+        </div>
 
-          <KeyStatus
-            label="Zugang Spracherkennung"
-            present={Boolean(apiKeys[settings.asrProviderId])}
-          />
-        </FieldGroup>
-      </Section>
-
-      <Separator />
-
-      <Section
-        icon={Sparkles}
-        title="Textentwurf"
-        description="Formuliert aus dem Transkript einen Entwurf in Ihrem Briefformat. Der Entwurf wird Ihnen immer zuerst zur Prüfung vorgelegt."
-      >
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="llm-provider">Anbieter</FieldLabel>
-            <div className="flex items-center gap-3">
-              <Select
-                items={LLM_ITEMS}
-                value={settings.llmProviderId}
-                onValueChange={(value) => void update({ llmProviderId: value as LlmProviderId })}
-              >
-                <SelectTrigger id="llm-provider" className="h-10 w-[22rem]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(LLM_PROVIDER_META).map(([id, meta]) => (
-                    <SelectItem key={id} value={id}>
-                      {meta.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <RegionBadge euHosted={llmMeta.euHosted} />
-            </div>
-          </Field>
-
-          <KeyStatus
-            label="Zugang Textentwurf"
-            present={Boolean(apiKeys[settings.llmProviderId])}
-          />
-        </FieldGroup>
-      </Section>
-
-      <Separator />
-
-      <Section
-        icon={HardDrive}
-        title="Speicher"
-        description="Aufnahmen und Entwürfe liegen im Speicher dieses Browsers. Mit der dauerhaften Speicherung darf der Browser sie nicht selbstständig löschen."
-      >
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+        <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">Dauerhafte Speicherung</div>
             <div className="flex items-center gap-3">
@@ -248,7 +80,15 @@ export function SettingsPage() {
               ) : (
                 <>
                   <Badge variant="outline">Nicht aktiv</Badge>
-                  <Button size="lg" variant="outline" onClick={() => void handlePersist()}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={async () => {
+                      const granted = await enablePersistence();
+                      if (granted) toast.success('Dauerhafte Speicherung ist aktiv.');
+                      else toast.error('Der Browser hat die dauerhafte Speicherung nicht gewährt.');
+                    }}
+                  >
                     Jetzt aktivieren
                   </Button>
                 </>
@@ -266,70 +106,71 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
-      </Section>
+      </section>
 
       <Separator />
 
-      <Section
-        icon={ShieldCheck}
-        title="Aufbewahrung"
-        description="Wie lange Tonaufnahmen und Entwürfe auf diesem Computer bleiben."
-      >
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="audio-retention">Tonaufnahmen</FieldLabel>
-            <Select
-              items={RETENTION_ITEMS}
-              value={settings.audioRetention}
-              onValueChange={(value) => void update({ audioRetention: value as AudioRetention })}
-            >
-              <SelectTrigger id="audio-retention" className="h-10 w-[26rem]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(RETENTION_ITEMS).map(([id, label]) => (
-                  <SelectItem key={id} value={id}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FieldDescription>
-              Solange die Aufnahme vorhanden ist, können Sie den erkannten Text mit dem Gesagten
-              vergleichen.
-            </FieldDescription>
-          </Field>
+      <section className="space-y-5">
+        <div className="space-y-1.5">
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold">
+            <KeyRound className="size-5 text-muted-foreground" aria-hidden />
+            Verbindungen
+          </h2>
+          <p className="max-w-[68ch] text-sm text-muted-foreground">
+            Wohin die Aufnahme geht, um in Text umgewandelt zu werden, und wohin der Text geht, um
+            in Ihre Briefform gebracht zu werden. Der Zugang ist fest hinterlegt — Sie müssen nichts
+            eingeben.
+          </p>
+        </div>
 
-          <Field>
-            <FieldLabel htmlFor="draft-retention">Entwürfe löschen nach</FieldLabel>
-            <div className="flex items-center gap-3">
-              <Input
-                id="draft-retention"
-                type="number"
-                min={1}
-                max={365}
-                value={settings.draftRetentionDays}
-                onChange={(e) => {
-                  const days = Number(e.target.value);
-                  if (Number.isFinite(days) && days >= 1 && days <= 365) {
-                    void update({ draftRetentionDays: days });
-                  }
-                }}
-                className="h-10 w-28 tabular-nums"
-              />
-              <span className="text-muted-foreground">Tagen nach dem Export</span>
-            </div>
-          </Field>
-        </FieldGroup>
-      </Section>
+        <dl className="grid gap-3 sm:max-w-[46rem] sm:grid-cols-[10rem_1fr]">
+          <dt className="text-sm text-muted-foreground">Spracherkennung</dt>
+          <dd className="flex flex-wrap items-center gap-2.5 text-base">
+            {asr.label}
+            {asr.euHosted ? (
+              <Badge variant="secondary">EU-Server</Badge>
+            ) : (
+              <Badge variant="outline">Server außerhalb der EU</Badge>
+            )}
+          </dd>
+
+          <dt className="text-sm text-muted-foreground">Texterstellung</dt>
+          <dd className="flex flex-wrap items-center gap-2.5 text-base">
+            {llm.label}
+            {llm.euHosted ? (
+              <Badge variant="secondary">EU-Server</Badge>
+            ) : (
+              <Badge variant="outline">Server außerhalb der EU</Badge>
+            )}
+          </dd>
+
+          <dt className="text-sm text-muted-foreground">Zugang</dt>
+          <dd className="text-base">
+            {keysPresent ? (
+              <Badge variant="secondary">Hinterlegt</Badge>
+            ) : (
+              <Badge variant="outline" className="text-destructive">
+                Fehlt — bitte Bescheid geben
+              </Badge>
+            )}
+          </dd>
+        </dl>
+      </section>
 
       <Separator />
 
-      <Section
-        icon={AlertTriangle}
-        title="Alle Daten löschen"
-        description="Entfernt alle Aufnahmen, Transkripte, Entwürfe und Begriffe unwiderruflich von diesem Computer."
-      >
+      <section className="space-y-5">
+        <div className="space-y-1.5">
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold">
+            <AlertTriangle className="size-5 text-muted-foreground" aria-hidden />
+            Alle Daten löschen
+          </h2>
+          <p className="max-w-[68ch] text-sm text-muted-foreground">
+            Entfernt alle Aufnahmen, erkannten Texte und erstellten Brieftexte unwiderruflich von
+            diesem Computer.
+          </p>
+        </div>
+
         <AlertDialog>
           <AlertDialogTrigger
             render={
@@ -342,8 +183,8 @@ export function SettingsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Wirklich alle Daten löschen?</AlertDialogTitle>
               <AlertDialogDescription>
-                Alle Aufnahmen, Transkripte und Entwürfe werden entfernt. Das
-                lässt sich nicht rückgängig machen. Tippen Sie zur Bestätigung{' '}
+                Alle Aufnahmen und alle erstellten Texte werden entfernt. Das lässt sich nicht
+                rückgängig machen. Tippen Sie zur Bestätigung{' '}
                 <span className="font-semibold text-foreground">LÖSCHEN</span> ein.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -358,19 +199,23 @@ export function SettingsPage() {
 
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setConfirmText('')}>Abbrechen</AlertDialogCancel>
-              {/* Destructive variant: the confirm for an irreversible wipe
-                  should not look like an ordinary primary action. */}
               <AlertDialogAction
                 variant="destructive"
                 disabled={confirmText !== 'LÖSCHEN'}
-                onClick={() => void handleClearAll()}
+                onClick={async () => {
+                  await clearAllData();
+                  await hydrate();
+                  setConfirmText('');
+                  toast.success('Alle Daten wurden gelöscht.');
+                  onBack();
+                }}
               >
                 Endgültig löschen
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </Section>
+      </section>
     </div>
   );
 }

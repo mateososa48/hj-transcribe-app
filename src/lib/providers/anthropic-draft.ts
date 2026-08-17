@@ -8,25 +8,25 @@ import {
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
 import {
-  buildTranslationSystemPrompt,
-  buildTranslationUserPrompt,
-  checkTranslation,
-  parseTranslation,
-} from '../../../prompts/translate.ts';
+  GESPRAECH_PROMPT_VERSION,
+  buildGespraechSystemPrompt,
+  buildGespraechUserPrompt,
+  parseGespraech,
+} from '../../../prompts/gespraech.ts';
 import {
   DraftError,
+  type BeurteilungRequest,
+  type BeurteilungResponse,
   type DraftProvider,
-  type DraftRequest,
-  type DraftResponse,
-  type TranslateRequest,
-  type TranslateResponse,
+  type GespraechRequest,
+  type GespraechResponse,
 } from './draft-types.ts';
 
 /**
- * Anthropic drafting adapter.
+ * Anthropic drafting adapter — the intended production path.
  *
  * Browser-direct via the official SDK's `dangerouslyAllowBrowser` mode. The key
- * belongs to HJ and lives on his machine — the usual reason that flag is
+ * belongs to HJ and lives on his machine; the usual reason that flag is
  * dangerous (shipping YOUR key to every visitor) does not apply to a
  * single-user local-first app. Verified 2026-08-15: the API returns CORS
  * headers only when the preflight requests
@@ -38,122 +38,118 @@ import {
  * see docs/providers.md for the open decision.
  */
 
-const MODEL = 'claude-sonnet-5';
+const MODEL = 'claude-opus-5';
 
 /**
- * Generous because thinking counts against it. Sonnet 5 runs adaptive thinking
- * by DEFAULT — a tight budget here truncates the answer mid-sentence rather
- * than producing a shorter one.
+ * Generous because thinking counts against it. Opus 5 runs adaptive thinking by
+ * DEFAULT — a tight budget here truncates the answer mid-sentence rather than
+ * producing a shorter one.
  */
 const MAX_TOKENS = 8_000;
 
 export function createAnthropicDraft(apiKey: string): DraftProvider {
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
 
+  /** Both features share the call shape; only the prompts differ. */
+  async function call(system: string, user: string, signal?: AbortSignal) {
+    const message = await client.messages.create(
+      {
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        // Cache the rules block: byte-identical on every request, and the large
+        // half of the prompt. The patient's transcript goes in `messages`,
+        // after the breakpoint, so it never invalidates the cache.
+        system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: user }],
+      },
+      signal ? { signal } : {},
+    );
+
+    if (message.stop_reason === 'refusal') {
+      throw new DraftError(
+        'anthropic',
+        'Die Anfrage wurde vom Modell abgelehnt. Bitte prüfen Sie die Aufnahme.',
+      );
+    }
+
+    return {
+      raw: message.content
+        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+        .map((block) => block.text)
+        .join('\n'),
+      model: message.model,
+      usage: {
+        inputTokens: message.usage.input_tokens,
+        outputTokens: message.usage.output_tokens,
+        ...(message.usage.cache_read_input_tokens !== null
+          ? { cacheReadTokens: message.usage.cache_read_input_tokens }
+          : {}),
+        ...(message.usage.cache_creation_input_tokens !== null
+          ? { cacheWriteTokens: message.usage.cache_creation_input_tokens }
+          : {}),
+      },
+    };
+  }
+
+  function fail(error: unknown): never {
+    if (error instanceof DraftError) throw error;
+    throw new DraftError(
+      'anthropic',
+      error instanceof Anthropic.APIError
+        ? `Anthropic: ${error.status ?? ''} ${error.message}`.trim()
+        : 'Der Entwurf konnte nicht erstellt werden.',
+      error,
+    );
+  }
+
   return {
     id: 'anthropic',
     label: 'Anthropic Claude',
     euHosted: false,
 
-    async draftBeurteilung(request: DraftRequest): Promise<DraftResponse> {
+    async draftBeurteilung(request: BeurteilungRequest): Promise<BeurteilungResponse> {
       const started = Date.now();
-      const system = buildStableSystemPrompt(request.examples, request.glossary);
-
       try {
-        const message = await client.messages.create(
-          {
-            model: MODEL,
-            max_tokens: MAX_TOKENS,
-            // Cache the rules + few-shot block: it is byte-identical on every
-            // letter, and it is the large half of the prompt. The patient's
-            // transcript goes in `messages`, after the breakpoint, so it never
-            // invalidates the cache.
-            system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-            messages: [{ role: 'user', content: buildUserPrompt(request) }],
-          },
-          request.signal ? { signal: request.signal } : {},
+        const result = await call(
+          buildStableSystemPrompt(request.examples, request.glossary),
+          buildUserPrompt(request),
+          request.signal,
         );
-
-        const raw = message.content
-          .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-          .map((block) => block.text)
-          .join('\n');
-
-        if (message.stop_reason === 'refusal') {
-          throw new DraftError(
-            'anthropic',
-            'Die Anfrage wurde vom Modell abgelehnt. Bitte prüfen Sie das Diktat.',
-          );
-        }
-
-        const { text, wellFormed } = parseBeurteilung(raw);
-
+        const { text, wellFormed } = parseBeurteilung(result.raw);
         return {
           text,
           wellFormed,
           fehlt: extractFehltMarkers(text),
-          model: message.model,
+          model: result.model,
           promptVersion: BEURTEILUNG_PROMPT_VERSION,
           latencyMs: Date.now() - started,
-          usage: {
-            inputTokens: message.usage.input_tokens,
-            outputTokens: message.usage.output_tokens,
-            ...(message.usage.cache_read_input_tokens !== null
-              ? { cacheReadTokens: message.usage.cache_read_input_tokens }
-              : {}),
-            ...(message.usage.cache_creation_input_tokens !== null
-              ? { cacheWriteTokens: message.usage.cache_creation_input_tokens }
-              : {}),
-          },
+          usage: result.usage,
         };
       } catch (error) {
-        if (error instanceof DraftError) throw error;
-        throw new DraftError(
-          'anthropic',
-          error instanceof Anthropic.APIError
-            ? `Anthropic: ${error.status ?? ''} ${error.message}`.trim()
-            : 'Der Entwurf konnte nicht erstellt werden.',
-          error,
-        );
+        fail(error);
       }
     },
 
-    async translate(request: TranslateRequest): Promise<TranslateResponse> {
+    async draftGespraech(request: GespraechRequest): Promise<GespraechResponse> {
       const started = Date.now();
       try {
-        const message = await client.messages.create(
-          {
-            model: MODEL,
-            max_tokens: MAX_TOKENS,
-            system: buildTranslationSystemPrompt(request.target),
-            messages: [
-              { role: 'user', content: buildTranslationUserPrompt(request.text, request.target) },
-            ],
-          },
-          request.signal ? { signal: request.signal } : {},
+        const result = await call(
+          buildGespraechSystemPrompt(request.glossary),
+          buildGespraechUserPrompt(request),
+          request.signal,
         );
-
-        const raw = message.content
-          .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-          .map((block) => block.text)
-          .join('\n');
-
-        const { text, wellFormed } = parseTranslation(raw);
+        const { sections, wellFormed } = parseGespraech(result.raw);
         return {
-          text,
+          sections,
           wellFormed,
-          check: checkTranslation(request.text, text),
-          model: message.model,
+          fehlt: extractFehltMarkers(Object.values(sections).join('\n')),
+          model: result.model,
+          promptVersion: GESPRAECH_PROMPT_VERSION,
           latencyMs: Date.now() - started,
+          usage: result.usage,
         };
       } catch (error) {
-        throw new DraftError(
-          'anthropic',
-          error instanceof Anthropic.APIError
-            ? `Anthropic: ${error.status ?? ''} ${error.message}`.trim()
-            : 'Die Übersetzung konnte nicht erstellt werden.',
-          error,
-        );
+        fail(error);
       }
     },
   };

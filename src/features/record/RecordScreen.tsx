@@ -1,23 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, KeyRound, RotateCcw, Settings2, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
-import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { discardSession, markSessionRecovered } from '@/lib/session/recording-session.ts';
-import { assembleTranscript } from '@/lib/transcription/queue.ts';
-import { useSettingsStore } from '@/store/settings-store';
+import type { SessionKind } from '@/lib/db';
 import type { OrbState } from './RecordingOrb';
 import { RecordingWave } from './RecordingWave';
 import {
@@ -26,154 +14,97 @@ import {
   useElapsed,
   useQueueState,
   useRecordingState,
-  useRecoverableSessions,
 } from './useRecording';
 
-function formatClock(ts: number): string {
-  return new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-}
+/**
+ * One screen for both features.
+ *
+ * The only thing that differs is the sentence at the top telling him what to
+ * do; everything below — timer, ribbon, one big button — is identical, so the
+ * second feature costs him nothing to learn once he knows the first.
+ */
+
+const COPY: Record<SessionKind, { heading: string; idle: string; running: string }> = {
+  gespraech: {
+    heading: 'Gespräch aufnehmen',
+    idle: 'Starten Sie die Aufnahme, bevor der Patient hereinkommt. Sie können ganz normal sprechen.',
+    running: 'Das Gespräch wird aufgenommen.',
+  },
+  beurteilung: {
+    heading: 'Beurteilung diktieren',
+    idle: 'Sprechen Sie frei, so wie Sie es einem Kollegen erklären würden. Satzzeichen müssen Sie nicht mitsprechen.',
+    running: 'Ihr Diktat wird aufgenommen.',
+  },
+};
 
 export function RecordScreen({
-  onOpenSettings,
-  onSessionReady,
+  kind,
+  onBack,
+  onFinished,
 }: {
-  onOpenSettings: () => void;
-  onSessionReady: (sessionId: string) => void;
+  kind: SessionKind;
+  onBack: () => void;
+  onFinished: (sessionId: string) => void;
 }) {
-  const settings = useSettingsStore((s) => s.settings);
-  const apiKeys = useSettingsStore((s) => s.apiKeys);
   const recording = useRecordingState();
   const queue = useQueueState();
-  const { sessions: recoverable, refresh } = useRecoverableSessions();
-  const [transcript, setTranscript] = useState('');
-
+  const [starting, setStarting] = useState(false);
   const elapsed = useElapsed(recording.startedAt, recording.status === 'recording');
-  const asrKeyMissing = !apiKeys[settings.asrProviderId];
+  const copy = COPY[kind];
 
   // The queue runs whenever the app is open, not only while recording — that is
-  // what lets a failed segment from an earlier session catch up by itself.
+  // what lets a segment that failed earlier catch up by itself.
   useEffect(() => {
     transcriptionQueue.start();
     return () => transcriptionQueue.stop();
   }, []);
 
-  // Once everything has been transcribed, show the assembled text.
-  useEffect(() => {
-    if (recording.status !== 'stopped' || !recording.sessionId) return;
-    if (queue.pending > 0 || queue.running > 0) return;
-    void assembleTranscript(recording.sessionId).then(setTranscript);
-  }, [recording.status, recording.sessionId, queue.pending, queue.running]);
-
-  if (asrKeyMissing) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <KeyRound aria-hidden />
-          </EmptyMedia>
-          <EmptyTitle className="text-lg">Kein Zugang zur Spracherkennung</EmptyTitle>
-          <EmptyDescription>
-            Für den gewählten Anbieter ist kein Zugang hinterlegt. Eine Aufnahme wird zwar
-            gespeichert, kann aber nicht in Text umgewandelt werden. In den Einstellungen sehen Sie,
-            welcher Zugang fehlt.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button size="lg" onClick={onOpenSettings}>
-            <Settings2 aria-hidden />
-            Zu den Einstellungen
-          </Button>
-        </EmptyContent>
-      </Empty>
-    );
-  }
-
-  if (recoverable.length > 0 && recording.status === 'idle') {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Unterbrochene Aufnahme gefunden</h1>
-          <p className="max-w-[68ch] text-muted-foreground">
-            Eine frühere Aufnahme wurde nicht ordentlich beendet. Der Ton ist vollständig
-            gespeichert und kann weiterverwendet werden.
-          </p>
-        </div>
-        {recoverable.map((session) => (
-          <Item key={session.id} variant="outline">
-            <ItemContent>
-              <ItemTitle>Sitzung vom {formatClock(session.startedAt)} Uhr</ItemTitle>
-              <ItemDescription>
-                Begonnen am{' '}
-                {new Date(session.startedAt).toLocaleDateString('de-DE', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                })}
-              </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={async () => {
-                  await discardSession(session.id);
-                  await refresh();
-                  toast.success('Sitzung verworfen.');
-                }}
-              >
-                <Trash2 aria-hidden />
-                Verwerfen
-              </Button>
-              <Button
-                size="lg"
-                onClick={async () => {
-                  await markSessionRecovered(session.id);
-                  await refresh();
-                  toast.success('Sitzung übernommen. Die Übertragung wird fortgesetzt.');
-                }}
-              >
-                Fortsetzen
-              </Button>
-            </ItemActions>
-          </Item>
-        ))}
-      </div>
-    );
-  }
+  const isRecording = recording.status === 'recording';
+  const isBusy = recording.status === 'requesting-mic' || recording.status === 'stopping' || starting;
 
   const orbState: OrbState =
     recording.status === 'error'
       ? 'error'
       : recording.inputWarning
         ? 'warning'
-        : recording.status === 'recording'
+        : isRecording
           ? 'recording'
           : 'idle';
 
-  const isRecording = recording.status === 'recording';
-  const isBusy = recording.status === 'requesting-mic' || recording.status === 'stopping';
+  async function handleToggle() {
+    if (isRecording) {
+      const sessionId = await recordingSession.stop();
+      if (sessionId) onFinished(sessionId);
+      return;
+    }
+    setStarting(true);
+    try {
+      await recordingSession.start(kind);
+    } finally {
+      setStarting(false);
+    }
+  }
 
   return (
-    <div className="flex flex-col items-center gap-8 py-4">
-      {/* Timer first in the DOM and largest on screen: from two metres away this
-          is the thing that answers "is it running?". */}
-      <div className="text-center">
-        {/* tabular-nums, not font-mono: no mono family is bundled, so font-mono
-            falls back to a system face that fights the rest of the type.
-            Geist's tabular figures stop the digits jittering just as well. */}
-        <div className="text-6xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
-        <p className="mt-2 text-lg text-muted-foreground">
-          {isRecording
-            ? recording.inputWarning
-              ? 'Aufnahme läuft — kein Ton!'
-              : 'Aufnahme läuft'
-            : recording.status === 'stopped'
-              ? 'Aufnahme beendet'
-              : recording.status === 'requesting-mic'
-                ? 'Mikrofon wird angefragt …'
-                : 'Bereit zur Aufnahme'}
+    <div className="flex flex-col items-center gap-5 py-1">
+      <div className="w-full">
+        <Button variant="ghost" size="lg" onClick={onBack} disabled={isRecording}>
+          <ArrowLeft aria-hidden />
+          Zurück
+        </Button>
+      </div>
+
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">{copy.heading}</h1>
+        <p className="mx-auto max-w-[52ch] text-lg text-muted-foreground">
+          {isRecording ? copy.running : copy.idle}
         </p>
       </div>
+
+      {/* Largest thing on screen: from two metres away this is what answers
+          "is it running?". tabular-nums, not font-mono — no mono family is
+          bundled, and Geist's tabular figures stop the digits jittering. */}
+      <div className="text-6xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
 
       <RecordingWave level={recording.level} state={orbState} />
 
@@ -201,83 +132,47 @@ export function RecordScreen({
         size="lg"
         variant={isRecording ? 'destructive' : 'default'}
         disabled={isBusy}
-        className="h-14 px-10 text-lg"
-        onClick={async () => {
-          if (isRecording) {
-            await recordingSession.stop();
-            toast.success('Aufnahme gespeichert.');
-          } else {
-            setTranscript('');
-            await recordingSession.start();
-          }
-        }}
+        className="h-16 px-12 text-lg"
+        onClick={() => void handleToggle()}
       >
         {isBusy ? <Spinner /> : null}
         {isRecording ? 'Aufnahme beenden' : 'Aufnahme starten'}
       </Button>
 
-      {/* Pipeline status. Deliberately plain language: "wird nachgeholt" tells
-          him nothing is lost, which is the only thing he needs to know. */}
-      {/* Outstanding transcription work is worth showing even on an idle
-          screen — it is how he knows nothing has been lost. */}
+      {/* Outstanding work is worth showing even here — it is how he knows
+          nothing has been lost. Plain language: "wird nachgeholt" tells him the
+          only thing he needs to know. */}
       {recording.segmentCount > 0 || queue.pending > 0 || queue.running > 0 || queue.failed > 0 ? (
-        <>
-          <Separator className="max-w-md" />
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {/* Session counters only once this session has produced something —
-                "0 Abschnitte aufgenommen" on a fresh screen is noise, and the
-                cumulative "übertragen" count belongs to the session in hand,
-                not to every letter ever recorded. */}
-            {recording.segmentCount > 0 ? (
-              <>
-                <Badge variant="secondary">
-                  {recording.segmentCount} Abschnitt{recording.segmentCount === 1 ? '' : 'e'}{' '}
-                  aufgenommen
-                </Badge>
-                {queue.done > 0 ? <Badge variant="secondary">{queue.done} übertragen</Badge> : null}
-              </>
-            ) : null}
-            {queue.pending > 0 || queue.running > 0 ? (
-              <Badge variant="outline">
-                <Spinner className="size-3.5" />
-                {queue.pending + queue.running} in Arbeit
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {recording.segmentCount > 0 ? (
+            <Badge variant="secondary">
+              {recording.segmentCount} Abschnitt{recording.segmentCount === 1 ? '' : 'e'} gespeichert
+            </Badge>
+          ) : null}
+          {queue.pending > 0 || queue.running > 0 ? (
+            <Badge variant="outline">
+              <Spinner className="size-3.5" />
+              {queue.pending + queue.running} in Arbeit
+            </Badge>
+          ) : null}
+          {queue.failed > 0 ? (
+            <>
+              <Badge variant="outline" className="text-destructive">
+                {queue.failed} wird nachgeholt
               </Badge>
-            ) : null}
-            {queue.failed > 0 ? (
-              <>
-                <Badge variant="outline" className="text-destructive">
-                  {queue.failed} wird nachgeholt
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void transcriptionQueue.retryFailed()}
-                >
-                  <RotateCcw aria-hidden />
-                  Jetzt erneut versuchen
-                </Button>
-              </>
-            ) : null}
-          </div>
-        </>
-      ) : null}
-
-      {transcript ? (
-        <div className="w-full max-w-[68ch] space-y-4">
-          <Separator />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">Erkannter Text</h2>
-            <Button
-              size="lg"
-              onClick={() => recording.sessionId && onSessionReady(recording.sessionId)}
-            >
-              Beurteilung erstellen
-            </Button>
-          </div>
-          {/* Shown so he can sanity-check the recognition before a draft is
-              built on top of it — a bad transcript is much easier to spot here
-              than inside finished prose. */}
-          <p className="whitespace-pre-wrap text-base leading-relaxed">{transcript}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void transcriptionQueue.retryFailed();
+                  toast.info('Wird erneut versucht.');
+                }}
+              >
+                <RotateCcw aria-hidden />
+                Jetzt erneut versuchen
+              </Button>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -1,0 +1,133 @@
+AUFBAU DER DREI ABSCHNITTE
+
+Jeder Abschnitt hat seine eigene Form UND seinen eigenen Inhalt.
+
+ZUSTÄNDIGKEIT — JEDE ANGABE STEHT IN GENAU EINEM ABSCHNITT
+
+Das ist die wichtigste Regel dieses Aufbaus. Was in die Diagnosen gehört, wird
+in der Anamnese nicht noch einmal erwähnt, auch nicht mit anderen Worten und
+auch nicht kürzer. Doppelt Geschriebenes muss der Arzt von Hand löschen.
+
+In die DIAGNOSEN und nirgendwo sonst:
+- Jede benannte Erkrankung, auch eine, die der Patient weiterhin hat:
+  Vorhofflimmern, Diabetes, Bluthochdruck, Schilddrüsenunterfunktion.
+- Jedes durchgemachte Ereignis und jeder Eingriff: Infarkt, Stent, PTCA,
+  Bypass-Operation, Ablation — mit Zeitangabe und Ort, soweit genannt.
+- Jede zurückliegende Operation, auch eine nicht kardiale und auch eine aus der
+  Kindheit: Blinddarm, Gallenblase, Kaiserschnitt.
+- Jede früher durchgemachte, heute ausgeheilte Erkrankung.
+- Jeder kardiovaskuläre Risikofaktor, gebündelt unter einem Punkt: Bluthochdruck,
+  Diabetes, erhöhte Cholesterinwerte, Übergewicht, Rauchen. Auch ein Rauchen,
+  das vor Jahren beendet wurde, ist ein Risikofaktor und steht hier:
+  "Nikotinabusus, sistiert vor 10 Jahren".
+- Die Familienanamnese, ebenfalls als Punkt unter den Risikofaktoren:
+  "Positive Familienanamnese (Vater Herzinfarkt mit 59 Jahren)".
+
+In die ANAMNESE und nirgendwo sonst:
+- Die aktuellen Beschwerden und ihre Umstände.
+- Die Belastbarkeit im Alltag.
+- Alle ausgesprochenen Verneinungen — auch die zu einer Erkrankung ("kein
+  Zucker"), zu einem Risikofaktor ("nie geraucht") und zur Verträglichkeit der
+  Medikation.
+- Die Gewohnheiten: körperliche Aktivität und Sport, Alkohol. Ein bestehender
+  oder früherer Nikotinkonsum gehört NICHT hierher, er steht bei den
+  Risikofaktoren.
+- Allergien und Unverträglichkeiten.
+
+In die MEDIKATION und nirgendwo sonst:
+- Jedes Präparat mit Stärke und Einnahmeschema. Ein Präparatename kommt in den
+  beiden anderen Abschnitten nicht vor: die Erkrankung steht in den Diagnosen,
+  die Tablette steht hier.
+
+In KEINEN der drei Abschnitte:
+- Größe, Gewicht, Blutdruckwerte und alles andere, was am Patienten gemessen
+  wird. Das gehört in den Untersuchungsbefund.
+- Ein Laborwert, den der Patient aus dem Gedächtnis nennt (etwa ein
+  Langzeitzuckerwert). Die Erkrankung selbst steht in den Diagnosen, die Zahl
+  wird nicht übernommen.
+- Wer den Patienten überwiesen hat und warum.
+
+Die Wörter des Gesprächs bleiben dabei stehen. Gesagt wurde "Bluthochdruck",
+dann steht dort "Bluthochdruck"; gesagt wurde "Kaiserschnitt", dann steht dort
+"Kaiserschnitt"; aus "Blinddarm" wird keine "Appendektomie". Eine relativ
+genannte Zeitangabe ("vor zehn Jahren") bleibt relativ; rechnen Sie kein Jahr
+aus und ergänzen Sie keine Jahreszahl zu einem bloß genannten Monat.
+
+Zwei Fälle, die man leicht verwechselt:
+- Ein Thema, nach dem im Gespräch gar nicht gefragt wurde — Allergien,
+  Familienanamnese, Alkohol —, fehlt nicht. Es entfällt ersatzlos, ohne
+  [FEHLT] und ohne Erwähnung.
+- Eine Angabe, die begonnen und nicht zu Ende geführt wurde — eine fehlende
+  Jahreszahl, ein unvollständiges Schema, zwei einander widersprechende
+  Zahlen —, bekommt an ihrer Stelle ihre Markierung.
+
+DIAGNOSEN — Aufzählung, keine Prosa.
+  Ein Aufzählungspunkt pro Diagnose, beginnend mit "- ". Reihenfolge: zuerst die
+  führende kardiologische Diagnose, dann die übrigen kardialen, dann der
+  gebündelte Punkt mit den Risikofaktoren, zuletzt die nicht kardialen als
+  flache Z.n.-Punkte.
+  Gehören Einzelheiten zu einer Diagnose, stehen sie eingerückt darunter:
+      - Koronare Herzkrankheit mit
+        - Z.n. DES-Implantation der LAD 12/23
+        - Z.n. Vorderwandinfarkt 3/25
+  Eine solche Oberzeile schreiben Sie nur, wenn der Arzt genau diese Diagnose
+  selbst genannt hat. Aus einem Stent und einem Infarkt eine "Koronare
+  Herzkrankheit" zu machen, die niemand ausgesprochen hat, ist eine erfundene
+  Diagnose; die Einzelheiten stehen dann als eigene Punkte nebeneinander.
+  Zusatzangaben stehen in Klammern hinter der Diagnose, mit Messwert und
+  Herkunft: "Aneurysma der Aorta ascendens (4,7 cm, CT 8/25)".
+  Zeitangaben knapp: "10/25", "28.12.2023", "3/25". Abkürzungen wie er sie
+  verwendet: Z.n., V.a., DD.
+  Die Risikofaktoren werden gebündelt:
+      - Kardiovaskuläre Risikofaktoren mit
+        - Bluthochdruck seit ca. 15 Jahren
+        - Nikotinabusus, sistiert vor 10 Jahren
+        - Positive Familienanamnese (Vater Herzinfarkt mit 59 Jahren)
+  Was der Patient verneint hat, bekommt hier keinen Punkt: weder "kein Diabetes"
+  noch "nie geraucht" noch "keine Herzerkrankungen in der Familie". Ein nicht
+  vorhandener Risikofaktor ist kein Risikofaktor. Die Verneinung steht in der
+  Anamnese.
+  Nennt der Arzt zu den aktuellen Beschwerden keine Diagnose, erfinden Sie
+  keine. Ein Punkt "- [FEHLT: …]" steht dann an erster Stelle, aber nur, wenn
+  die Liste sonst keine bestehende Erkrankung enthält.
+
+ANAMNESE — kurze Prosa, keine Aufzählung, und vor allem: KURZ.
+  Das ist der Abschnitt, der immer zu lang gerät. Er ist eine Aufstellung in
+  Sätzen, kein Bericht über das Gespräch. So sieht eine vollständige Anamnese in
+  seinen Briefen aus — das ist kein Auszug, das ist der ganze Abschnitt:
+      "Z.n. Fraktur des rechten Unterarms. Keine weiteren wesentlichen
+      Erkrankungen. Regelmäßige sportliche Aktivität. Pollinosis."
+  Genau diese Inhalte, in dieser Reihenfolge, und nichts sonst:
+  1. Die aktuellen Beschwerden mit ihren Umständen — wobei sie auftreten, seit
+     wann, wohin sie ausstrahlen, was sie beendet — und die Belastbarkeit im
+     Alltag mit der Angabe des Patienten. Bestehen keine Beschwerden, ist das
+     ein halber Satz: "Aktuell beschwerdefrei, täglich 3 km Spaziergang und
+     zwei Stockwerke ohne Pause."
+  2. EIN einziger Satz mit allen ausgesprochenen Verneinungen. Sie werden als
+     bloße Substantive aneinandergereiht, ohne Umstände und ohne ein "kein" vor
+     jedem einzelnen; das Wort "verneint" steht einmal am Ende:
+     "Luftnot, Herzstolpern, Schwindel, Synkopen und Beinödeme werden verneint."
+     Niemals ein Satz pro Verneinung. Die gute Verträglichkeit der Medikation
+     hängt in drei Wörtern an denselben Satz.
+  3. Die Gewohnheiten, knapp: sportliche Aktivität, Alkohol.
+  4. Allergien und Unverträglichkeiten als kurze Angabe.
+  Maß: höchstens vier Sätze, zusammen etwa 250 Zeichen und in keinem Fall mehr
+  als 350. Ist Ihr Entwurf länger, streichen Sie, bis er es nicht mehr ist —
+  zuerst alles, was ohnehin schon in den Diagnosen oder in der Medikation
+  steht, dann jeden Umstand, der an der Angabe nichts ändert (der Hund, das
+  Kissen, das Wetter), dann jedes Wort, das nur den Gesprächsverlauf schildert.
+  Kein "Der Patient berichtet", kein "Es wird angegeben", kein Patientenname.
+  Was der Arzt gefragt hat, wird nicht erzählt.
+
+MEDIKATION — Liste, ein Präparat pro Zeile.
+  Format: Präparatename, Leerzeichen, Stärke, dann ein TABULATOR, dann das
+  Einnahmeschema.
+      ASS 100	1-0-0
+      Clopidogrel 75	1-0-0 bis 5/26
+      Sevikar 40/5	1-0-0
+      Rosuvastatin 20	0-0-1
+  Die Stärke steht OHNE Einheit, so wie er sie schreibt: "ASS 100", niemals
+  "ASS 100 mg". Gesprochenes "ASS hundert" wird zu "ASS 100".
+  Ein befristetes Präparat bekommt das Ende angehängt: "1-0-0 bis 5/26".
+  Nimmt der Patient nichts, besteht der Abschnitt aus dem einen Wort:
+      Keine

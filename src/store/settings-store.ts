@@ -4,13 +4,10 @@ import {
   DEFAULT_SETTINGS,
   loadApiKeys,
   loadSettings,
-  saveApiKey,
   saveSettings,
   type ApiKeyMap,
   type AppSettings,
-  type LlmProviderId,
 } from '@/lib/settings';
-import type { TranscriptionProviderId } from '@/lib/providers/types';
 import { getStorageStatus, requestPersistence, type StorageStatus } from '@/lib/storage';
 
 interface SettingsState {
@@ -21,7 +18,6 @@ interface SettingsState {
 
   hydrate: () => Promise<void>;
   update: (patch: Partial<AppSettings>) => Promise<void>;
-  setApiKey: (provider: TranscriptionProviderId | LlmProviderId, key: string) => Promise<void>;
   refreshStorage: () => Promise<void>;
   enablePersistence: () => Promise<boolean>;
 }
@@ -44,11 +40,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   update: async (patch) => {
     const settings = await saveSettings(patch);
     set({ settings });
-  },
-
-  setApiKey: async (provider, key) => {
-    await saveApiKey(provider, key);
-    set({ apiKeys: await loadApiKeys() });
   },
 
   refreshStorage: async () => {

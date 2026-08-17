@@ -1,74 +1,36 @@
 import { create } from 'zustand';
 
+import type { SessionKind } from '@/lib/db';
+
 /**
- * App-level navigation state, shared by all three layout shells.
+ * Where he is in the app. Four screens, one at a time.
  *
- * Lives outside the layouts so switching layout never loses the user's place —
- * which matters while we are comparing them side by side.
+ * There is no router and no URL state: this runs on one machine, in one tab,
+ * for one person who will never bookmark a screen. A router would only add a
+ * way for the back button to strand him mid-recording.
  */
-
-export type View = 'aufnahme' | 'brief' | 'einstellungen';
-
-/**
- * The three layouts under evaluation. Same design language throughout — same
- * tokens, type scale, components and German. They differ only in how the work
- * is arranged on screen.
- */
-export type LayoutId = 'fokus' | 'werkbank' | 'split';
-
-export const LAYOUTS: Array<{ id: LayoutId; label: string; blurb: string }> = [
-  {
-    id: 'fokus',
-    label: 'Fokus',
-    blurb: 'Eine Aufgabe pro Bildschirm, mittig, größtmögliche Schaltflächen.',
-  },
-  {
-    id: 'werkbank',
-    label: 'Werkbank',
-    blurb: 'Seitenleiste mit allen Briefen und ihrem Stand, Arbeitsfläche rechts.',
-  },
-  {
-    id: 'split',
-    label: 'Gegenüberstellung',
-    blurb: 'Diktat und Entwurf nebeneinander — zum direkten Vergleichen beim Prüfen.',
-  },
-];
-
-const LAYOUT_KEY = 'arztbrief-layout';
-
-function initialLayout(): LayoutId {
-  if (typeof window === 'undefined') return 'fokus';
-  const fromUrl = new URLSearchParams(window.location.search).get('layout');
-  const stored = window.localStorage.getItem(LAYOUT_KEY);
-  const candidate = fromUrl ?? stored;
-  return LAYOUTS.some((l) => l.id === candidate) ? (candidate as LayoutId) : 'fokus';
-}
+export type View = 'start' | 'aufnahme' | 'ergebnis' | 'einstellungen';
 
 interface AppState {
   view: View;
+  /** The recording currently being made or read. */
   sessionId: string | null;
-  layout: LayoutId;
-  setView: (view: View) => void;
-  setSessionId: (id: string | null) => void;
-  setLayout: (layout: LayoutId) => void;
+  /** Which feature is in play. Set when a recording starts, kept for the result. */
+  kind: SessionKind;
+
+  goHome: () => void;
+  startRecording: (kind: SessionKind) => void;
+  openResult: (sessionId: string, kind: SessionKind) => void;
+  openSettings: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  view: 'aufnahme',
+  view: 'start',
   sessionId: null,
-  layout: initialLayout(),
+  kind: 'gespraech',
 
-  setView: (view) => set({ view }),
-  setSessionId: (sessionId) => set({ sessionId }),
-  setLayout: (layout) => {
-    try {
-      window.localStorage.setItem(LAYOUT_KEY, layout);
-      const url = new URL(window.location.href);
-      url.searchParams.set('layout', layout);
-      window.history.replaceState({}, '', url);
-    } catch {
-      // Private mode — the choice just does not persist.
-    }
-    set({ layout });
-  },
+  goHome: () => set({ view: 'start' }),
+  startRecording: (kind) => set({ view: 'aufnahme', kind, sessionId: null }),
+  openResult: (sessionId, kind) => set({ view: 'ergebnis', sessionId, kind }),
+  openSettings: () => set({ view: 'einstellungen' }),
 }));

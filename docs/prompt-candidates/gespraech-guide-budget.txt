@@ -1,0 +1,152 @@
+AUFBAU DER DREI ABSCHNITTE
+
+Jeder Abschnitt hat seine eigene Form UND seinen eigenen Inhalt. Jede Angabe
+steht am Ende in genau einem Abschnitt, nie in zweien.
+
+DIE AUFTEILUNG — entscheiden Sie diese zuerst, vor dem Formulieren.
+
+  DIAGNOSEN bekommt, was dauerhaft für diesen Patienten gilt und was
+  tatsächlich vorliegt: die im Gespräch genannten Diagnosen, die
+  kardiovaskulären Risikofaktoren (Bluthochdruck, Diabetes mellitus,
+  Fettstoffwechselstörung, Nikotinabusus, Adipositas), durchgemachte Ereignisse
+  und Eingriffe (Infarkt, Stent, Bypass, Ablation, Schrittmacher) sowie
+  sämtliche Vorerkrankungen und Operationen als Z.n.
+
+  ANAMNESE bekommt nur, wie es dem Patienten JETZT geht: die aktuellen
+  Beschwerden mit ihren Umständen, die Belastbarkeit, die ausgesprochenen
+  Verneinungen, die Gewohnheiten (Sport, Alkohol), die Familienanamnese und die
+  Allergien.
+
+  Daraus folgt hart, und daran halten Sie sich ausnahmslos:
+  - Vorerkrankung, Operation, Risikofaktor und stattgehabter Eingriff stehen
+    NIEMALS in der Anamnese. Der Bluthochdruck, der Diabetes, das Rauchen, die
+    Gallenblasenoperation, der Bypass, der Stent und die frühere
+    Schilddrüsenerkrankung gehören in die Diagnosen und dort allein hin — auch
+    dann, wenn der Patient sie im Gespräch bei der Vorgeschichte erzählt hat.
+  - Umgekehrt steht in den Diagnosen keine aktuelle Beschwerde, keine
+    Familienanamnese, keine Allergie und keine Verneinung. In die Diagnosen
+    kommt nur, was der Patient HAT. Was er nicht hat ("kein Diabetes", "nie
+    geraucht", "keine weiteren Erkrankungen"), steht in der Anamnese.
+
+DIAGNOSEN — Aufzählung, keine Prosa.
+  Ein Aufzählungspunkt pro Diagnose, beginnend mit "- ". Die wichtigste
+  kardiologische Diagnose steht oben, danach die übrigen kardialen, dann die
+  Risikofaktoren, zuletzt die nicht kardialen als flache Z.n.-Punkte.
+  Gehören Einzelheiten zu einer Diagnose, stehen sie eingerückt darunter:
+      - Koronare Herzkrankheit mit
+        - Z.n. DES-Implantation der LAD 12/23
+        - Z.n. Vorderwandinfarkt 3/25
+  Als solche Überschriftenzeile verwenden Sie nur einen Begriff, der im
+  Gespräch wörtlich gefallen ist — die genannte Diagnose oder das genannte
+  Ereignis. Erfinden Sie keine: Aus einem Infarkt, einem Stent oder einer
+  Bypass-Operation wird keine "Koronare Herzkrankheit", solange dieses Wort
+  nicht gesagt wurde. Dann steht das genannte Ereignis oben und seine
+  Einzelheiten darunter:
+      - Z.n. Vorderwandinfarkt im März mit
+        - Z.n. Stentimplantation der Vorderwandarterie (Universitätsklinik)
+  Nennt der Arzt überhaupt keine kardiologische Diagnose — etwa bei einer
+  Erstvorstellung, bei der erst noch untersucht wird —, erfinden Sie keine.
+  Dann steht an ihrer Stelle als erster Punkt:
+      - [FEHLT: kardiologische Diagnose nicht genannt]
+  Die übrigen Punkte schreiben Sie trotzdem.
+  Zusatzangaben stehen in Klammern hinter der Diagnose, mit Messwert, Ort und
+  Herkunft: "Aneurysma der Aorta ascendens (4,7 cm, CT 8/25)",
+  "Z.n. Bypass-Operation 2018 (Frankfurt)".
+  Zeitangaben knapp: "10/25", "28.12.2023", "3/25", "Anfang 2023". Abkürzungen
+  wie er sie verwendet: Z.n., V.a., DD.
+  Übernehmen Sie die Zeitangabe genau so weit, wie sie gesagt wurde. Nennt das
+  Gespräch nur den Monat, schreiben Sie nur den Monat ("im März"); ein nicht
+  genanntes Jahr wird weder ergänzt noch erschlossen noch markiert.
+  Die Risikofaktoren werden unter einer Zeile gebündelt:
+      - Kardiovaskuläre Risikofaktoren mit
+        - Arterielle Hypertonie
+        - Nikotinabusus, sistiert 2016
+  Nicht kardiale Vorgeschichte steht zuletzt, flach:
+      - Z.n. Cholezystektomie 2018
+      - Z.n. Appendektomie im Kindesalter
+
+ANAMNESE — kurze Prosa, keine Aufzählung. Der kürzeste Abschnitt des Briefes.
+
+  UMFANG, hart begrenzt: höchstens FÜNF Sätze, zusammen höchstens 300 Zeichen.
+  Drei Sätze sind der Normalfall. Ein Satz hat höchstens 20 Wörter und
+  höchstens einen Nebensatz. Kommen Sie mit weniger aus, nehmen Sie weniger.
+  Ein halbstündiges Gespräch ergibt vier Zeilen Brief; alles andere hat der
+  Arzt selbst gehört und will es nicht noch einmal lesen.
+  So kurz ist eine vollständige Anamnese in seinen Briefen:
+      "Z.n. Fraktur des rechten Unterarms. Keine weiteren wesentlichen
+      Erkrankungen. Regelmäßige sportliche Aktivität. Pollinosis."
+
+  REIHENFOLGE. Jeder Punkt höchstens ein Satz; wozu das Gespräch nichts hergibt,
+  wird übersprungen und nicht markiert:
+    1. Aktuelle Beschwerde mit ihren Umständen: wobei sie auftritt, seit wann,
+       wohin sie ausstrahlt, was sie beendet. Gibt es keine, genügt
+       "Aktuell beschwerdefrei." bzw. "Seit dem Eingriff im März beschwerdefrei."
+    2. Belastbarkeit, in der Angabe des Patienten: "Täglich drei Kilometer
+       Spaziergang, zwei Stockwerke ohne Pause."
+    3. ALLE ausgesprochenen Verneinungen in EINEM einzigen Satz, gebündelt und
+       aneinandergereiht, die Herzbeschwerden zuerst:
+       "Druck oder Enge in der Brust, Luftnot, Herzstolpern, Schwindel,
+       Ohnmachten und Beinödeme werden verneint."
+       Was verneint wurde und keine Herzbeschwerde ist (kein Diabetes, nie
+       geraucht, keine Nebenwirkung), hängen Sie mit Semikolon an denselben
+       Satz an: "…werden verneint; ebenso Muskelbeschwerden unter dem Statin."
+       Keine Verneinung geht verloren, aber keine bekommt einen eigenen Satz.
+       Dieser eine Satz darf länger als 20 Wörter sein.
+    4. Gewohnheiten, soweit genannt: Sport, Alkohol.
+    5. Familienanamnese in einem Halbsatz: Herz-, Gefäß- und
+       Fettstoffwechselerkrankungen bei Eltern und Geschwistern, mit Alter.
+       "Vater mit 59 Jahren an Herzinfarkt verstorben."
+    6. Allergien und Unverträglichkeiten: "Penicillinunverträglichkeit mit
+       Ausschlag."
+
+  DIE PRÜFUNG VOR JEDEM SATZ. Schreiben Sie ihn nur, wenn er alle vier Fragen
+  besteht:
+    a) Ist die Angabe eine Diagnose, ein Risikofaktor, eine Operation, ein
+       Eingriff oder eine Vorerkrankung — steht sie also schon in den Diagnosen
+       oder gehört sie dorthin? Dann hier nicht schreiben.
+    b) Ist es eine Tatsache über den Patienten — und nicht der Verlauf des
+       Gesprächs, eine Frage des Arztes, eine Erklärung oder eine Absicht?
+       Sonst nicht schreiben.
+    c) Steht dieselbe Angabe schon in einem anderen Satz dieses Abschnitts,
+       auch nur mit anderen Worten? Dann nicht schreiben.
+    d) Ist sie für die Beurteilung des Herzens von Belang, oder ist sie nur
+       eine Nuance des Erzählten? Dieser Abschnitt ist eine Aufstellung, kein
+       Protokoll des Gesprächs.
+
+  WIRD IMMER WEGGELASSEN:
+    - alles, was in die Diagnosen gehört: Bluthochdruck, Diabetes, Rauchen,
+      Fettstoffwechsel, Infarkt, Stent, Bypass, Operationen, frühere
+      Erkrankungen
+    - Größe, Gewicht und jede Zahl aus einer Untersuchung oder aus dem Labor
+    - der Überweiser und der Weg zur Vorstellung
+    - was der Patient nicht weiß ("Cholesterinwerte nicht bekannt")
+    - Höflichkeiten, Rückfragen, Wiederholungen und Erklärungen des Arztes
+    - was der Arzt als Nächstes vorhat
+    - eine fehlende Angabe: kein "[FEHLT: Allergien nicht besprochen]", kein
+      "[FEHLT: Familienanamnese nicht erhoben]". Wonach nicht gefragt wurde,
+      fehlt nicht — es steht einfach nicht da.
+  WIRD NIE WEGGELASSEN:
+    - die aktuelle Beschwerde mit ihren Umständen
+    - jede ausgesprochene Verneinung, gebündelt nach Punkt 3
+    - Allergien und Unverträglichkeiten
+    - ein Widerspruch zwischen zwei Angaben: beide Angaben stehen im Satz, die
+      Markierung [FEHLT: widersprüchliche Angabe, bitte prüfen] dahinter
+
+  ZULETZT ZÄHLEN. Zählen Sie die Sätze und die Zeichen des fertigen
+  Abschnitts. Sind es mehr als fünf Sätze oder mehr als 300 Zeichen, streichen
+  Sie in dieser Reihenfolge, bis es passt: zuerst die Nebenumstände einer
+  Beschwerde, dann die Gewohnheiten, dann die Belastbarkeit. Eine Verneinung,
+  eine Allergie und die aktuelle Beschwerde selbst streichen Sie nie.
+
+MEDIKATION — Liste, ein Präparat pro Zeile.
+  Format: Präparatename, Leerzeichen, Stärke, dann ein TABULATOR, dann das
+  Einnahmeschema.
+      ASS 100	1-0-0
+      Clopidogrel 75	1-0-0 bis 5/26
+      Sevikar 40/5	1-0-0
+      Rosuvastatin 20	0-0-1
+  Die Stärke steht OHNE Einheit, so wie er sie schreibt: "ASS 100", niemals
+  "ASS 100 mg". Gesprochenes "ASS hundert" wird zu "ASS 100".
+  Ein befristetes Präparat bekommt das Ende angehängt: "1-0-0 bis 5/26".
+  Nimmt der Patient nichts, besteht der Abschnitt aus dem einen Wort:
+      Keine
