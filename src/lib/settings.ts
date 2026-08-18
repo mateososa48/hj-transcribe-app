@@ -16,8 +16,6 @@ import type { TranscriptionProviderId } from './providers/types.ts';
 export interface AppSettings {
   asrProviderId: TranscriptionProviderId;
   llmProviderId: DraftProviderId;
-  /** Only used by the AI Gateway, which fronts many models. */
-  llmModel: string;
   /** Result of the last navigator.storage.persist() call, for the UI. */
   storagePersisted: boolean;
 }
@@ -27,7 +25,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   // Gateway while we are still choosing a model. Switch to `anthropic` before
   // real patient use — see gateway-draft.ts.
   llmProviderId: 'gateway',
-  llmModel: 'anthropic/claude-opus-5',
   storagePersisted: false,
 };
 

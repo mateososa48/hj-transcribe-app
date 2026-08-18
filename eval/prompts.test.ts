@@ -108,6 +108,22 @@ test('the rules cover the failure that shipped on 2026-08-16', () => {
   assert.match(CORE_RULES, /kein\s*\n?\s*Kommentarfeld/, 'a marker is not a comment field');
   assert.match(CORE_RULES, /EINE EINZIGE VERWERTBARE ANGABE GENÜGT/, 'partial input still gets a letter');
   assert.match(CORE_RULES, /kein verwertbares Diktat, bitte neu aufnehmen/, 'refusal has one fixed shape');
+
+  // 2026-08-17: gpt-5.6-terra silently resolved a wife-vs-patient disagreement
+  // 6/6 times because rule 8a's self-correction clause did not say WHOSE
+  // correction. Naming the speaker took it to 6/6 carried. Opus never hit this,
+  // so the ambiguity was invisible until the model changed.
+  assert.match(CORE_RULES, /Selbstkorrektur ist eine Korrektur DERSELBEN Person/);
+  assert.match(CORE_RULES, /Widerspricht dagegen eine ANDERE Person/);
+  assert.match(CORE_RULES, /Wer zuletzt gesprochen hat, entscheidet nichts/);
+
+  // Same session: terra wrote "400 mg Cholesterin ... verordnet" into the
+  // letter 2/10 times. Rule 3 covered an INCOMPLETE scheme but not a medication
+  // that has no writable form at all. Framed as a format test, not a clinical
+  // one, so the model is never asked to judge whether a drug makes sense.
+  assert.match(CORE_RULES, /nicht in die\s*\n?\s*übliche Form bringen lässt/);
+  assert.match(CORE_RULES, /Formfrage, keine medizinische Beurteilung/);
+  assert.match(CORE_RULES, /was unverwertbar erkannt wurde, wird markiert, nicht\s*\n?\s*berichtet/);
   // Rule 5 must forbid upgrading lay language into a diagnosis.
   assert.match(CORE_RULES, /"hohes Cholesterin" wird nicht "Hypercholesterinämie"/);
   // The prompt itself must not teach Swiss orthography.

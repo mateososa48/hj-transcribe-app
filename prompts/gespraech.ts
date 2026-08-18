@@ -138,8 +138,9 @@ außerhalb davon:
 </medikation>
 
 Ein Abschnitt, zu dem das Gespräch nichts hergibt, bleibt nicht weg — der Block
-steht trotzdem da und enthält genau eine Zeile:
-    [FEHLT: im Gespräch nicht besprochen]
+steht trotzdem da und enthält genau diese eine Zeile, mit Bindestrich wie jeder
+andere Punkt auch:
+    - [FEHLT: im Gespräch nicht besprochen]
 
 Kein Vorwort, keine Erklärung, kein Kommentar vor oder nach den Blöcken.`;
 }

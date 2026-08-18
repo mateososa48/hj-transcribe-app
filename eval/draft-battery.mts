@@ -21,6 +21,7 @@ import { buildStableSystemPrompt, buildUserPrompt, parseBeurteilung, extractFehl
   from '../prompts/beurteilung.ts';
 import { DEV_BEURTEILUNG_EXAMPLES } from '../prompts/examples/dev/index.ts';
 import { PROMPT_VERSION } from '../prompts/rules.ts';
+import { DEFAULT_GATEWAY_MODEL } from '../src/lib/providers/gateway-draft.ts';
 
 const DIR = process.argv[2]!;
 const RUNS = Number(process.argv[3] ?? 3);
@@ -31,7 +32,7 @@ async function draft(transcript: string) {
   const res = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: 'anthropic/claude-opus-5', max_tokens: 4000,
+    body: JSON.stringify({ model: DEFAULT_GATEWAY_MODEL, max_tokens: 4000,
       messages: [{ role: 'system', content: system }, { role: 'user', content: buildUserPrompt({ transcript }) }] }),
   });
   if (!res.ok) throw new Error(`${res.status}`);
@@ -68,7 +69,15 @@ for (const name of CASES) {
       if (/Hypercholesterinämie|Myokardinfarkt/i.test(r.text)) flags.push('COINED_DX');
       if (INVENTED_NEG.test(r.text)) flags.push('INVENTED_NEG');
       if (!/32/.test(r.text) || !/34/.test(r.text)) flags.push('WEIGHT_DROPPED');
-      if (/(Advil|Proposteron|400\s*mg)/i.test(r.text) && !markers.some((m) => /Medikation|Präparat|Therapie/i.test(m))) flags.push('MED_ASSERTED');
+      // Per line, not per draft: the drug names appearing at all is fine — the
+      // question is whether a line ASSERTS them outside a marker. Checking the
+      // whole text against the marker list cried wolf on every run that phrased
+      // the marker differently.
+      const assertsMed = r.text
+        .split('\n')
+        .filter((l) => /(Advil|Proposteron|400\s*mg)/i.test(l))
+        .some((l) => !/\[FEHLT[^\]]*\]/i.test(l) && !/nicht verwertbar|nicht nachvollziehbar|nicht plausib/i.test(l));
+      if (assertsMed) flags.push('MED_ASSERTED');
       if (!/nie|verneint|nicht/i.test(r.text)) flags.push('NEGATION_LOST');
     }
     console.log(

@@ -23,6 +23,7 @@ import {
 } from '../prompts/gespraech.ts';
 import { extractFehltMarkers } from '../prompts/beurteilung.ts';
 import { PROMPT_VERSION } from '../prompts/rules.ts';
+import { DEFAULT_GATEWAY_MODEL } from '../src/lib/providers/gateway-draft.ts';
 
 const DIR = process.argv[2] ?? 'eval/probe-gespraech';
 const RUNS = Number(process.argv[3] ?? 2);
@@ -43,7 +44,7 @@ async function run(transcript: string) {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model: 'anthropic/claude-opus-5',
+      model: DEFAULT_GATEWAY_MODEL,
       max_tokens: 4000,
       messages: [
         { role: 'system', content: system },

@@ -17,8 +17,9 @@ export async function resolveDraftProvider(): Promise<DraftProvider | null> {
   const factory = DRAFT_PROVIDERS[settings.llmProviderId];
   const key = keys[settings.llmProviderId];
   if (!factory || !key) return null;
-  // The model argument is only consumed by the gateway; direct providers pin theirs.
-  return factory(key, settings.llmModel);
+  // The model is a constant, not a setting: with no picker in the UI, a value
+  // left in his browser from an older build would quietly win over the default.
+  return factory(key);
 }
 
 export interface GenerateResult {

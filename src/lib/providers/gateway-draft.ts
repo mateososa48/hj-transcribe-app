@@ -46,15 +46,20 @@ const ENDPOINT = 'https://ai-gateway.vercel.sh/v1/chat/completions';
  * describes the MODEL's own residency — the gateway hop is US regardless.
  */
 export const GATEWAY_MODELS = [
+  { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', euCapable: false },
+  { id: 'openai/gpt-5.6-terra-fast', label: 'GPT-5.6 Terra (fast)', euCapable: false },
   { id: 'anthropic/claude-opus-5', label: 'Claude Opus 5', euCapable: false },
   { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5', euCapable: false },
-  { id: 'anthropic/claude-opus-4.8', label: 'Claude Opus 4.8', euCapable: false },
-  { id: 'openai/gpt-5.2', label: 'GPT-5.2', euCapable: false },
   { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', euCapable: false },
   { id: 'mistral/mistral-large-3', label: 'Mistral Large 3 (EU-Modell)', euCapable: true },
 ] as const;
 
-export const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-opus-5';
+/**
+ * Verified present in the gateway's own model list on 2026-08-17 — the id is
+ * `gpt-5.6-terra`, not `terra-5.6`, and a wrong id fails as an opaque runtime
+ * error rather than a build error.
+ */
+export const DEFAULT_GATEWAY_MODEL = 'openai/gpt-5.6-terra';
 
 export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL): DraftProvider {
   return {

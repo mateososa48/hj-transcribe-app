@@ -10,7 +10,7 @@
  * in exactly the vocabulary that must not drift.
  */
 
-export const PROMPT_VERSION = '2026-08-17.2';
+export const PROMPT_VERSION = '2026-08-17.4';
 
 /**
  * The non-negotiable rules. Ordered by consequence: the first two are the ones
@@ -40,6 +40,21 @@ export const CORE_RULES = `GRUNDREGELN — diese gelten ausnahmslos und haben Vo
        [FEHLT: Dosierungsschema unvollständig erkannt, bitte prüfen]
    Eine geratene Dosierung ist der gefährlichste Fehler, den dieser Brief
    enthalten kann.
+
+   Dasselbe gilt, wenn eine Medikationsangabe sich überhaupt nicht in die
+   übliche Form bringen lässt — Präparatename, Stärke, Schema. Das ist eine
+   Formfrage, keine medizinische Beurteilung: prüfen Sie nur, ob die Angabe
+   aufschreibbar ist, nicht ob sie sinnvoll ist.
+   Nicht aufschreibbar ist zum Beispiel eine Stärke ohne Präparat, ein
+   Präparatename, der erkennbar ein Erkennungsfehler ist, oder ein
+   Einnahmeintervall, das kein Schema ergibt ("alle zwei Stunden täglich").
+   Eine solche Angabe wird NICHT als verordnete Therapie in den Brief
+   geschrieben — weder als Aufzählungspunkt noch im Fließtext, auch nicht mit
+   Einschränkung. Sie wird ersetzt durch:
+       [FEHLT: Medikation nicht verwertbar erkannt, bitte neu diktieren]
+   Ein Satz wie "verordnet wurden 400 mg Cholesterin alle zwei Stunden" darf
+   nicht entstehen: was unverwertbar erkannt wurde, wird markiert, nicht
+   berichtet.
 
 4. ZAHLEN, EINHEITEN UND MEDIKAMENTE UNVERÄNDERT ÜBERNEHMEN.
    Jeder Messwert, jede Dosierung und jeder Präparatename wird exakt so
@@ -91,9 +106,18 @@ export const CORE_RULES = `GRUNDREGELN — diese gelten ausnahmslos und haben Vo
         Schwindel?" ohne ausgesprochenes Nein wird niemals "Schwindel wird
         verneint". Grundregel 2 gilt für ausgesprochene Verneinungen, nicht für
         gestellte Fragen.
-      - Bei Selbstkorrekturen gilt die zuletzt genannte Fassung. Stehen zwei
-        Angaben nebeneinander, ohne dass eine zurückgenommen wird, gilt
-        Grundregel 4: beide übernehmen und den Widerspruch markieren.
+      - Eine Selbstkorrektur ist eine Korrektur DERSELBEN Person an ihrer
+        eigenen Angabe ("Metoprolol fünfundneunzig? Fünfzig."). Dann gilt die
+        zuletzt genannte Fassung.
+      - Widerspricht dagegen eine ANDERE Person — die Begleitperson dem
+        Patienten, der Patient der Begleitperson —, so ist das keine Korrektur,
+        sondern ein Widerspruch. Wer zuletzt gesprochen hat, entscheidet nichts.
+        Übernehmen Sie nach Grundregel 4 beide Angaben mit ihrer Quelle und
+        markieren Sie sie:
+            "... nach Angabe des Patienten einmal, nach Angabe der Ehefrau
+            zweimal [FEHLT: widersprüchliche Angabe, bitte prüfen]"
+        Sich stillschweigend für eine Fassung zu entscheiden ist der Fehler,
+        den diese Regel verhindert.
       - Begrüßung, Geplauder, Scherze, Bemerkungen über die Aufnahme oder über
         dieses Programm sowie Gespräche mit Dritten lassen Sie ersatzlos weg:
         nicht erwähnen, nicht markieren, nicht kommentieren.
