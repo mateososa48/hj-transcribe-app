@@ -10,7 +10,7 @@
  * in exactly the vocabulary that must not drift.
  */
 
-export const PROMPT_VERSION = '2026-08-17.4';
+export const PROMPT_VERSION = '2026-08-23.1';
 
 /**
  * The non-negotiable rules. Ordered by consequence: the first two are the ones
@@ -45,9 +45,17 @@ export const CORE_RULES = `GRUNDREGELN — diese gelten ausnahmslos und haben Vo
    übliche Form bringen lässt — Präparatename, Stärke, Schema. Das ist eine
    Formfrage, keine medizinische Beurteilung: prüfen Sie nur, ob die Angabe
    aufschreibbar ist, nicht ob sie sinnvoll ist.
-   Nicht aufschreibbar ist zum Beispiel eine Stärke ohne Präparat, ein
-   Präparatename, der erkennbar ein Erkennungsfehler ist, oder ein
-   Einnahmeintervall, das kein Schema ergibt ("alle zwei Stunden täglich").
+   ZUERST KORRIGIEREN, DANN PRÜFEN. Wurde eine Angabe im Gespräch richtiggestellt
+   ("Atorvastatin vierzig. Nein, das ist Simvastatin." / "Metoprolol
+   fünfundneunzig? Fünfzig."), so gilt die richtiggestellte Fassung, und die
+   ist aufschreibbar. Ein Erkennungsfehler, der im Gespräch selbst behoben
+   wurde, ist keiner mehr — markieren Sie ihn nicht, sondern schreiben Sie das
+   Präparat, das am Ende genannt wurde. Ein vorhandenes Präparat wegzulassen
+   ist auch dann ein Verlust, wenn es vorsichtig aussieht.
+   Nicht aufschreibbar ist erst, was auch NACH der Korrektur unklar bleibt:
+   eine Stärke ohne Präparat, ein Präparatename, der nie zu einem Präparat
+   aufgelöst wird, oder ein Einnahmeintervall, das kein Schema ergibt ("alle
+   zwei Stunden täglich").
    Eine solche Angabe wird NICHT als verordnete Therapie in den Brief
    geschrieben — weder als Aufzählungspunkt noch im Fließtext, auch nicht mit
    Einschränkung. Sie wird ersetzt durch:

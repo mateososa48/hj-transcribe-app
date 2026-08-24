@@ -57,8 +57,23 @@ which drugs should be present at all — so a vanished drug and an invented one
 were both invisible.
 
 `eval/gespraech-battery.mts` now pins, per fixture, which preparations must
-appear and which must not (`MED_MISSING` / `MED_FABRICATED`). Verified: it
-flags the exemplar run that drops a drug, and the shipped guide passes 9/9.
+appear and which must not (`MED_MISSING` / `MED_FABRICATED`), and
+`eval/med-quarantine.mts` measures both failure directions over many runs.
+
+That gate promptly caught a defect in the SHIPPED guide too. I first reported
+it as 9/9 clean on a three-run sample; at eight runs it was **7/8** — the G3
+statin, which the speaker corrects from Atorvastatin to Simvastatin, was
+replaced by a "nicht verwertbar" marker one run in eight. Cause: the rule added
+on 2026-08-17 to stop garbage being written as therapy said to mark "a
+preparation name that is clearly a recognition error", and that exchange
+*contains* one before it is corrected. Rule 3 now says to apply the correction
+FIRST and only then judge writability. 8/8 after, and the garbage quarantine
+still holds 0/10.
+
+Worth stating plainly: the shipped guide's failure mode is to mark a
+determinable drug as unreadable — visible, and he fills it in. The candidates'
+failure mode was to print a drug the patient does not take. Failing safe versus
+failing silently is most of why this decision went the way it did.
 
 ## If you pick this up again
 
