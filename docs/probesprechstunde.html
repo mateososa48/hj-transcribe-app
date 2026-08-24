@@ -267,6 +267,26 @@
     border-radius: 3px;
   }
 </style>
+<style>
+  /* Part badges — the two features, distinguished without a second palette. */
+  .part { display: flex; align-items: baseline; gap: .75rem; }
+  .part-n {
+    font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--s-violet);
+    border: 1px solid currentColor; border-radius: 999px;
+    padding: .2rem .6rem; white-space: nowrap;
+  }
+  .who { display: grid; grid-template-columns: 4.75rem 1fr; gap: .15rem 1rem; }
+  .who dt {
+    font-family: var(--sans); font-size: .78rem; font-weight: 650;
+    letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint);
+    padding-top: .42rem;
+  }
+  .who dd { margin: 0; font-family: var(--serif); font-size: 1.18rem; line-height: 1.7; }
+  .who dd + dd { margin-top: .1rem; }
+  .who + .note { margin-top: .9rem; }
+  @media (max-width: 40rem) { .who { grid-template-columns: 1fr; } .who dt { padding-top: .6rem; } }
+</style>
 
 <div class="page">
 
@@ -274,272 +294,261 @@
     <hr class="rule-spectral" />
     <h1>Probesprechstunde</h1>
     <p class="standfirst">
-      A mock consultation for testing the Arztbrief-Assistent end to end: questions to ask a
-      stand-in patient, a word-for-word German dictation to speak into the app, and the exact
-      strings the finished draft has to contain.
+      One mock patient, run the way his day actually runs: record the consultation,
+      then dictate the assessment after the patient leaves. That exercises both
+      features in order and lets you check whether the two outputs agree.
     </p>
     <div class="meta">
       <span><b>App</b> hj-transcribe-app.vercel.app</span>
-      <span><b>Dictation</b> ~2 minutes</span>
-      <span><b>Full run</b> ~10 minutes</span>
+      <span><b>Part 1</b> ~4 min, you and one other</span>
+      <span><b>Part 2</b> ~2 min, alone</span>
     </div>
   </header>
 
   <section>
     <h2>Before you start</h2>
     <ol class="steps">
+      <li><p>Open the app in <b>Chrome or Edge</b> and allow the microphone when asked.</p></li>
       <li>
         <p>
-          Open the app in <b>Chrome or Safari</b> and allow microphone access when asked. Firefox
-          records fine but produces a different container format — test there separately, not first.
+          Sit where a doctor sits — <b>50–80&nbsp;cm from the laptop</b>, normal speaking
+          volume, and get your stand-in patient to sit opposite, not next to you. The
+          point is to find out whether it copes with the real distance and with two
+          voices at different angles.
         </p>
       </li>
       <li>
         <p>
-          Go to <b>Einstellungen</b> and check that both rows say <b>Hinterlegt</b>. If either says
-          <b>Fehlt</b>, the build is missing a key and nothing downstream will work.
+          Press the button and watch the ribbon. It should <b>bloom into colour</b> when
+          either of you speaks and settle back in the silences. If it stays a flat grey
+          thread while you talk, the microphone is not reaching the app — stop and fix
+          that first, everything below is wasted otherwise.
         </p>
       </li>
       <li>
         <p>
-          Sit about where a doctor sits: <b>50–80&nbsp;cm from the laptop</b>, normal speaking volume.
-          Do not lean into the microphone. The whole point is to find out whether it copes with the
-          real distance.
-        </p>
-      </li>
-      <li>
-        <p>
-          Press <b>Aufnahme starten</b> and watch the ribbon. It should bloom into colour as soon as
-          you speak and settle back when you stop. If it stays a flat grey thread while you talk, the
-          microphone is not reaching the app — stop and fix that before going further.
+          The app never asks you to approve anything. When the text appears, each block
+          has its own <b>Kopieren</b> button, because the three blocks go to three
+          different places in his Word template.
         </p>
       </li>
     </ol>
   </section>
 
   <section>
-    <h2>Part one · Play the consultation</h2>
+    <div class="part">
+      <span class="part-n">Teil 1</span>
+      <h2 style="border:0;padding:0;">Gespräch aufnehmen</h2>
+    </div>
     <p class="lede">
-      Sit someone opposite you and work through these. You are not testing the app yet — you are
-      generating something real to dictate afterwards. Let them answer however they like; the
-      messier the answers, the better the test.
-    </p>
-
-    <ul class="asks">
-      <li><span class="ask">Wie ist es Ihnen seit dem letzten Mal ergangen?</span><span class="why">Opens the Anamnese. Everything else hangs off this.</span></li>
-      <li><span class="ask">Haben Sie Druck oder Schmerzen in der Brust? Bei Belastung oder in Ruhe?</span><span class="why">The core cardiac question. Note whether it is exertional.</span></li>
-      <li><span class="ask">Wie viele Stockwerke schaffen Sie, ohne stehen zu bleiben?</span><span class="why">Turns "gut" into a number you can dictate.</span></li>
-      <li><span class="ask">Bekommen Sie Luftnot? Nachts? Mit wie vielen Kissen schlafen Sie?</span><span class="why">Heart-failure signs, and a number again.</span></li>
-      <li><span class="ask">Spüren Sie Herzstolpern oder Herzrasen?</span><span class="why">Arrhythmia. Ask how long and how it stops.</span></li>
-      <li><span class="ask">Ist Ihnen schwindlig geworden, oder waren Sie kurz weg?</span><span class="why">Syncope — the answer that changes the plan.</span></li>
-      <li><span class="ask">Schwellen Ihre Beine an, vor allem abends?</span><span class="why">Oedema. Ask whether the socks leave a mark.</span></li>
-      <li><span class="ask">Welche Medikamente nehmen Sie zurzeit, und in welcher Dosierung?</span><span class="why">Have them read from the box. This is where the dosing traps come from.</span></li>
-      <li><span class="ask">Vertragen Sie alles gut? Muskelschmerzen?</span><span class="why">Statin tolerance — a routine line in his letters.</span></li>
-      <li><span class="ask">Rauchen Sie? Wie sieht es mit Bewegung aus?</span><span class="why">Risk factors, and gives the Prozedere something to say.</span></li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>Part two · The dictation</h2>
-    <p class="lede">
-      Read this aloud at a normal pace, in one recording. Pause naturally between blocks — the app
-      cuts its segments on the silences, so a real pause is a feature, not a problem. The
-      <mark class="trap">underlined</mark> phrases are deliberate traps; say them exactly as written.
+      Press <b>Gespräch aufnehmen</b> and act this out with one other person. You are the
+      doctor, they are the patient. Read at a normal conversational pace, talk over each
+      other a bit, do not be tidy about it — messiness is the thing being tested. The
+      <mark class="trap">underlined</mark> lines are deliberate traps; say them exactly as
+      written.
     </p>
 
     <div class="dictation">
-
       <div class="block">
-        <div class="block-label"><span class="n">01</span><span class="name">Anrede</span></div>
+        <div class="block-label"><span class="n">01</span><span class="name">Begrüßung</span></div>
         <div>
-          <div class="say">
-            Sehr geehrter Herr Kollege, wir berichten Ihnen über unseren gemeinsamen Patienten,
-            Herrn Werner Baumgartner, geboren am vierzehnten März neunzehnhundertachtundfünfzig,
-            der sich am heutigen Tage in unserer kardiologischen Sprechstunde vorstellte.
-          </div>
-        </div>
-      </div>
-
-      <div class="block">
-        <div class="block-label"><span class="n">02</span><span class="name">Diagnosen</span></div>
-        <div>
-          <div class="say">
-            Diagnosen. Erstens, koronare Herzkrankheit, Zustand nach Nicht-ST-Hebungsinfarkt
-            im März zweitausendfünfundzwanzig mit Implantation eines medikamentenbeschichteten
-            Stents in den Ramus interventricularis anterior. Zweitens, arterielle Hypertonie.
-            Drittens, Hyperlipoproteinämie.
-          </div>
+          <dl class="who">
+            <dt>Arzt</dt><dd>So, Herr Neumann, guten Tag, setzen Sie sich. Wie ist es Ihnen ergangen seit dem Frühjahr?</dd>
+            <dt>Patient</dt><dd>Danke, ganz gut. Ein bisschen Stress war, aber sonst geht es.</dd>
+            <dt>Arzt</dt><dd>Das freut mich. Dann gehen wir das mal der Reihe nach durch.</dd>
+          </dl>
           <p class="note">
-            <b>Watch:</b> "Zustand nach" should come back as <code>Z.n.</code> and keep its full
-            stops. The stent name is the kind of long compound that separates a good transcription
-            from a bad one.
+            <b>Watch:</b> none of this small talk may appear in the letter. If "setzen Sie
+            sich" or the joke about the wife shows up anywhere, that is a bug.
           </p>
         </div>
       </div>
 
       <div class="block">
-        <div class="block-label"><span class="n">03</span><span class="name">Anamnese</span></div>
+        <div class="block-label"><span class="n">02</span><span class="name">Beschwerden</span></div>
         <div>
-          <div class="say">
-            Anamnese. Der Patient berichtet über eine deutliche Besserung seiner Belastbarkeit.
-            Er schafft zwei Stockwerke ohne Pause. <mark class="trap">Angina pectoris wird
-            verneint.</mark> <mark class="trap">Kein Hinweis auf Palpitationen oder
-            Synkopen.</mark> Beinödeme bestehen nicht. Die Medikation wird gut vertragen,
-            insbesondere ohne Myalgien.
-          </div>
+          <dl class="who">
+            <dt>Patient</dt><dd>Ganz gut eigentlich. Seit dem Infarkt ist eigentlich Ruhe.</dd>
+            <dt>Arzt</dt><dd>Und wann war der genau?</dd>
+            <dt>Patient</dt><dd><mark class="trap">Das war dreiundzwanzig. Nein, warte — zweiundzwanzig war das, im November.</mark></dd>
+            <dt>Arzt</dt><dd>Gut. Und Druck auf der Brust, Enge, wenn Sie sich anstrengen?</dd>
+            <dt>Patient</dt><dd>Nein, gar nichts mehr.</dd>
+            <dt>Arzt</dt><dd>Wie viel wiegen Sie zurzeit?</dd>
+            <dt>Patient</dt><dd><mark class="trap">Achtzig Kilo.</mark></dd>
+            <dt>Arzt</dt><dd>Und beim Hausarzt letzte Woche?</dd>
+            <dt>Patient</dt><dd><mark class="trap">Da waren es sechsundachtzig, aber deren Waage geht falsch.</mark></dd>
+            <dt>Arzt</dt><dd>Gut, notieren wir beides. Luftnot sonst? Nachts, wenn Sie flach liegen?</dd>
+            <dt>Patient</dt><dd>Nein, ich schlafe ganz normal mit einem Kissen.</dd>
+            <dt>Arzt</dt><dd>Herzstolpern, Herzrasen? Schwindel, mal kurz weg gewesen?</dd>
+            <dt>Patient</dt><dd>Nein, nichts davon. Und geschwollene Beine auch nicht.</dd>
+          </dl>
           <p class="note">
-            <b>Watch:</b> both negations must survive word for word. A draft that turns
-            "wird verneint" into "besteht" is the single most dangerous failure this app can have.
+            <b>Two traps here.</b> The year corrects itself — only <b>11/2022</b> may appear,
+            never 2023. The weight does <em>not</em>: 80 and 86 are two measurements and
+            neither is withdrawn, so the app must carry <b>both</b> with a
+            <code>[FEHLT: widersprüchliche Angabe]</code> marker rather than quietly pick
+            one. Telling those two cases apart — a correction versus a genuine
+            discrepancy — is the hardest thing this prompt does, and it failed six times out
+            of six a week ago.
           </p>
         </div>
       </div>
 
       <div class="block">
-        <div class="block-label"><span class="n">04</span><span class="name">Befund</span></div>
+        <div class="block-label"><span class="n">03</span><span class="name">Medikation</span></div>
         <div>
-          <div class="say">
-            Befund. Blutdruck einhundertdreißig zu achtzig Millimeter Quecksilbersäule,
-            Herzfrequenz vierundsechzig pro Minute, regelmäßig. Im Ruhe-EKG Sinusrhythmus,
-            keine Erregungsrückbildungsstörungen. Echokardiographisch normal große Herzhöhlen,
-            Ejektionsfraktion fünfundfünfzig Prozent, <mark class="trap">kein Hinweis auf
-            regionale Wandbewegungsstörungen.</mark> Die Belastungsuntersuchung bis
-            einhundertfünfzig Watt blieb ohne Ischämiezeichen.
-          </div>
+          <dl class="who">
+            <dt>Arzt</dt><dd>Was nehmen Sie zurzeit?</dd>
+            <dt>Patient</dt><dd>Ich habe es aufgeschrieben. Also <mark class="trap">ASS hundert, eins null null.</mark></dd>
+            <dt>Arzt</dt><dd>Gut.</dd>
+            <dt>Patient</dt><dd><mark class="trap">Dann Metoprolol fünfundneunzig — nein, fünfzig. Fünfzig, eins null eins.</mark></dd>
+            <dt>Patient</dt><dd><mark class="trap">Dann Atorvastatin vierzig. Nein, warte, das ist Rosuvastatin. Rosuvastatin zwanzig, abends, null null eins.</mark></dd>
+            <dt>Patient</dt><dd><mark class="trap">Und Ramipril fünf, eins null.</mark></dd>
+            <dt>Arzt</dt><dd>Vertragen Sie alles? Keine Muskelschmerzen?</dd>
+            <dt>Patient</dt><dd>Nein, gar keine.</dd>
+          </dl>
           <p class="note">
-            <b>Watch:</b> every number. <code>130/80&nbsp;mmHg</code>, <code>64/min</code>,
-            <code>55&nbsp;%</code>, <code>150&nbsp;Watt</code>. A transposed digit here is a wrong
-            letter.
+            <b>This block is the safety test.</b> Four things must come out exactly right:
+            "eins null null" is a <em>schedule</em> and must become <code>1-0-0</code>, never
+            the number 100. The strength is bare — <code>ASS 100</code>, never
+            <code>ASS 100 mg</code>. Both self-corrections must land on the
+            <em>second</em> value: <code>Metoprolol 50</code> and <code>Rosuvastatin 20</code>,
+            with <b>no Atorvastatin and no 95 anywhere</b>. And the Ramipril line is
+            deliberately incomplete — two slots where there should be three — so the app must
+            flag it rather than invent the missing dose.
           </p>
         </div>
       </div>
 
       <div class="block">
-        <div class="block-label"><span class="n">05</span><span class="name">Therapie</span></div>
+        <div class="block-label"><span class="n">04</span><span class="name">Vorgeschichte</span></div>
         <div>
-          <div class="say">
-            Therapie. <mark class="trap">Acetylsalicylsäure einhundert Milligramm, eins null
-            null.</mark> <mark class="trap">Bisoprolol fünf Milligramm, eins null null.</mark>
-            Atorvastatin vierzig Milligramm, null null eins. <mark class="trap">Ramipril fünf
-            Milligramm, eins null.</mark>
-          </div>
-          <p class="note">
-            <b>This block is the whole safety test.</b> "eins null null" is a dosing schedule and
-            must become <code>1-0-0</code>, never the number <code>100</code>. The last line is
-            deliberately incomplete — a three-times-a-day schedule with only two slots dictated —
-            and the app must flag it rather than guess the missing dose.
-          </p>
+          <dl class="who">
+            <dt>Arzt</dt><dd>Sonstige Erkrankungen? Zucker?</dd>
+            <dt>Patient</dt><dd>Bluthochdruck seit zwanzig Jahren. Zucker nein.</dd>
+            <dt>Arzt</dt><dd>Operiert worden?</dd>
+            <dt>Patient</dt><dd>Blinddarm als Kind. Und die Hüfte rechts, zweitausendneunzehn.</dd>
+            <dt>Arzt</dt><dd>Rauchen Sie?</dd>
+            <dt>Patient</dt><dd>Aufgehört, vor fünfzehn Jahren. Davor eine Schachtel am Tag.</dd>
+            <dt>Arzt</dt><dd>Und in der Familie, Herzerkrankungen?</dd>
+            <dt>Patient</dt><dd>Meine Schwester hatte mit einundsechzig einen Infarkt.</dd>
+            <dt>Arzt</dt><dd>Allergien?</dd>
+            <dt>Patient</dt><dd>Ich vertrage kein Penicillin, da bekomme ich Ausschlag.</dd>
+            <dt>Arzt</dt><dd>Gut, Herr Neumann, dann schauen wir uns jetzt Ihr Herz an.</dd>
+          </dl>
         </div>
       </div>
-
-      <div class="block">
-        <div class="block-label"><span class="n">06</span><span class="name">Prozedere</span></div>
-        <div>
-          <div class="say">
-            Prozedere. Wir empfehlen die Fortführung der bestehenden Medikation sowie eine
-            Kontrolle der Blutfette in drei Monaten. Eine Wiedervorstellung in unserer
-            Sprechstunde ist in sechs Monaten vorgesehen. Bei erneuten Beschwerden bitten wir um
-            kurzfristige Wiedervorstellung.
-          </div>
-        </div>
-      </div>
-
     </div>
   </section>
 
   <section>
-    <h2>Part three · What the draft has to say</h2>
+    <h2>What the three blocks must say</h2>
     <p class="lede">
-      Open the letter and check these one at a time. Anything in the right-hand column means stop
-      and tell me — those are bugs, not rough edges.
+      Check these one at a time. Anything in the right-hand column means stop and send it
+      to me — those are bugs, not rough edges.
     </p>
 
     <div class="scroller">
       <table>
-        <thead>
-          <tr><th>Must read</th><th>Where</th><th>Failure to report</th></tr>
-        </thead>
+        <thead><tr><th>Must read</th><th>Block</th><th>Failure to report</th></tr></thead>
         <tbody>
-          <tr>
-            <td class="expect">ASS 100 mg 1-0-0</td>
-            <td>Therapie</td>
-            <td class="fail">Any form of <code>100 100</code>, or the schedule collapsed into a number</td>
-          </tr>
-          <tr>
-            <td class="expect">Bisoprolol 5 mg 1-0-0</td>
-            <td>Therapie</td>
-            <td class="fail"><code>Bisoprolol 5 mg 100</code> — reads as a hundred-milligram dose</td>
-          </tr>
-          <tr>
-            <td class="expect">Atorvastatin 40 mg 0-0-1</td>
-            <td>Therapie</td>
-            <td class="fail">Slots reordered, or the strength changed</td>
-          </tr>
-          <tr>
-            <td class="expect">[FEHLT: …]</td>
-            <td>Therapie, Ramipril</td>
-            <td class="fail">A completed <code>1-0-1</code> or <code>1-0-0</code> — the app invented a dose</td>
-          </tr>
-          <tr>
-            <td class="expect">verneint / Kein Hinweis auf</td>
-            <td>Anamnese, Befund</td>
-            <td class="fail">Any negation dropped, softened, or reversed</td>
-          </tr>
-          <tr>
-            <td class="expect">130/80 mmHg · 64/min · 55 %</td>
-            <td>Befund</td>
-            <td class="fail">A digit changed anywhere</td>
-          </tr>
-          <tr>
-            <td class="expect">Z.n. NSTEMI 03/2025</td>
-            <td>Diagnosen</td>
-            <td class="fail">Full stops stripped from <code>Z.n.</code></td>
-          </tr>
-          <tr>
-            <td class="expect">no ICD or GOÄ codes anywhere</td>
-            <td>whole letter</td>
-            <td class="fail">Any billing or coding suggestion — it must never do this</td>
-          </tr>
+          <tr><td class="expect">ASS 100 &nbsp;1-0-0</td><td>Medikation</td><td class="fail">Any <code>100</code> where the schedule belongs, or an added <code>mg</code></td></tr>
+          <tr><td class="expect">Metoprolol 50 &nbsp;1-0-1</td><td>Medikation</td><td class="fail"><code>95</code> anywhere — the correction was ignored</td></tr>
+          <tr><td class="expect">Rosuvastatin 20 &nbsp;0-0-1</td><td>Medikation</td><td class="fail"><b>Atorvastatin appearing at all</b>, or both statins listed</td></tr>
+          <tr><td class="expect">[FEHLT: …]</td><td>Medikation, Ramipril</td><td class="fail">A completed <code>1-0-1</code> or <code>1-0-0</code> — it invented a dose</td></tr>
+          <tr><td class="expect">80 kg <b>and</b> 86 kg</td><td>Anamnese</td><td class="fail">Only one weight — it picked a side. (The <code>[FEHLT]</code> marker alongside them is inconsistent, about one run in eight; both numbers being present is the thing that matters.)</td></tr>
+          <tr><td class="expect">11/2022</td><td>Diagnosen</td><td class="fail"><code>2023</code> — the correction was ignored</td></tr>
+          <tr><td class="expect">negations present</td><td>Anamnese</td><td class="fail">Luftnot, Schwindel, Beinödeme, Muskelschmerzen or Zucker silently missing</td></tr>
+          <tr><td class="expect">Penicillin</td><td>Anamnese</td><td class="fail">The allergy dropped</td></tr>
+          <tr><td class="expect">no small talk</td><td>all three</td><td class="fail">Any greeting, joke, or "schauen wir uns Ihr Herz an"</td></tr>
+          <tr><td class="expect">no ICD or GOÄ codes</td><td>all three</td><td class="fail">Any billing or coding suggestion — it must never do this</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="callout">
-      <h3>If a dosing scheme is wrong</h3>
+      <h3>Expect some duplication</h3>
       <p class="note">
-        Screenshot the letter, then send me the <b>Erkannter Text</b> from the recording screen as
-        well. The two together tell me whether the speech recognition or the drafting step broke it,
-        and those are fixed in completely different places.
+        The smoking history and one or two diagnoses will probably appear in
+        <b>both</b> Diagnosen and Anamnese. That is a known defect, measured at about 1.3
+        repeated items per letter. I tried three fixes for it last week and rejected all
+        three, because every one of them bought the tidiness by silently dropping a
+        negation. Deleting a duplicate line is annoying; a missing "no" is wrong. Not a
+        bug to report — but tell me if it is worse than a line or two.
       </p>
     </div>
   </section>
 
   <section>
-    <h2>Two shorter runs</h2>
-
-    <h3>Thirty-second smoke test</h3>
-    <div class="say">
-      Befund. Blutdruck einhundertvierzig zu neunzig, Herzfrequenz zweiundsiebzig pro Minute.
-      Therapie. Bisoprolol fünf Milligramm, eins null null. Angina pectoris wird verneint.
+    <div class="part">
+      <span class="part-n">Teil 2</span>
+      <h2 style="border:0;padding:0;">Beurteilung diktieren</h2>
     </div>
-    <p class="note">
-      Everything that can go badly wrong, in three sentences. Use this after every change I deploy.
+    <p class="lede">
+      Now the patient has gone and the echo is done. Go back to the start screen, press
+      <b>Beurteilung diktieren</b>, and read this alone, at dictation pace. Do not speak
+      the punctuation — the app puts it in.
     </p>
 
-    <h3>Translation</h3>
-    <p>
-      With a finished draft on screen, open <b>Übersetzung</b>, pick English, and translate. Then
-      check the same three things: the numbers are identical, the dosing schemes are identical, and
-      no <code>[FEHLT]</code> marker has disappeared. The app checks this itself and will warn you
-      — the point of testing is to find out whether the warning is right.
+    <div class="dictation">
+      <div class="block">
+        <div class="block-label"><span class="n">05</span><span class="name">Diktat</span></div>
+        <div>
+          <div class="say">
+            Bezüglich der koronaren Herzkrankheit war im November zweiundzwanzig bei
+            Nicht-ST-Hebungsinfarkt eine Stentimplantation in die rechte Kranzarterie
+            erfolgt. Der Patient ist zwischenzeitlich weitgehend beschwerdefrei;
+            <mark class="trap">eine Angina pectoris wird verneint</mark>, zum Körpergewicht
+            liegen widersprüchliche Angaben vor. Die heute durchgeführte
+            Echokardiographie zeigte eine normal große linke Kammer mit einer
+            Ejektionsfraktion von <mark class="trap">fünfundfünfzig Prozent</mark> ohne
+            regionale Wandbewegungsstörungen. Die Ergometrie war bis
+            <mark class="trap">einhundertfünfundzwanzig Watt</mark> ohne Ischämiezeichen.
+            Bei einem Blutdruck von <mark class="trap">einhundertfünfundvierzig zu
+            neunzig</mark> würde ich eine Anpassung der antihypertensiven Therapie
+            empfehlen. Sicherheitshalber würde ich eine Kontrolle in sechs Monaten
+            empfehlen, dann sollte wieder ein Belastungstest erfolgen.
+          </div>
+          <p class="note">
+            <b>Watch:</b> every number — <code>55&nbsp;%</code>, <code>125&nbsp;Watt</code>,
+            <code>145/90&nbsp;mmHg</code>, <code>11/22</code>. The negation must survive as a
+            negation. And the decimal separator in German is a comma, never a full stop.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h3>The cross-check that makes this worth doing</h3>
+      <p class="note">
+        Part 1 and Part 2 describe the same patient. Put them side by side: does the infarct
+        date in the Beurteilung match the one in Diagnosen? Does "widersprüchliche Angaben"
+        line up with the two weights from Part 1? If the two features disagree with each
+        other about the same patient, that is worth more to me than either output alone.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Thirty-second smoke test</h2>
+    <p class="lede">Use this after every change I deploy — it is everything that can go badly wrong, in four sentences.</p>
+    <div class="say">
+      Der Patient ist beschwerdefrei, eine Angina pectoris wird verneint. Blutdruck
+      einhundertvierzig zu neunzig. Metoprolol fünfundneunzig — nein, fünfzig, eins null
+      eins. Ramipril fünf, eins null.
+    </div>
+    <p class="note">
+      Correct output: the negation intact, <code>140/90</code>, <code>Metoprolol 50 1-0-1</code>
+      with no <code>95</code>, and a <code>[FEHLT]</code> on the Ramipril.
     </p>
 
     <div class="callout">
-      <h3>One thing to know while testing</h3>
+      <h3>If something is wrong</h3>
       <p class="note">
-        The draft is written by a model reached through the Vercel AI Gateway, which sits between
-        the browser and the model. That is fine for finding out which model writes the best German,
-        and it is <b>not</b> the configuration to put in front of a real patient. Use invented
-        patients only — the name and date of birth above are made up, and yours should be too.
+        Send me a screenshot of the block <b>and</b> the <b>Erkannter Text</b> from the same
+        recording. The two together tell me whether the speech recognition or the drafting
+        step broke it, and those are fixed in completely different places. Use invented
+        patients only — "Herr Neumann" is made up, and yours should be too.
       </p>
     </div>
   </section>

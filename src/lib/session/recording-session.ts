@@ -27,6 +27,12 @@ export interface RecordingState {
   /** Which feature this recording belongs to. Decides the prompt used later. */
   kind: SessionKind | null;
   startedAt: number | null;
+  /**
+   * When recording stopped. The elapsed time is frozen against this rather than
+   * against the wall clock — otherwise navigating away and back re-derives it
+   * from Date.now() and shows the time spent away as recorded time.
+   */
+  endedAt: number | null;
   /** Segments persisted so far. */
   segmentCount: number;
   level: number;
@@ -40,6 +46,7 @@ const INITIAL: RecordingState = {
   sessionId: null,
   kind: null,
   startedAt: null,
+  endedAt: null,
   segmentCount: 0,
   level: 0,
   inputWarning: null,
@@ -161,6 +168,7 @@ export class RecordingSession {
       sessionId: session.id,
       kind,
       startedAt: session.startedAt,
+      endedAt: null,
       segmentCount: 0,
       error: null,
     });
@@ -211,12 +219,12 @@ export class RecordingSession {
       await db.sessions.update(sessionId, { status: 'stopped', endedAt: Date.now() });
     }
 
-    this.set({ status: 'stopped', level: 0 });
+    this.set({ status: 'stopped', level: 0, endedAt: Date.now() });
     return sessionId;
   }
 
   private fail(message: string): void {
-    this.set({ status: 'error', error: message, level: 0 });
+    this.set({ status: 'error', error: message, level: 0, endedAt: Date.now() });
     void this.teardown();
   }
 

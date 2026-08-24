@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { formatElapsed } from './elapsed.ts';
+
 import {
   RecordingSession,
   findRecoverableSessions,
@@ -49,18 +51,20 @@ export function useRecoverableSessions(): {
 }
 
 /** MM:SS, counting up from a start timestamp. */
-export function useElapsed(startedAt: number | null, running: boolean): string {
+export function useElapsed(
+  startedAt: number | null,
+  running: boolean,
+  endedAt: number | null = null,
+): string {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!running) return;
+    setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(timer);
   }, [running]);
 
-  if (!startedAt) return '00:00';
-  const total = Math.max(0, Math.floor((now - startedAt) / 1000));
-  const minutes = String(Math.floor(total / 60)).padStart(2, '0');
-  const seconds = String(total % 60).padStart(2, '0');
-  return `${minutes}:${seconds}`;
+  return formatElapsed(startedAt, endedAt, now, running);
 }
+

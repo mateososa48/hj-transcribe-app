@@ -49,7 +49,7 @@ export function RecordScreen({
   const recording = useRecordingState();
   const queue = useQueueState();
   const [starting, setStarting] = useState(false);
-  const elapsed = useElapsed(recording.startedAt, recording.status === 'recording');
+  const elapsed = useElapsed(recording.startedAt, recording.status === 'recording', recording.endedAt);
   const copy = COPY[kind];
 
   // The queue runs whenever the app is open, not only while recording — that is

@@ -48,6 +48,16 @@ export function ResultScreen({
   const [busy, setBusy] = useState(false);
   const [vorbrief, setVorbrief] = useState('');
   const [showVorbrief, setShowVorbrief] = useState(false);
+  /**
+   * Segments of THIS recording that are not transcribed yet.
+   *
+   * Deliberately read from the segment rows rather than the queue's counters:
+   * the counters are refreshed on a tick, so a segment written a moment ago can
+   * be invisible to them. That window let the button enable while the tail of a
+   * recording was still pending, and the draft was then built from half a
+   * dictation — which is exactly what happened on 2026-08-23.
+   */
+  const [outstanding, setOutstanding] = useState<number | null>(null);
   const queue = useQueueState();
 
   const load = useCallback(async () => {
@@ -55,12 +65,14 @@ export function ResultScreen({
       setLoading(false);
       return;
     }
-    const [existing, text] = await Promise.all([
+    const [existing, text, segments] = await Promise.all([
       db.results.where('sessionId').equals(sessionId).first(),
       assembleTranscript(sessionId),
+      db.segments.where('sessionId').equals(sessionId).toArray(),
     ]);
     setResult(existing ?? null);
     setTranscript(text);
+    setOutstanding(segments.filter((seg) => seg.transcriptionStatus !== 'done').length);
     setLoading(false);
   }, [sessionId]);
 
@@ -73,6 +85,14 @@ export function ResultScreen({
   useEffect(() => {
     if (queue.pending === 0 && queue.running === 0) void load();
   }, [queue.pending, queue.running, load]);
+
+  // The queue can be idle while a segment is still marked pending (it retries on
+  // a backoff). Poll until this recording is genuinely complete.
+  useEffect(() => {
+    if ((outstanding ?? 0) === 0) return;
+    const timer = setInterval(() => void load(), 1500);
+    return () => clearInterval(timer);
+  }, [outstanding, load]);
 
   async function handleGenerate() {
     if (!sessionId) return;
@@ -104,7 +124,8 @@ export function ResultScreen({
     );
   }
 
-  const waiting = queue.pending > 0 || queue.running > 0;
+  // Either signal saying "not finished" is enough to hold the button.
+  const waiting = queue.pending > 0 || queue.running > 0 || (outstanding ?? 0) > 0;
   const sections = KIND_SECTIONS[kind];
   const allMarkers = result
     ? extractFehltMarkers(Object.values(result.sections).join('\n'))
@@ -169,8 +190,9 @@ export function ResultScreen({
         <div className="flex items-center gap-3 rounded-lg bg-muted px-4 py-3">
           <Spinner />
           <p className="text-base">
-            Die Aufnahme wird noch in Text umgewandelt ({queue.pending + queue.running} offen). Das
-            geht gleich weiter.
+            Die Aufnahme wird noch in Text umgewandelt (
+            {Math.max(queue.pending + queue.running, outstanding ?? 0)} offen). Bitte warten Sie
+            — sonst entsteht der Text nur aus dem ersten Teil.
           </p>
         </div>
       ) : null}

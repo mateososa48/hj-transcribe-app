@@ -119,6 +119,8 @@ export class SegmentRecorder {
   private activeStartedAt = 0;
   private nextIndex = 0;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  /** In-flight onSegment writes, so stop() can wait for them. */
+  private readonly pendingPersists = new Set<Promise<void>>();
   private rotating = false;
   private inputDead = false;
   private readonly opts: Required<SegmentRecorderOptions>;
@@ -171,6 +173,10 @@ export class SegmentRecorder {
         recorder.stop();
       });
     }
+    // Every segment is on disk before stop() resolves. Anything downstream that
+    // reads the session — assembling the transcript, counting outstanding work —
+    // can then trust what it finds.
+    await Promise.all([...this.pendingPersists]);
     this.state = 'stopped';
   }
 
@@ -188,17 +194,26 @@ export class SegmentRecorder {
     });
 
     recorder.addEventListener('stop', () => {
+      // Tracked so stop() can await it. Fire-and-forget here meant the LAST
+      // segment of a recording was still being written to IndexedDB while the
+      // result screen was already assembling the transcript — so the tail of a
+      // dictation could silently go missing.
+
       // Assemble here rather than trusting a single dataavailable: a rotation
       // or a browser quirk can split the payload, and a dropped chunk is a
       // dropped sentence.
       const blob = new Blob(chunks, { type: this.mimeType || 'audio/webm' });
       if (blob.size === 0) return;
-      void this.callbacks.onSegment(blob, {
-        index,
-        startedAt,
-        durationMs: Date.now() - startedAt,
-        mimeType: this.mimeType || 'audio/webm',
-      });
+      this.pendingPersists.add(
+        Promise.resolve(
+          this.callbacks.onSegment(blob, {
+            index,
+            startedAt,
+            durationMs: Date.now() - startedAt,
+            mimeType: this.mimeType || 'audio/webm',
+          }),
+        ).catch(() => undefined),
+      );
     });
 
     recorder.addEventListener('error', () => {

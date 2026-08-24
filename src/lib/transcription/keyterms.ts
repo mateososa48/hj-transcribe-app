@@ -62,6 +62,13 @@ const TERMS = [
   'Zustand nach', 'Verdacht auf', 'beschwerdefrei', 'Belastungsdyspnoe',
   'Ödeme', 'Beinödeme', 'Palpitationen', 'Nikotinabusus', 'Dyspnoe',
   'Verlaufskontrolle', 'Erstvorstellung', 'Wiedervorstellung',
+  // Everyday history words the recogniser gets wrong in ways that read as
+  // clinical findings. "Blinddarm" came back as "Der Patient ist blind" in a
+  // real test on 2026-08-23.
+  'Blinddarm', 'Blinddarmoperation', 'Appendektomie', 'Gallenblase',
+  'Cholezystektomie', 'Kaiserschnitt', 'Bandscheibe', 'Hüftoperation',
+  'Knie-TEP', 'Schilddrüse', 'Schilddrüsenunterfunktion', 'Pollinosis',
+  'Penicillin', 'Unverträglichkeit',
 ];
 
 /**

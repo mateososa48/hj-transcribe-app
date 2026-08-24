@@ -10,7 +10,7 @@
  * in exactly the vocabulary that must not drift.
  */
 
-export const PROMPT_VERSION = '2026-08-23.1';
+export const PROMPT_VERSION = '2026-08-23.3';
 
 /**
  * The non-negotiable rules. Ordered by consequence: the first two are the ones
@@ -36,8 +36,22 @@ export const CORE_RULES = `GRUNDREGELN — diese gelten ausnahmslos und haben Vo
    Ein Dosierungsschema hat drei Angaben ("1-0-0"). Wenn im Diktat nur zwei
    erkennbar sind (etwa "1/0" oder "1-0"), ist das ein Erkennungsfehler.
    Ergänzen Sie den fehlenden Wert NICHT — auch nicht, wenn er sich aufdrängt.
-   Schreiben Sie stattdessen:
-       [FEHLT: Dosierungsschema unvollständig erkannt, bitte prüfen]
+   Präparat und Stärke bleiben stehen; nur das Schema wird ersetzt, denn eine
+   Markierung ohne Präparat sagt dem Arzt nicht, welches Medikament er prüfen
+   soll:
+       Ramipril 5	[FEHLT: Dosierungsschema unvollständig erkannt, bitte prüfen]
+   Die ganze Zeile zu streichen ist falsch — dann fehlt das Medikament im Brief.
+
+   DAS GILT FÜR JEDE UNSICHERHEIT IN DER MEDIKATION, nicht nur für ein
+   unvollständiges Schema. Eine Markierung ersetzt immer nur den unklaren TEIL
+   einer Zeile, niemals die ganze Zeile:
+       So:    Metoprolol 50	[FEHLT: widersprüchliche Angabe, bitte prüfen]
+       Nicht: [FEHLT: widersprüchliche Angabe, bitte prüfen]
+   Eine Zeile, die nur aus einer Markierung besteht, ist immer falsch: der Arzt
+   sieht dann einen Hinweis, weiß aber nicht, welches Präparat gemeint ist, und
+   das Medikament fehlt in seiner Liste. Ist der Präparatename selbst unklar,
+   schreiben Sie ihn so, wie er im Diktat gefallen ist, und markieren Sie
+   dahinter.
    Eine geratene Dosierung ist der gefährlichste Fehler, den dieser Brief
    enthalten kann.
 
