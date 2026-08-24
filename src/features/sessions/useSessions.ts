@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { db, type Result, type Session } from '@/lib/db';
+import { useAppStore } from '@/store/app-store';
 
 export interface SessionSummary {
   session: Session;
-  /** First line or so of the produced text, for the list. */
+  /** First real line of the produced text, for the list. */
   preview: string;
   hasResult: boolean;
-  segmentCount: number;
 }
 
-const PREVIEW_LIMIT = 130;
+const PREVIEW_LIMIT = 90;
 
 function previewOf(result: Result | undefined): string {
   if (!result) return '';
   for (const text of Object.values(result.sections)) {
     const line = text
-      .replace(/\[FEHLT:[^\]]*\]/gi, '')
       .split('\n')
       .map((l) => l.replace(/^[\s\-–—•]+/, '').trim())
       .find((l) => l.length > 0);
@@ -25,35 +24,22 @@ function previewOf(result: Result | undefined): string {
   return '';
 }
 
-/**
- * Recent recordings, newest first.
- *
- * Re-read on demand rather than through a live query: the list changes only
- * when he records, deletes or generates, and those are all moments the caller
- * already knows about.
- */
-export function useSessions(limit = 20): {
+/** Recent recordings, newest first. Re-reads whenever sessions are touched. */
+export function useSessions(limit = 50): {
   sessions: SessionSummary[];
   loading: boolean;
   refresh: () => Promise<void>;
 } {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const version = useAppStore((s) => s.sessionsVersion);
 
   const refresh = useCallback(async () => {
     const rows = await db.sessions.orderBy('startedAt').reverse().limit(limit).toArray();
     const summaries = await Promise.all(
       rows.map(async (session) => {
-        const [result, segmentCount] = await Promise.all([
-          db.results.where('sessionId').equals(session.id).first(),
-          db.segments.where('sessionId').equals(session.id).count(),
-        ]);
-        return {
-          session,
-          preview: previewOf(result),
-          hasResult: Boolean(result),
-          segmentCount,
-        };
+        const result = await db.results.where('sessionId').equals(session.id).first();
+        return { session, preview: previewOf(result), hasResult: Boolean(result) };
       }),
     );
     setSessions(summaries);
@@ -62,20 +48,35 @@ export function useSessions(limit = 20): {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, version]);
 
   return { sessions, loading, refresh };
 }
 
-/** Human date for the list: today and yesterday get named, older gets a date. */
-export function formatWhen(ts: number): string {
-  const then = new Date(ts);
-  const time = then.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+/** Default display title for a session. */
+export function sessionTitle(session: Session): string {
+  if (session.label?.trim()) return session.label;
+  const when = new Date(session.startedAt);
+  const day = when.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  const time = when.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  return `${session.kind === 'gespraech' ? 'Termin' : 'Diktat'} ${day}, ${time} Uhr`;
+}
+
+/** Bucket key for the sidebar's date groups. */
+export function dayGroup(ts: number): string {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const dayMs = 86_400_000;
+  if (ts >= midnight.getTime()) return 'Heute';
+  if (ts >= midnight.getTime() - dayMs) return 'Gestern';
+  if (ts >= midnight.getTime() - 6 * dayMs) return 'Diese Woche';
+  return 'Älter';
+}
 
-  if (ts >= midnight.getTime()) return `Heute, ${time} Uhr`;
-  if (ts >= midnight.getTime() - dayMs) return `Gestern, ${time} Uhr`;
-  return then.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+export function formatDuration(ms: number | undefined): string {
+  if (!ms || ms <= 0) return '';
+  const total = Math.round(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')} min`;
 }

@@ -13,19 +13,18 @@ import { GESPRAECH_SECTIONS, GESPRAECH_SECTION_LABELS } from '../../prompts/gesp
 /**
  * The two things the app does.
  *
- * `gespraech` records the consultation and produces the sections he currently
- * types off a paper note. `beurteilung` replaces the dictation machine for the
- * summary. Everything downstream of the microphone is shared; only the prompt
- * and the shape of the result differ.
+ * `gespraech` records an appointment and turns it into a speaker-separated
+ * transcript plus sectioned notes — a meeting-notes app for the consulting
+ * room. `beurteilung` is dictation: he talks, it returns finished text.
  */
 export type SessionKind = 'gespraech' | 'beurteilung';
 
 export const SESSION_KIND_LABELS: Record<SessionKind, string> = {
-  gespraech: 'Gespräch',
-  beurteilung: 'Beurteilung',
+  gespraech: 'Termin',
+  beurteilung: 'Diktat',
 };
 
-/** The sections each kind produces, in the order they appear in his letter. */
+/** The sections each kind produces, in the order they appear on screen. */
 export const KIND_SECTIONS: Record<SessionKind, readonly string[]> = {
   gespraech: GESPRAECH_SECTIONS,
   beurteilung: ['beurteilung'],
@@ -45,59 +44,73 @@ export interface Session {
   startedAt: number;
   endedAt?: number;
   status: SessionStatus;
-  /**
-   * A local scratch label so HJ can tell recordings apart in the list
-   * ("Gespräch, 14:32"). NOT the patient name — no patient identity is ever
-   * captured incidentally from audio.
-   */
+  /** Editable title, Notion-style. Defaults to kind + time; never required. */
   label?: string;
+  /** Total recorded audio, from the recorder's own clock. */
+  durationMs?: number;
+  /** MIME type of the stored audio chunks. */
+  mimeType?: string;
+  /**
+   * Display names for diarized speakers, keyed by the provider's label
+   * ("A", "B", …). Unset speakers render as "Sprecher 1/2/…".
+   */
+  speakerNames?: Record<string, string>;
   resultId?: string;
 }
 
-export type TranscriptionStatus = 'pending' | 'running' | 'done' | 'failed';
-
 /**
- * One rotated recorder segment: a self-contained, independently playable file.
- * Written the moment it exists, before any network call — SPEC constraint 6
- * ("a recording must be unlosable"). A 30-minute consultation is a lot to lose.
+ * One timeslice chunk of the continuous recording, written the moment the
+ * recorder hands it over — before any network call (SPEC constraint 6: a
+ * recording must be unlosable).
+ *
+ * Chunks from a single MediaRecorder session are NOT independently playable —
+ * only the first carries the container header — but concatenated in order they
+ * form one valid file. That property is what this whole table is built on: it
+ * gives crash-safety (whatever chunks exist replay as a valid prefix) AND one
+ * seekable file for playback and diarization, where the old segment-rotation
+ * design gave neither.
  */
-export interface Segment {
+export interface AudioChunk {
   id: string;
   sessionId: string;
-  /** Monotonic within a session; defines transcript assembly order. */
+  /** Monotonic within a session; concatenation order. */
   index: number;
-  blob?: Blob;
-  mimeType: string;
-  durationMs: number;
+  blob: Blob;
   createdAt: number;
-  transcriptionStatus: TranscriptionStatus;
-  attempts: number;
-  lastError?: string;
-  /**
-   * Earliest time the queue may retry, for exponential backoff. Not indexed —
-   * the queue filters in memory, and the pending set is tiny.
-   */
-  nextAttemptAt?: number;
-  /** Set when the audio blob is dropped after he deletes the recording. */
-  audioDeletedAt?: number;
 }
 
-export interface Transcript {
+export type TranscriptionStatus = 'uploading' | 'processing' | 'done' | 'failed';
+
+/** One diarized utterance: who said what, when (ms from recording start). */
+export interface Utterance {
+  /** Provider speaker label: "A", "B", … Absent for dictations. */
+  speaker?: string;
+  text: string;
+  startMs: number;
+  endMs: number;
+}
+
+/** The transcript of one session — one row per session, whole-file. */
+export interface Transcription {
   id: string;
   sessionId: string;
-  segmentId: string;
+  status: TranscriptionStatus;
   providerId: string;
+  /** Full text, dosing-repaired. */
   text: string;
+  /** Speaker-separated, in time order. Empty for dictations. */
+  utterances: Utterance[];
+  error?: string;
   createdAt: number;
+  updatedAt: number;
 }
 
 /**
  * What came out of one recording: text he can read, correct and copy.
  *
  * `sections` is the working copy he edits; `original` is what the model
- * actually returned. Keeping both costs nothing and is the only signal we will
- * ever have for how his voice differs from the model's — it cannot be
- * reconstructed after he has edited over it.
+ * actually returned — the only signal we will ever have for how his voice
+ * differs from the model's, unreconstructable once edited over.
  */
 export interface Result {
   id: string;
@@ -110,8 +123,6 @@ export interface Result {
   model: string;
   promptVersion: string;
   wellFormed: boolean;
-  /** Previous letter he pasted in, used for carrying diagnoses forward. */
-  vorbrief?: string;
 }
 
 /** Key/value settings. Single-user, single machine. */
@@ -123,19 +134,14 @@ export interface SettingRecord {
 
 export class ArztbriefDB extends Dexie {
   sessions!: EntityTable<Session, 'id'>;
-  segments!: EntityTable<Segment, 'id'>;
-  transcripts!: EntityTable<Transcript, 'id'>;
+  chunks!: EntityTable<AudioChunk, 'id'>;
+  transcriptions!: EntityTable<Transcription, 'id'>;
   results!: EntityTable<Result, 'id'>;
   settings!: EntityTable<SettingRecord, 'key'>;
 
   constructor() {
     super('arztbrief');
 
-    // v1 modelled a whole six-section letter with an approval state machine.
-    // The app no longer owns the letter — he does, in Word — so v2 drops the
-    // document, glossary, template and audit stores and replaces them with a
-    // flat result per recording. Recordings and their audio carry across
-    // untouched; that is the data worth keeping.
     this.version(1).stores({
       sessions: 'id, startedAt, status',
       segments: 'id, sessionId, transcriptionStatus, [sessionId+index]',
@@ -147,21 +153,34 @@ export class ArztbriefDB extends Dexie {
       audit: 'id, at, type, documentId',
     });
 
-    this.version(2)
+    this.version(2).stores({
+      sessions: 'id, kind, startedAt, status',
+      segments: 'id, sessionId, transcriptionStatus, [sessionId+index]',
+      transcripts: 'id, sessionId, segmentId',
+      results: 'id, sessionId, kind, updatedAt',
+      settings: 'key',
+      documents: null,
+      glossary: null,
+      templates: null,
+      audit: null,
+    });
+
+    // v3: the segment-rotation design is replaced by one continuous recording
+    // persisted as ordered chunks, plus one whole-file diarized transcription
+    // per session. Old segments/transcripts are dropped — their audio format
+    // cannot be stitched into the new pipeline, and everything recorded so far
+    // is test data. Sessions and generated results carry across.
+    this.version(3)
       .stores({
         sessions: 'id, kind, startedAt, status',
-        segments: 'id, sessionId, transcriptionStatus, [sessionId+index]',
-        transcripts: 'id, sessionId, segmentId',
+        chunks: 'id, sessionId, [sessionId+index]',
+        transcriptions: 'id, sessionId',
         results: 'id, sessionId, kind, updatedAt',
         settings: 'key',
-        documents: null,
-        glossary: null,
-        templates: null,
-        audit: null,
+        segments: null,
+        transcripts: null,
       })
       .upgrade(async (tx) => {
-        // Sessions predate `kind`; everything recorded before this release was
-        // a dictated summary.
         await tx
           .table('sessions')
           .toCollection()
@@ -176,4 +195,18 @@ export const db = new ArztbriefDB();
 
 export function newId(): string {
   return crypto.randomUUID();
+}
+
+/** All chunks of a session, concatenated into one playable/uploadable file. */
+export async function assembleAudio(sessionId: string): Promise<Blob | null> {
+  const [session, chunks] = await Promise.all([
+    db.sessions.get(sessionId),
+    db.chunks.where('[sessionId+index]').between([sessionId, 0], [sessionId, Infinity]).toArray(),
+  ]);
+  if (chunks.length === 0) return null;
+  chunks.sort((a, b) => a.index - b.index);
+  return new Blob(
+    chunks.map((c) => c.blob),
+    { type: session?.mimeType || 'audio/webm' },
+  );
 }

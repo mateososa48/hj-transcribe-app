@@ -17,7 +17,7 @@
  * not in the repo.
  */
 import { readFileSync } from 'node:fs';
-import { buildStableSystemPrompt, buildUserPrompt, parseBeurteilung, extractFehltMarkers, hasReleasableContent }
+import { buildStableSystemPrompt, buildUserPrompt, parseBeurteilung }
   from '../prompts/beurteilung.ts';
 import { DEV_BEURTEILUNG_EXAMPLES } from '../prompts/examples/dev/index.ts';
 import { PROMPT_VERSION } from '../prompts/rules.ts';
@@ -58,12 +58,14 @@ for (const name of CASES) {
   const src = readFileSync(`${DIR}/${name}.txt`, 'utf8');
   const rows = await Promise.all(Array.from({ length: RUNS }, () => draft(src).catch((e) => ({ text: `ERR ${e}`, wellFormed: false }))));
   for (const [i, r] of rows.entries()) {
-    const markers = extractFehltMarkers(r.text);
-    const longest = Math.max(0, ...markers.map((m) => m.split(/\s+/).length));
-    const releasable = hasReleasableContent(r.text);
+    // E-garbage must yield exactly the fixed no-content sentence; everything
+    // else must yield real prose.
+    const isRefusal = /Kein medizinischer Inhalt erkannt\./.test(r.text);
     const flags: string[] = [];
     if (BANNER.test(r.text)) flags.push('BANNER');
-    if (longest > 8) flags.push(`MARKER_${longest}w`);
+    if (name === 'E-garbage' && !isRefusal) flags.push('GARBAGE_NOT_REFUSED');
+    if (name !== 'E-garbage' && isRefusal) flags.push('OVER_REFUSED');
+    if (/\[FEHLT/i.test(r.text)) flags.push('MARKER_RELIC');
     if (SWISS.test(r.text)) flags.push('SWISS_SS');
     if (name === 'A-dialog') {
       if (/Hypercholesterinämie|Myokardinfarkt/i.test(r.text)) flags.push('COINED_DX');
@@ -76,13 +78,12 @@ for (const name of CASES) {
       const assertsMed = r.text
         .split('\n')
         .filter((l) => /(Advil|Proposteron|400\s*mg)/i.test(l))
-        .some((l) => !/\[FEHLT[^\]]*\]/i.test(l) && !/nicht verwertbar|nicht nachvollziehbar|nicht plausib/i.test(l));
+        .some(() => true); // any mention at all is an assertion now — rule 3 says omit
       if (assertsMed) flags.push('MED_ASSERTED');
       if (!/nie|verneint|nicht/i.test(r.text)) flags.push('NEGATION_LOST');
     }
     console.log(
-      `${name.padEnd(17)} run${i + 1}  ${releasable ? 'releasable' : 'BLOCKED   '}  ${r.wellFormed ? 'tagged  ' : 'UNTAGGED'}  ` +
-      `markers:${String(markers.length).padStart(2)} longest:${String(longest).padStart(2)}w  ` +
+      `${name.padEnd(17)} run${i + 1}  ${isRefusal ? 'refused   ' : 'text      '}${r.wellFormed ? 'tagged  ' : 'UNTAGGED'}  ` +
       `chars:${String(r.text.length).padStart(4)}  ${flags.length ? '⚠ ' + flags.join(',') : 'clean'}`,
     );
   }

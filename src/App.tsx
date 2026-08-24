@@ -1,73 +1,41 @@
-import { useEffect } from 'react';
-import { Settings2 } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
-import { HomeScreen } from '@/features/home/HomeScreen';
-import { RecordScreen } from '@/features/record/RecordScreen';
-import { ResultScreen } from '@/features/result/ResultScreen';
+import { RecordFlow } from '@/features/record/RecordFlow';
+import { SessionView } from '@/features/session/SessionView';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { StartScreen } from '@/features/start/StartScreen';
 import { useAppStore } from '@/store/app-store';
-import { useSettingsStore } from '@/store/settings-store';
 
 /**
- * One column, one screen at a time.
- *
- * The three-layout comparison is gone: with two features and a linear path
- * through them there is nothing left for a sidebar to hold, and a layout
- * switcher was one more control that could put him somewhere he did not mean
- * to be.
+ * Sidebar app: everything ever recorded on the left, the selected thing on the
+ * right. The Diktat recorder is the one deliberate exception — it takes over
+ * the whole screen, because dictating is the one moment nothing else matters.
  */
 export default function App() {
-  const { view, sessionId, kind, goHome, startRecording, openResult, openSettings } = useAppStore();
-  const hydrate = useSettingsStore((s) => s.hydrate);
-  const loaded = useSettingsStore((s) => s.loaded);
-
-  useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
+  const view = useAppStore((s) => s.view);
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6 sm:px-8">
-        <button
-          type="button"
-          onClick={goHome}
-          className="rounded-md text-base font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-        >
-          Arztbrief-Assistent
-        </button>
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={openSettings}
-          aria-label="Einstellungen"
-          className="text-muted-foreground"
-        >
-          <Settings2 aria-hidden />
-          <span className="hidden sm:inline">Einstellungen</span>
-        </Button>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-10 sm:px-8">
-        {!loaded ? (
-          <p className="text-muted-foreground">Wird geladen …</p>
-        ) : view === 'start' ? (
-          <HomeScreen onStart={startRecording} onOpen={openResult} />
-        ) : view === 'aufnahme' ? (
-          <RecordScreen
-            kind={kind}
-            onBack={goHome}
-            onFinished={(id) => openResult(id, kind)}
-          />
-        ) : view === 'ergebnis' ? (
-          <ResultScreen sessionId={sessionId} kind={kind} onBack={goHome} />
-        ) : (
-          <SettingsPage onBack={goHome} />
-        )}
-      </main>
-
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="min-w-0">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
+          <SidebarTrigger />
+          <span className="text-base font-semibold tracking-tight">Arztbrief-Assistent</span>
+        </header>
+        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10 sm:px-10">
+          {view.name === 'start' ? (
+            <StartScreen />
+          ) : view.name === 'record' ? (
+            <RecordFlow kind={view.kind} />
+          ) : view.name === 'session' ? (
+            <SessionView sessionId={view.sessionId} />
+          ) : (
+            <SettingsPage />
+          )}
+        </main>
+      </SidebarInset>
       <Toaster position="bottom-right" />
-    </div>
+    </SidebarProvider>
   );
 }

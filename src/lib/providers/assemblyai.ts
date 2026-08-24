@@ -24,6 +24,7 @@ interface TranscriptResponse {
   text?: string | null;
   error?: string | null;
   words?: Array<{ text: string; start: number; end: number; confidence?: number }> | null;
+  utterances?: Array<{ speaker: string; text: string; start: number; end: number }> | null;
 }
 
 export function createAssemblyAI(apiKey: string): TranscriptionProvider {
@@ -34,7 +35,7 @@ export function createAssemblyAI(apiKey: string): TranscriptionProvider {
     label: 'AssemblyAI (EU)',
     euHosted: true,
 
-    async transcribeSegment(blob, opts): Promise<TranscriptChunk> {
+    async transcribeFile(blob, opts): Promise<TranscriptChunk> {
       const started = Date.now();
 
       const uploadRes = await assertOk(
@@ -55,9 +56,22 @@ export function createAssemblyAI(apiKey: string): TranscriptionProvider {
           body: JSON.stringify({
             audio_url: upload_url,
             language_code: opts.language,
-            // Glossary bias. If AssemblyAI rejects this field for the active
-            // speech model, the eval surfaces the 400 body immediately.
-            ...(opts.keyterms.length ? { word_boost: opts.keyterms, boost_param: 'high' } : {}),
+            // Domain bias. `keyterms_prompt` is the current parameter for the
+            // Universal models (up to 1000 terms); it replaced word_boost.
+            // If the API rejects it, the eval surfaces the 400 body.
+            ...(opts.keyterms.length ? { keyterms_prompt: opts.keyterms } : {}),
+            // Diarization: consultations only. speaker_options describes the
+            // realistic range rather than pinning an exact count — the docs
+            // recommend the range form unless the count is certain.
+            ...(opts.diarize
+              ? {
+                  speaker_labels: true,
+                  speaker_options: {
+                    min_speakers_expected: opts.diarize.minSpeakers,
+                    max_speakers_expected: opts.diarize.maxSpeakers,
+                  },
+                }
+              : {}),
           }),
           ...(opts.signal ? { signal: opts.signal } : {}),
         }),
@@ -65,13 +79,15 @@ export function createAssemblyAI(apiKey: string): TranscriptionProvider {
       );
       const created = (await createRes.json()) as TranscriptResponse;
 
-      // Poll. Segments are ~45 s, so this resolves in seconds, not minutes.
-      const deadline = Date.now() + 5 * 60_000;
+      // Poll. A full consultation is a real job: allow up to 15 min, check
+      // every 3 s. Universal typically finishes a 20-min file well under a
+      // minute, so the deadline is a hang-guard, not the expectation.
+      const deadline = Date.now() + 15 * 60_000;
       for (;;) {
         if (Date.now() > deadline) {
-          throw new ProviderError(ID, undefined, 'assemblyai-eu: polling timed out after 5 min');
+          throw new ProviderError(ID, undefined, 'assemblyai-eu: polling timed out after 15 min');
         }
-        await new Promise((r) => setTimeout(r, 1_000));
+        await new Promise((r) => setTimeout(r, 3_000));
 
         const pollRes = await assertOk(
           await fetch(`${BASE}/v2/transcript/${created.id}`, {
@@ -88,6 +104,16 @@ export function createAssemblyAI(apiKey: string): TranscriptionProvider {
         if (job.status === 'completed') {
           return {
             text: job.text ?? '',
+            ...(job.utterances && job.utterances.length
+              ? {
+                  utterances: job.utterances.map((u) => ({
+                    speaker: u.speaker,
+                    text: u.text,
+                    startMs: u.start,
+                    endMs: u.end,
+                  })),
+                }
+              : {}),
             ...(job.words
               ? {
                   words: job.words.map((w) => ({

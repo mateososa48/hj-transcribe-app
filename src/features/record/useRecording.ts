@@ -1,24 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { formatElapsed } from './elapsed.ts';
-
-import {
-  RecordingSession,
-  findRecoverableSessions,
-  type RecordingState,
-} from '@/lib/session/recording-session.ts';
-import { TranscriptionQueue, type QueueState } from '@/lib/transcription/queue.ts';
-import type { Session } from '@/lib/db.ts';
+import { RecordingSession, type RecordingState } from '@/lib/session/recording-session.ts';
+import { pipeline, type PipelineState } from '@/lib/transcription/pipeline.ts';
 
 /**
- * Module-level singletons on purpose.
- *
- * A recording must survive React remounting the view — putting the session or
- * the queue in component state would tie an in-flight recording to a render
- * tree, which is exactly the class of bug that loses audio.
+ * Module-level singleton on purpose: a recording must survive React remounting
+ * the view — tying an in-flight recording to a render tree is exactly the
+ * class of bug that loses audio.
  */
 export const recordingSession = new RecordingSession();
-export const transcriptionQueue = new TranscriptionQueue();
 
 export function useRecordingState(): RecordingState {
   const [state, setState] = useState<RecordingState>(() => recordingSession.getState());
@@ -26,31 +17,15 @@ export function useRecordingState(): RecordingState {
   return state;
 }
 
-export function useQueueState(): QueueState {
-  const [state, setState] = useState<QueueState>(() => transcriptionQueue.getState());
-  useEffect(() => transcriptionQueue.subscribe(setState), []);
-  return state;
+/** Live phase of the stop→transcript→notes pipeline for one session. */
+export function usePipelineState(sessionId: string | null): PipelineState {
+  return useSyncExternalStore(
+    (cb) => pipeline.subscribe(cb),
+    () => (sessionId ? pipeline.get(sessionId) : { phase: 'idle' as const, error: null }),
+  );
 }
 
-/** Sessions left mid-recording by a crash or a closed tab. */
-export function useRecoverableSessions(): {
-  sessions: Session[];
-  refresh: () => Promise<void>;
-} {
-  const [sessions, setSessions] = useState<Session[]>([]);
-
-  const refresh = async () => {
-    setSessions(await findRecoverableSessions());
-  };
-
-  useEffect(() => {
-    void refresh();
-  }, []);
-
-  return { sessions, refresh };
-}
-
-/** MM:SS, counting up from a start timestamp. */
+/** MM:SS, counting up while recording and frozen at endedAt once stopped. */
 export function useElapsed(
   startedAt: number | null,
   running: boolean,
@@ -67,4 +42,3 @@ export function useElapsed(
 
   return formatElapsed(startedAt, endedAt, now, running);
 }
-

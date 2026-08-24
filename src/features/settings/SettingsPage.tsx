@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowLeft, HardDrive, KeyRound, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, HardDrive, KeyRound, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -31,7 +31,7 @@ import { useSettingsStore } from '@/store/settings-store';
  * browser has promised to keep his recordings — plus an honest statement of
  * where his audio and text are sent.
  */
-export function SettingsPage({ onBack }: { onBack: () => void }) {
+export function SettingsPage() {
   const { settings, apiKeys, storage } = useSettingsStore();
   const enablePersistence = useSettingsStore((s) => s.enablePersistence);
   const hydrate = useSettingsStore((s) => s.hydrate);
@@ -43,10 +43,6 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="space-y-12 pb-16">
-      <Button variant="ghost" size="lg" onClick={onBack}>
-        <ArrowLeft aria-hidden />
-        Zurück
-      </Button>
 
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Einstellungen</h1>
@@ -207,7 +203,6 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
                   await hydrate();
                   setConfirmText('');
                   toast.success('Alle Daten wurden gelöscht.');
-                  onBack();
                 }}
               >
                 Endgültig löschen

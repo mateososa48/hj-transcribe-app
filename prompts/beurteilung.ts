@@ -14,8 +14,6 @@ export const BEURTEILUNG_TAG = 'beurteilung';
 
 export interface BeurteilungPromptInput {
   transcript: string;
-  /** Previous letter, pasted by HJ. Used for carry-forward and comparisons. */
-  vorbrief?: string;
   glossary: string[];
   examples: BeurteilungExample[];
 }
@@ -92,18 +90,8 @@ ${outputContract(BEURTEILUNG_TAG)}`;
 }
 
 /** The half that changes per patient — never cached. */
-export function buildUserPrompt(input: Pick<BeurteilungPromptInput, 'transcript' | 'vorbrief'>): string {
-  const vorbrief = input.vorbrief?.trim()
-    ? `VORBRIEF (vorheriger Brief dieses Patienten, nur als Kontext für
-Vergleiche und zur Fortschreibung von Diagnosen — übernehmen Sie daraus nichts,
-was im aktuellen Diktat nicht bestätigt wird):
-
-${input.vorbrief.trim()}
-
-`
-    : '';
-
-  return `${vorbrief}DIKTAT (automatische Spracherkennung, kann Erkennungsfehler enthalten):
+export function buildUserPrompt(input: Pick<BeurteilungPromptInput, 'transcript'>): string {
+  return `DIKTAT (automatische Spracherkennung, kann Erkennungsfehler enthalten):
 
 ${input.transcript.trim()}
 
@@ -132,36 +120,3 @@ export function parseBeurteilung(raw: string): { text: string; wellFormed: boole
   return { text: raw.trim(), wellFormed: false };
 }
 
-/** Every [FEHLT: …] marker in a draft, for the review UI. */
-export function extractFehltMarkers(text: string): string[] {
-  return [...text.matchAll(/\[FEHLT:([^\]]*)\]/gi)].map((m) => (m[1] ?? '').trim());
-}
-
-/**
- * What would actually reach the patient's letter: the draft with every
- * [FEHLT: …] marker and the bullet scaffolding around it removed.
- *
- * A marker is a note to the doctor, not letter text. Counting it as content is
- * how a draft that says nothing but "this dictation cannot be assessed" gets
- * released and copied into a letter — which is exactly what happened on
- * 2026-08-16.
- */
-export function letterSubstance(text: string): string {
-  return text
-    .replace(/\[FEHLT:[^\]]*\]/gi, ' ')
-    // Bullets, dashes and the punctuation left stranded once a marker that was
-    // the whole bullet is gone.
-    .replace(/^[\s•\-–—*.,;:]+$/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Whether there is enough left to be a letter at all.
- *
- * The threshold is deliberately low — this blocks "nothing but markers", not
- * "a short draft". Anything above it is the doctor's call, not the app's.
- */
-export function hasReleasableContent(text: string): boolean {
-  return letterSubstance(text).length >= 30;
-}

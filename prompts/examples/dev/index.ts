@@ -58,8 +58,8 @@ Woche. Ein aktuelles Labor liegt mir heute nicht vor.`,
   Sacubitril/Valsartan 49/51 zweimal täglich neu angesetzt. Diesbezüglich
   sollte eine Kaliumkontrolle in einer Woche erfolgen.
 - Ich habe die Patientin gebeten, das Gewicht täglich zu kontrollieren und sich
-  bei einer Zunahme von mehr als zwei Kilogramm umgehend vorzustellen.
-- [FEHLT: aktuelle Laborwerte lagen bei der Vorstellung nicht vor]`,
+  bei einer Zunahme von mehr als zwei Kilogramm umgehend vorzustellen. Aktuelle
+  Laborwerte lagen bei der Vorstellung nicht vor.`,
   },
 ];
 

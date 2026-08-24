@@ -21,7 +21,6 @@ import {
   buildGespraechUserPrompt,
   parseGespraech,
 } from '../prompts/gespraech.ts';
-import { extractFehltMarkers } from '../prompts/beurteilung.ts';
 import { PROMPT_VERSION } from '../prompts/rules.ts';
 import { DEFAULT_GATEWAY_MODEL } from '../src/lib/providers/gateway-draft.ts';
 
@@ -101,9 +100,11 @@ function check(s: Record<string, string>, fixture?: string) {
   const medLines = (s.medikation ?? '')
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l && !/^\[FEHLT/i.test(l) && l.toLowerCase() !== 'keine');
+    .filter((l) => l && l.toLowerCase() !== 'keine');
   if (medLines.some((l) => /\b\d+\s*(mg|milligramm|g|µg|ml|IE)\b/i.test(l))) flags.push('MED_HAS_UNIT');
-  if (medLines.length && !medLines.every((l) => /\t/.test(l))) flags.push('MED_NO_TAB');
+  // A line may legitimately have no scheme (incomplete dictation → drug and
+  // strength only). But if a scheme is present it must sit behind a tab.
+  if (medLines.some((l) => !/\t/.test(l) && /\d-\d(-\d)?/.test(l))) flags.push('MED_NO_TAB');
   // A dosing scheme must survive as a scheme, never collapse into a number.
   const schemeOf = (l: string) => (l.includes('\t') ? l.slice(l.indexOf('\t') + 1) : '');
   if (medLines.some((l) => /\b[01]{3}\b/.test(schemeOf(l)))) flags.push('MED_SCHEME_COLLAPSED');
@@ -113,11 +114,11 @@ function check(s: Record<string, string>, fixture?: string) {
 
   // No commentary about the recording, and no summary/recommendation.
   if (/(Gespräch|Aufnahme|Diktat)[^.\n]{0,60}(nicht verwertbar|enthält keine)/i.test(all)) flags.push('BANNER');
-  if (/\b(empfehle|empfiehlt sich|sollte.{0,20}erfolgen|Kontrolle in \d)/i.test(all)) flags.push('RECOMMENDS');
+  if (/\[FEHLT/i.test(all)) flags.push('MARKER_RELIC');
+  if (s.zusammenfassung && !/^\s*-/m.test(s.zusammenfassung)) flags.push('SUMMARY_NOT_LIST');
+  const letterBound = [s.diagnosen, s.anamnese, s.medikation].join('\n');
+  if (/\b(empfehle|empfiehlt sich|sollte.{0,20}erfolgen)\b/i.test(letterBound)) flags.push('RECOMMENDS');
 
-  const markers = extractFehltMarkers(all);
-  const longest = Math.max(0, ...markers.map((m) => m.split(/\s+/).length));
-  if (longest > 8) flags.push(`MARKER_${longest}w`);
 
   const missing = GESPRAECH_SECTIONS.filter((k) => !s[k]?.trim());
   if (missing.length) flags.push(`EMPTY:${missing.join('+')}`);
@@ -131,7 +132,7 @@ function check(s: Record<string, string>, fixture?: string) {
     if (forbidden.length) flags.push('MED_FABRICATED');
   }
 
-  return { flags, markers: markers.length, longest };
+  return { flags };
 }
 
 const files = readdirSync(DIR).filter((f) => f.endsWith('.txt')).sort();
@@ -142,11 +143,11 @@ for (const file of files) {
   for (let i = 0; i < RUNS; i++) {
     try {
       const { sections, wellFormed } = await run(src);
-      const { flags, markers, longest } = check(sections, file.replace('.txt', ''));
+      const { flags } = check(sections, file.replace('.txt', ''));
       console.log(
         `${file.replace('.txt', '').padEnd(22)} run${i + 1}  ${wellFormed ? 'tagged  ' : 'UNTAGGED'}  ` +
           `d:${String(sections.diagnosen.length).padStart(4)} a:${String(sections.anamnese.length).padStart(4)} ` +
-          `m:${String(sections.medikation.length).padStart(4)}  markers:${markers}/${longest}w  ` +
+          `m:${String(sections.medikation.length).padStart(4)}  z:${String(sections.zusammenfassung.length).padStart(4)}  ` +
           `${flags.length ? '⚠ ' + flags.join(',') : 'clean'}`,
       );
       if (VERBOSE) {

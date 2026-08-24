@@ -1,132 +1,112 @@
-import { CORE_RULES, glossaryBlock, PROMPT_VERSION } from './rules.ts';
+import { CORE_RULES, PROMPT_VERSION } from './rules.ts';
 
 /**
- * The consultation feature: one recorded patient conversation in, three
- * sections of his letter out.
+ * The appointment feature: one recorded consultation in, meeting notes out.
  *
- * These are the sections he currently fills by writing on paper during the
- * conversation and then typing off that paper afterwards — the slowest part of
- * his day after the summary. Everything measured by a machine (echo, ECG) is
- * deliberately out of scope: he reads those off the device long after the
- * patient has left, and no microphone in the room can know them.
+ * Four sections: a Granola-style summary of the appointment, then the three
+ * blocks of his letter that come from conversation (Diagnosen, Anamnese,
+ * Medikation). Everything measured by a machine (echo, ECG) is out of scope —
+ * those numbers are read off devices after the patient leaves, and no
+ * microphone in the room can know them.
  *
- * Three sections in ONE call, not three. The model has to see the whole
- * conversation to know that a drug mentioned in passing belongs in the
- * medication list and not in the history, and one pass is also the difference
- * between waiting once and waiting three times.
+ * One call, not four: the model has to see the whole conversation to know
+ * that a drug mentioned in passing belongs in the medication list.
  */
 
-export const GESPRAECH_SECTIONS = ['diagnosen', 'anamnese', 'medikation'] as const;
+export const GESPRAECH_SECTIONS = [
+  'zusammenfassung',
+  'diagnosen',
+  'anamnese',
+  'medikation',
+] as const;
 export type GespraechSection = (typeof GESPRAECH_SECTIONS)[number];
 
 export const GESPRAECH_SECTION_LABELS: Record<GespraechSection, string> = {
+  zusammenfassung: 'Zusammenfassung',
   diagnosen: 'Diagnosen',
   anamnese: 'Anamnese',
   medikation: 'Medikation',
 };
 
-export interface GespraechPromptInput {
-  transcript: string;
-  /** Previous letter, pasted by HJ. Diagnoses are largely carried forward. */
-  vorbrief?: string;
-  glossary: string[];
-}
-
 /**
- * Structure and voice for the three sections.
- *
- * Every rule here was read off his own letters, not invented: the nested
- * diagnosis bullets with their parenthetical measurements, the terse prose of
- * the history, and the two-column medication list with a bare strength and no
- * unit ("ASS 100", never "ASS 100 mg").
+ * Structure for the four sections. The letter-bound three keep the formats
+ * read off his real letters; the summary is deliberately generic meeting-notes
+ * material — he will shape it once he has used it.
  */
-export const SECTION_GUIDE = `AUFBAU DER DREI ABSCHNITTE
+export const SECTION_GUIDE = `AUFBAU DER VIER ABSCHNITTE
 
-Jeder Abschnitt hat seine eigene Form. Verwechseln Sie sie nicht.
+ZUSAMMENFASSUNG — kurze Aufzählung, wie gute Besprechungsnotizen.
+  Drei bis sechs Punkte, jeweils mit "- " beginnend, in dieser Art:
+  Anlass des Termins, die wichtigsten Angaben des Patienten, was besprochen
+  oder entschieden wurde, was als Nächstes ansteht. Knapp und sachlich; ein
+  Punkt pro Gedanke. Nichts hineinschreiben, was nicht gesagt wurde.
 
 DIAGNOSEN — Aufzählung, keine Prosa.
-  Ein Aufzählungspunkt pro Diagnose, beginnend mit "- ". Die wichtigste
-  kardiologische Diagnose steht oben, danach die übrigen, zuletzt die nicht
-  kardialen.
-  Gehören Einzelheiten zu einer Diagnose, stehen sie eingerückt darunter:
+  Ein Punkt pro Erkrankung, beginnend mit "- ". Kardiologisches zuerst.
+  Einzelheiten eingerückt darunter:
       - Koronare Herzkrankheit mit
-        - Z.n. DES-Implantation der LAD 12/23
-        - Z.n. Vorderwandinfarkt 3/25
-  Zusatzangaben stehen in Klammern hinter der Diagnose, mit Messwert und
-  Herkunft: "Aneurysma der Aorta ascendens (4,7 cm, CT 8/25)".
-  Zeitangaben knapp: "10/25", "28.12.2023", "3/25". Abkürzungen wie er sie
-  verwendet: Z.n., V.a., DD.
-  Risikofaktoren werden gebündelt:
-      - Kardiovaskuläre Risikofaktoren mit
-        - Arterielle Hypertonie
-        - Nikotinabusus, sistiert 2016
+        - Z.n. Vorderwandinfarkt 11/22
+  Zeitangaben knapp ("11/22", "2019"). Nur Erkrankungen und Eingriffe, die im
+  Gespräch genannt wurden.
 
-ANAMNESE — kurze Prosa, keine Aufzählung.
-  Ganze, aber knappe Sätze hintereinander. Kein Telegrammstil, aber auch keine
-  ausschweifenden Nebensätze — dieser Abschnitt ist eine Aufstellung, kein
-  Bericht. Vorbild:
-      "Z.n. Fraktur des rechten Unterarms. Keine weiteren wesentlichen
-      Erkrankungen. Regelmäßige sportliche Aktivität. Pollinosis."
-  Reihenfolge: aktuelle Beschwerden, dann Vorerkrankungen und Operationen, dann
-  Risikofaktoren und Gewohnheiten (Rauchen, Alkohol, Sport), dann
-  Familienanamnese, dann Allergien und Unverträglichkeiten.
-  Beschwerden werden mit ihren Umständen genannt, so wie der Patient sie
-  beschreibt: wobei sie auftreten, wie lange, was sie beendet.
-  Was der Patient verneint hat, wird als Verneinung aufgeschrieben und nicht
-  weggelassen: "Eine Belastungsdyspnoe wird verneint."
+ANAMNESE — knappe Prosa, keine Aufzählung.
+  Ganze, kurze Sätze: aktuelle Beschwerden mit ihren Umständen, Belastbarkeit,
+  ausgesprochene Verneinungen, Vorerkrankungen und Operationen, Gewohnheiten
+  (Rauchen, Alkohol, Sport), Familienanamnese, Allergien. Kürze entsteht durch
+  Weglassen von Gespräch, niemals durch Weglassen von Befunden — jede
+  ausgesprochene Verneinung steht im Text, zusammengefasst ist erlaubt:
+      "Luftnot, Palpitationen, Schwindel und Beinödeme werden verneint."
 
 MEDIKATION — Liste, ein Präparat pro Zeile.
-  Format: Präparatename, Leerzeichen, Stärke, dann ein TABULATOR, dann das
-  Einnahmeschema.
+  Präparatename und Stärke OHNE Einheit, dann ein TABULATOR, dann das Schema:
       ASS 100	1-0-0
       Clopidogrel 75	1-0-0 bis 5/26
-      Sevikar 40/5	1-0-0
       Rosuvastatin 20	0-0-1
-  Die Stärke steht OHNE Einheit, so wie er sie schreibt: "ASS 100", niemals
-  "ASS 100 mg". Gesprochenes "ASS hundert" wird zu "ASS 100".
-  Ein befristetes Präparat bekommt das Ende angehängt: "1-0-0 bis 5/26".
-  Nimmt der Patient nichts, besteht der Abschnitt aus dem einen Wort:
+  "ASS hundert" wird zu "ASS 100", niemals zu "ASS 100 mg". Fehlt das Schema,
+  steht die Zeile ohne Schema da. Jedes Präparat erscheint genau einmal und
+  nur in seiner endgültigen Fassung — ein im Gespräch zurückgenommener Name
+  taucht nicht auf, auch nicht in Klammern. Nimmt der Patient nichts, besteht
+  der Abschnitt aus dem einen Wort:
       Keine`;
 
-/**
- * The half that never changes between patients — cache this.
- *
- * `guide` exists so the battery can A/B a candidate section guide without
- * editing this file, which is what makes several candidates testable in
- * parallel. Production always passes nothing and gets SECTION_GUIDE.
- */
+export interface GespraechPromptInput {
+  /** The conversation, one line per turn: "Arzt: …" / "Patient: …" / "Sprecher 1: …". */
+  transcript: string;
+}
+
+/** The half that never changes between patients — cache this. */
 export function buildGespraechSystemPrompt(glossary: string[], guide = SECTION_GUIDE): string {
-  return `Sie unterstützen einen deutschen Kardiologen beim Schreiben von Arztbriefen.
+  const glossaryBlock = glossary.length
+    ? `\nBEGRIFFE DIESER PRAXIS, genau so geschrieben:\n${glossary.map((t) => `- ${t}`).join('\n')}\n`
+    : '';
 
-Sie bekommen die AUFNAHME EINES SPRECHSTUNDENGESPRÄCHS zwischen dem Arzt und
-dem Patienten. Daraus erstellen Sie genau drei Abschnitte seines Briefes:
-Diagnosen, Anamnese und Medikation. Der Arzt liest und korrigiert alles selbst;
-Ihr Text ist ein Entwurf, keine fertige Aussage.
+  return `Sie unterstützen einen deutschen Kardiologen. Sie bekommen das
+TRANSKRIPT EINES SPRECHSTUNDENGESPRÄCHS, nach Sprechern getrennt, und erstellen
+daraus vier Abschnitte seiner Notizen. Der Arzt liest und korrigiert alles
+selbst; das Transkript und die Tonaufnahme liegen ihm daneben vor.
 
-Ein Gespräch ist keine geordnete Quelle. Die Angaben kommen durcheinander, der
-Patient korrigiert sich, die Begleitperson widerspricht, es wird über anderes
-geredet. Ihre Aufgabe ist das Ordnen — nicht das Ergänzen.
+Wer von den Sprechern der Arzt ist, erkennen Sie am Gesprächsverlauf, falls die
+Sprecher nicht benannt sind.
 
 ${CORE_RULES}
 
 ${guide}
 
 WAS NICHT IN DIESE ABSCHNITTE GEHÖRT
-- Messwerte aus Echokardiographie, EKG, Belastungstest oder Labor. Diese
-  Untersuchungen finden nach dem Gespräch statt; was im Gespräch darüber gesagt
-  wird, ist eine Ankündigung und kein Befund. Nehmen Sie nichts davon auf.
-- Ihre eigene Einschätzung, eine Zusammenfassung oder eine Empfehlung. Die
-  Beurteilung diktiert der Arzt später selbst.
-- Begrüßung, Small Talk, Organisatorisches ("kommen Sie mit rüber", "legen Sie
-  sich hin"), Gespräche über das Aufnahmegerät.
-
-${glossaryBlock(glossary)}
-
+- Messwerte aus Echokardiographie, EKG, Belastungstest oder Labor, die erst
+  nach dem Gespräch erhoben werden. Was im Gespräch darüber angekündigt wird,
+  ist kein Befund.
+- Ihre eigene Einschätzung oder Empfehlung. Die Beurteilung diktiert der Arzt
+  selbst.
+${glossaryBlock}
 AUSGABEFORMAT
 
-Geben Sie genau diese drei Blöcke aus, in dieser Reihenfolge, und nichts
+Geben Sie genau diese vier Blöcke aus, in dieser Reihenfolge, und nichts
 außerhalb davon:
 
+<zusammenfassung>
+…
+</zusammenfassung>
 <diagnosen>
 …
 </diagnosen>
@@ -137,53 +117,32 @@ außerhalb davon:
 …
 </medikation>
 
-Ein Abschnitt, zu dem das Gespräch nichts hergibt, bleibt nicht weg — der Block
-steht trotzdem da und enthält genau diese eine Zeile, mit Bindestrich wie jeder
-andere Punkt auch:
-    - [FEHLT: im Gespräch nicht besprochen]
-
-Kein Vorwort, keine Erklärung, kein Kommentar vor oder nach den Blöcken.`;
+Ein Abschnitt, zu dem das Gespräch nichts hergibt, bleibt leer — der Block
+steht trotzdem da, ohne Inhalt.`;
 }
 
 /** The half that changes per patient — never cached. */
-export function buildGespraechUserPrompt(
-  input: Pick<GespraechPromptInput, 'transcript' | 'vorbrief'>,
-): string {
-  const vorbrief = input.vorbrief?.trim()
-    ? `VORHERIGER BRIEF DIESES PATIENTEN
-
-Übernehmen Sie die dort aufgeführten Diagnosen, soweit das Gespräch ihnen nicht
-widerspricht, und ergänzen Sie, was im Gespräch neu hinzugekommen ist. Aus der
-Anamnese und der Medikation des Vorbriefs übernehmen Sie nur, was im aktuellen
-Gespräch bestätigt wurde — eine abgesetzte Tablette steht sonst für immer im
-Brief.
-
-${input.vorbrief.trim()}
-
-`
-    : '';
-
-  return `${vorbrief}GESPRÄCHSAUFNAHME (automatische Spracherkennung, kann Erkennungsfehler enthalten):
+export function buildGespraechUserPrompt(input: GespraechPromptInput): string {
+  return `TRANSKRIPT DES GESPRÄCHS (automatische Spracherkennung, kann Erkennungsfehler enthalten):
 
 ${input.transcript.trim()}
 
-Erstellen Sie daraus die drei Abschnitte.`;
+Erstellen Sie daraus die vier Abschnitte.`;
 }
 
 export const GESPRAECH_PROMPT_VERSION = PROMPT_VERSION;
 
 const EMPTY = (): Record<GespraechSection, string> => ({
+  zusammenfassung: '',
   diagnosen: '',
   anamnese: '',
   medikation: '',
 });
 
 /**
- * Pull the three sections out of the response.
- *
- * Forgiving on purpose, like the Beurteilung parser: a section that arrives
- * without its closing tag is still worth showing him. `wellFormed` is false
- * whenever anything had to be recovered, so the UI can say so.
+ * Pull the sections out of the response. Forgiving on purpose: a section that
+ * arrives without its closing tag is still worth showing. `wellFormed` is
+ * false whenever anything had to be recovered, so the UI can say so.
  */
 export function parseGespraech(raw: string): {
   sections: Record<GespraechSection, string>;
@@ -198,8 +157,9 @@ export function parseGespraech(raw: string): {
       sections[key] = closed[1].trim();
       continue;
     }
-    // Unclosed: take everything up to the next opening tag, or to the end.
-    const open = raw.match(new RegExp(`<${key}>([\\s\\S]*?)(?=<(?:${GESPRAECH_SECTIONS.join('|')})>|$)`, 'i'));
+    const open = raw.match(
+      new RegExp(`<${key}>([\\s\\S]*?)(?=<(?:${GESPRAECH_SECTIONS.join('|')})>|$)`, 'i'),
+    );
     if (open?.[1] !== undefined) {
       sections[key] = open[1].replace(/<\/?\w+>\s*$/, '').trim();
       wellFormed = false;

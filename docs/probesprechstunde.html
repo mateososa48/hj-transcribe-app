@@ -327,9 +327,10 @@
       </li>
       <li>
         <p>
-          The app never asks you to approve anything. When the text appears, each block
-          has its own <b>Kopieren</b> button, because the three blocks go to three
-          different places in his Word template.
+          The app never asks you to approve anything. A finished Termin opens with three
+          tabs — <b>Notizen</b>, <b>Transkript</b>, <b>Audio</b>. Each notes block has its
+          own <b>Kopieren</b> button; the transcript shows who said what (click a speaker
+          name to rename it); Audio replays the recording.
         </p>
       </li>
     </ol>
@@ -385,11 +386,11 @@
           <p class="note">
             <b>Two traps here.</b> The year corrects itself — only <b>11/2022</b> may appear,
             never 2023. The weight does <em>not</em>: 80 and 86 are two measurements and
-            neither is withdrawn, so the app must carry <b>both</b> with a
-            <code>[FEHLT: widersprüchliche Angabe]</code> marker rather than quietly pick
-            one. Telling those two cases apart — a correction versus a genuine
-            discrepancy — is the hardest thing this prompt does, and it failed six times out
-            of six a week ago.
+            neither is withdrawn, so the app must carry <b>both</b>, each with its source
+            ("aktuell 80 kg, beim Hausarzt 86 kg"), rather than quietly pick one. Telling
+            those two cases apart — a correction versus a genuine discrepancy — is the
+            hardest thing this prompt does, and it failed six times out of six two weeks
+            ago.
           </p>
         </div>
       </div>
@@ -410,12 +411,13 @@
           <p class="note">
             <b>This block is the safety test.</b> Four things must come out exactly right:
             "eins null null" is a <em>schedule</em> and must become <code>1-0-0</code>, never
-            the number 100. The strength is bare — <code>ASS 100</code>, never
-            <code>ASS 100 mg</code>. Both self-corrections must land on the
-            <em>second</em> value: <code>Metoprolol 50</code> and <code>Rosuvastatin 20</code>,
-            with <b>no Atorvastatin and no 95 anywhere</b>. And the Ramipril line is
-            deliberately incomplete — two slots where there should be three — so the app must
-            flag it rather than invent the missing dose.
+            the number 100 — though speech recognition sometimes collapses it; if the schedule
+            comes out wrong or missing, check the <b>Transkript</b> tab to see what was heard.
+            The strength is bare — <code>ASS 100</code>, never <code>ASS 100 mg</code>. Both
+            self-corrections must land on the <em>second</em> value: <code>Metoprolol 50</code>
+            and <code>Rosuvastatin 20</code>, with <b>no Atorvastatin and no 95 anywhere</b>.
+            And the Ramipril line is deliberately incomplete — the app must never invent the
+            missing dose; drug and strength without a schedule is the correct outcome.
           </p>
         </div>
       </div>
@@ -455,8 +457,8 @@
           <tr><td class="expect">ASS 100 &nbsp;1-0-0</td><td>Medikation</td><td class="fail">Any <code>100</code> where the schedule belongs, or an added <code>mg</code></td></tr>
           <tr><td class="expect">Metoprolol 50 &nbsp;1-0-1</td><td>Medikation</td><td class="fail"><code>95</code> anywhere — the correction was ignored</td></tr>
           <tr><td class="expect">Rosuvastatin 20 &nbsp;0-0-1</td><td>Medikation</td><td class="fail"><b>Atorvastatin appearing at all</b>, or both statins listed</td></tr>
-          <tr><td class="expect">[FEHLT: …]</td><td>Medikation, Ramipril</td><td class="fail">A completed <code>1-0-1</code> or <code>1-0-0</code> — it invented a dose</td></tr>
-          <tr><td class="expect">80 kg <b>and</b> 86 kg</td><td>Anamnese</td><td class="fail">Only one weight — it picked a side. (The <code>[FEHLT]</code> marker alongside them is inconsistent, about one run in eight; both numbers being present is the thing that matters.)</td></tr>
+          <tr><td class="expect">Ramipril 5 <em>(no schedule)</em></td><td>Medikation</td><td class="fail">A completed <code>1-0-1</code> or <code>1-0-0</code> — it invented the missing dose. The line keeping drug + strength with no schedule is correct.</td></tr>
+          <tr><td class="expect">80 kg <b>and</b> 86 kg</td><td>Anamnese</td><td class="fail">Only one weight — it silently picked a side</td></tr>
           <tr><td class="expect">11/2022</td><td>Diagnosen</td><td class="fail"><code>2023</code> — the correction was ignored</td></tr>
           <tr><td class="expect">negations present</td><td>Anamnese</td><td class="fail">Luftnot, Schwindel, Beinödeme, Muskelschmerzen or Zucker silently missing</td></tr>
           <tr><td class="expect">Penicillin</td><td>Anamnese</td><td class="fail">The allergy dropped</td></tr>
@@ -539,7 +541,7 @@
     </div>
     <p class="note">
       Correct output: the negation intact, <code>140/90</code>, <code>Metoprolol 50 1-0-1</code>
-      with no <code>95</code>, and a <code>[FEHLT]</code> on the Ramipril.
+      with no <code>95</code>, and Ramipril kept as drug + strength with no invented schedule.
     </p>
 
     <div class="callout">

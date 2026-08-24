@@ -4,7 +4,6 @@ import {
   BEURTEILUNG_PROMPT_VERSION,
   buildStableSystemPrompt,
   buildUserPrompt,
-  extractFehltMarkers,
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
 import {
@@ -119,7 +118,6 @@ export function createAnthropicDraft(apiKey: string): DraftProvider {
         return {
           text,
           wellFormed,
-          fehlt: extractFehltMarkers(text),
           model: result.model,
           promptVersion: BEURTEILUNG_PROMPT_VERSION,
           latencyMs: Date.now() - started,
@@ -142,7 +140,6 @@ export function createAnthropicDraft(apiKey: string): DraftProvider {
         return {
           sections,
           wellFormed,
-          fehlt: extractFehltMarkers(Object.values(sections).join('\n')),
           model: result.model,
           promptVersion: GESPRAECH_PROMPT_VERSION,
           latencyMs: Date.now() - started,

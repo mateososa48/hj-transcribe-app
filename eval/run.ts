@@ -114,7 +114,7 @@ async function main(): Promise<void> {
 
         for (let attempt = 1; attempt <= repeat; attempt++) {
           try {
-            const chunk = await provider.transcribeSegment(blob, {
+            const chunk = await provider.transcribeFile(blob, {
               language: 'de',
               keyterms: GLOSSARY,
             });

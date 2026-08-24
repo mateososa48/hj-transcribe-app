@@ -10,6 +10,8 @@ export interface RecordingWaveProps {
   state: OrbState;
   /** Only used by the fallback indicator when WebGL2 is unavailable. */
   level: number;
+  /** Additive glow on a dark surface — the Diktat feature's signature. */
+  dark?: boolean;
   className?: string;
 }
 
@@ -27,7 +29,7 @@ export interface RecordingWaveProps {
  * — proving sound is arriving right now — and a decorative animation that runs
  * whether or not the microphone works would answer that question with a guess.
  */
-export function RecordingWave({ state, level, className }: RecordingWaveProps) {
+export function RecordingWave({ state, level, dark = false, className }: RecordingWaveProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const audioRef = useRef<MicLevelSnapshot | null>(null);
   const [supported, setSupported] = useState(true);
@@ -42,6 +44,7 @@ export function RecordingWave({ state, level, className }: RecordingWaveProps) {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const engine = new WaveEngine(host, {
       reducedMotion: motionQuery.matches,
+      dark,
       probe: () => {
         // Dev-only pose override, so the ribbon can be tuned and screenshotted
         // at a given input level without talking into a microphone.
@@ -101,7 +104,8 @@ export function RecordingWave({ state, level, className }: RecordingWaveProps) {
       motionQuery.removeEventListener('change', onMotionChange);
       engine.destroy();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dark]);
 
   if (!supported) {
     return <RecordingOrb level={level} state={state} {...(className ? { className } : {})} />;

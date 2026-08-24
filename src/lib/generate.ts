@@ -1,15 +1,15 @@
 import { loadExamples } from '../../prompts/examples/dev/index.ts';
-import { db, newId, type Result, type SessionKind } from '@/lib/db.ts';
+import { db, newId, type Result, type SessionKind, type Utterance } from '@/lib/db.ts';
 import { DRAFT_PROVIDERS, DraftError, type DraftProvider } from '@/lib/providers/index.ts';
 import { loadApiKeys, loadSettings } from '@/lib/settings.ts';
-import { assembleTranscript } from '@/lib/transcription/queue.ts';
+import { speakerDisplayName } from '@/lib/speakers.ts';
 
 /**
- * Recording -> text he can paste.
+ * Transcript -> text he can paste.
  *
  * Both features land here and produce the same thing: a `Result` holding one
- * section per block of his letter, plus an untouched copy of what the model
- * actually said. Only the prompt differs.
+ * section per block, plus an untouched copy of what the model actually said.
+ * Only the prompt differs.
  */
 
 export async function resolveDraftProvider(): Promise<DraftProvider | null> {
@@ -17,31 +17,33 @@ export async function resolveDraftProvider(): Promise<DraftProvider | null> {
   const factory = DRAFT_PROVIDERS[settings.llmProviderId];
   const key = keys[settings.llmProviderId];
   if (!factory || !key) return null;
-  // The model is a constant, not a setting: with no picker in the UI, a value
-  // left in his browser from an older build would quietly win over the default.
   return factory(key);
+}
+
+/**
+ * The conversation as the model should read it: one line per turn, prefixed
+ * with the speaker's display name. Falls back to the plain text when
+ * diarization produced nothing.
+ */
+export function renderTranscriptForPrompt(
+  text: string,
+  utterances: Utterance[],
+  speakerNames: Record<string, string> | undefined,
+): string {
+  if (utterances.length === 0) return text;
+  return utterances
+    .map((u) => `${speakerDisplayName(u.speaker, speakerNames, utterances)}: ${u.text}`)
+    .join('\n');
 }
 
 export interface GenerateResult {
   result: Result;
-  /** Whether the few-shot examples were HJ's real letters or synthetic ones. */
-  exampleSource: 'real' | 'dev';
-  fehlt: string[];
   wellFormed: boolean;
   model: string;
   latencyMs: number;
 }
 
-export interface GenerateOptions {
-  vorbrief?: string;
-  signal?: AbortSignal;
-}
-
-export async function generate(
-  sessionId: string,
-  kind: SessionKind,
-  options: GenerateOptions = {},
-): Promise<GenerateResult> {
+export async function generate(sessionId: string, kind: SessionKind): Promise<GenerateResult> {
   const provider = await resolveDraftProvider();
   if (!provider) {
     throw new DraftError(
@@ -50,26 +52,31 @@ export async function generate(
     );
   }
 
-  const transcript = await assembleTranscript(sessionId);
-  if (!transcript.trim()) {
-    throw new DraftError(
-      provider.id,
-      'Es liegt noch kein erkannter Text vor. Bitte warten Sie, bis die Übertragung abgeschlossen ist.',
-    );
+  const [session, transcription] = await Promise.all([
+    db.sessions.get(sessionId),
+    db.transcriptions.where('sessionId').equals(sessionId).first(),
+  ]);
+  if (!transcription?.text.trim()) {
+    throw new DraftError(provider.id, 'Zu dieser Aufnahme liegt noch kein Transkript vor.');
   }
 
-  const { examples, source } = await loadExamples();
-  const request = {
-    transcript,
-    glossary: [] as string[],
-    ...(options.vorbrief ? { vorbrief: options.vorbrief } : {}),
-    ...(options.signal ? { signal: options.signal } : {}),
-  };
+  const transcript =
+    kind === 'gespraech'
+      ? renderTranscriptForPrompt(
+          transcription.text,
+          transcription.utterances,
+          session?.speakerNames,
+        )
+      : transcription.text;
 
   const response =
     kind === 'gespraech'
-      ? await provider.draftGespraech(request)
-      : await provider.draftBeurteilung({ ...request, examples });
+      ? await provider.draftGespraech({ transcript, glossary: [] })
+      : await provider.draftBeurteilung({
+          transcript,
+          glossary: [],
+          examples: (await loadExamples()).examples,
+        });
 
   const sections: Record<string, string> =
     'sections' in response ? { ...response.sections } : { beurteilung: response.text };
@@ -84,13 +91,11 @@ export async function generate(
     updatedAt: now,
     sections,
     // Regenerating replaces the model's copy too — the pairing between what he
-    // edits and what it said has to stay truthful, or the record is worse than
-    // not keeping one.
+    // edits and what it said has to stay truthful.
     original: { ...sections },
     model: response.model,
     promptVersion: response.promptVersion,
     wellFormed: response.wellFormed,
-    ...(options.vorbrief ? { vorbrief: options.vorbrief } : {}),
   };
 
   await db.results.put(result);
@@ -98,8 +103,6 @@ export async function generate(
 
   return {
     result,
-    exampleSource: source,
-    fehlt: response.fehlt,
     wellFormed: response.wellFormed,
     model: response.model,
     latencyMs: response.latencyMs,
@@ -107,11 +110,7 @@ export async function generate(
 }
 
 /** Autosaved as he types. */
-export async function saveSection(
-  resultId: string,
-  section: string,
-  text: string,
-): Promise<void> {
+export async function saveSection(resultId: string, section: string, text: string): Promise<void> {
   const result = await db.results.get(resultId);
   if (!result || result.sections[section] === text) return;
   await db.results.update(resultId, {
@@ -120,11 +119,11 @@ export async function saveSection(
   });
 }
 
-/** Deletes a recording, its audio, its transcripts and its text. */
+/** Deletes a recording, its audio, its transcript and its text. */
 export async function deleteSession(sessionId: string): Promise<void> {
   await Promise.all([
-    db.segments.where('sessionId').equals(sessionId).delete(),
-    db.transcripts.where('sessionId').equals(sessionId).delete(),
+    db.chunks.where('sessionId').equals(sessionId).delete(),
+    db.transcriptions.where('sessionId').equals(sessionId).delete(),
     db.results.where('sessionId').equals(sessionId).delete(),
     db.sessions.delete(sessionId),
   ]);

@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { extractFehltMarkers } from '../../../prompts/beurteilung.ts';
 import { SECTION_LABELS } from '@/lib/db';
 import { saveSection } from '@/lib/generate';
 
@@ -64,7 +63,6 @@ export function SectionCard({
     [],
   );
 
-  const markers = extractFehltMarkers(text);
 
   async function handleCopy() {
     // Flush pending keystrokes so what he copies is what he sees.
@@ -86,14 +84,9 @@ export function SectionCard({
     if (copiedTimer.current) clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setCopied(false), 2200);
 
-    // Not a gate — the markers are visible in the text he is looking at. But
-    // pasting "[FEHLT: …]" into a patient's letter is worth one sentence.
-    if (markers.length > 0) {
-      toast.warning(
-        `Kopiert. Achtung: ${markers.length} Markierung${markers.length === 1 ? '' : 'en'} noch im Text.`,
-      );
-    }
   }
+
+  const empty = !text.trim();
 
   return (
     <section className="space-y-3">
@@ -101,12 +94,18 @@ export function SectionCard({
         <h2 className="text-lg font-semibold tracking-tight">
           {SECTION_LABELS[section] ?? section}
         </h2>
-        <Button size="lg" variant={copied ? 'secondary' : 'default'} onClick={() => void handleCopy()}>
-          {copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
-          {copied ? 'Kopiert' : 'Kopieren'}
-        </Button>
+        {!empty ? (
+          <Button size="sm" variant={copied ? 'secondary' : 'outline'} onClick={() => void handleCopy()}>
+            {copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
+            {copied ? 'Kopiert' : 'Kopieren'}
+          </Button>
+        ) : null}
       </div>
+      {empty ? (
+        <p className="text-sm text-muted-foreground">Im Gespräch nicht besprochen.</p>
+      ) : null}
 
+      {empty ? null : (
       <Textarea
         ref={areaRef}
         value={text}
@@ -123,6 +122,7 @@ export function SectionCard({
           columnar && 'font-mono text-[0.95rem] [tab-size:18]',
         )}
       />
+      )}
     </section>
   );
 }

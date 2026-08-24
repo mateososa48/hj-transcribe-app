@@ -2,7 +2,6 @@ import {
   BEURTEILUNG_PROMPT_VERSION,
   buildStableSystemPrompt,
   buildUserPrompt,
-  extractFehltMarkers,
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
 import {
@@ -83,7 +82,6 @@ export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL
       return {
         text,
         wellFormed,
-        fehlt: extractFehltMarkers(text),
         model: result.model,
         promptVersion: BEURTEILUNG_PROMPT_VERSION,
         latencyMs: Date.now() - started,
@@ -107,7 +105,6 @@ export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL
       return {
         sections,
         wellFormed,
-        fehlt: extractFehltMarkers(Object.values(sections).join('\n')),
         model: result.model,
         promptVersion: GESPRAECH_PROMPT_VERSION,
         latencyMs: Date.now() - started,

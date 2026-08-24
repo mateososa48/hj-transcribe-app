@@ -268,33 +268,48 @@ Two constraints are enforced by the build, not by discipline:
 
 ---
 
-## 8. The shape of the app (rebuilt 2026-08-17)
+## 8. The shape of the app (rebuilt 2026-08-24)
 
-The app does two things and owns neither the letter nor the patient record.
+A sidebar app, Notion/Granola-shaped: everything ever recorded on the left,
+grouped by day; the selected recording on the right. Built on shadcn's sidebar
+primitives.
 
-    Start ──▶ Aufnahme ──▶ Ergebnis ──▶ (he pastes into Word)
+    ┌──────────────┬──────────────────────────────┐
+    │ + Termin     │  Title (editable)            │
+    │ + Diktat     │  Mo · 12:30 min · 2 Sprecher │
+    │──────────────│  [Notizen][Transkript][Audio]│
+    │ Heute        │                              │
+    │  · Termin …  │  …                           │
+    │  · Diktat …  │                              │
+    │ Einstellungen│                              │
+    └──────────────┴──────────────────────────────┘
 
-**Two features, one pipeline.** `Gespräch aufnehmen` records the consultation
-and produces Diagnosen, Anamnese and Medikation — the sections he currently
-writes on paper and then types. `Beurteilung diktieren` replaces the dictation
-machine for the summary. Everything from the microphone to the transcript is
-shared; only the prompt and the number of output sections differ.
+**Two features that must not feel alike.** Termin records while he talks to a
+patient — it stays inside the frame, calm, glanceable. Diktat is the opposite:
+he is alone and the recording IS the task, so it takes the whole screen, goes
+black, and the ribbon switches to the shader's additive mode — light itself.
+That dark surface is Diktat's signature and appears nowhere else.
 
-**Copy per section, not per letter.** The three blocks land in three different
-places in his Word template. One Copy button for all of them would hand the
-splitting work back to him.
+**The recording architecture** (v3): ONE continuous MediaRecorder, flushed to
+IndexedDB every 5 s. Timeslice chunks concatenate into one valid WebM — that
+single property gives crash-safety (any prefix replays), one seekable file for
+playback, and whole-file speaker diarization with consistent labels. Verified
+in-browser: EBML header on chunk 0 only, 13-chunk concat decodes as one 63 s
+file. This replaced segment rotation, which could do none of those.
 
-**Word wins.** There is no in-app letter, no approval state machine, no .docx
-export. He lives in Word; an editor built here would compete with it and lose,
-and his own note says the app can only ever produce about 75% of a report.
+**The pipeline is visible, not a queue.** Stop → upload → diarized transcript
+(AssemblyAI EU, `speaker_labels` + `keyterms_prompt`) → notes (one LLM pass).
+The session page shows each step. The whole class of "generated from half a
+transcript" races died with the background queue.
 
-**What was deleted, and why it is not coming back by accident**: the six-section
-document model, the Entwurf/Freigegeben state machine, the audit log, the
-glossary and template tables, the retention settings, the translation feature,
-the three-layout comparison, four ASR adapters and one LLM adapter. All of it is
-in git history. None of it survived the question "does this save him a minute?"
+**Notes are lossy on purpose; the transcript is not.** The `[FEHLT: …]` marker
+system is gone. What the notes can't use they omit, because the ground truth —
+speaker-split transcript and audio — is one tab away. The safety rules survive
+in the prompt (never invent, negations verbatim, never guess or narrate a
+dose); the eval batteries hold them at 0/16 garbage-assertions.
 
-**One setting is load-bearing**: persistent storage. His notes are explicit —
-"persistence very good and reliable, or he could lose the info from a whole
-patient" — so a segment is written to IndexedDB before any network call, and an
-interrupted session is offered back.
+**Speakers are editable.** Diarization says "Sprecher 1 said this"; he says who
+Sprecher 1 was (click the name → Arzt/Patient/…). Names feed the notes prompt.
+
+**One setting is load-bearing**: persistent storage. A segment of audio is on
+disk before any network call, and an interrupted session is offered back.

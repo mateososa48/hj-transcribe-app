@@ -3,7 +3,7 @@
  * Usage: tsx repro.ts <transcript-file> [label]
  */
 import { readFileSync } from 'node:fs';
-import { buildStableSystemPrompt, buildUserPrompt, parseBeurteilung, extractFehltMarkers }
+import { buildStableSystemPrompt, buildUserPrompt, parseBeurteilung }
   from '../prompts/beurteilung.ts';
 import { DEFAULT_GATEWAY_MODEL } from '../src/lib/providers/gateway-draft.ts';
 import { DEV_BEURTEILUNG_EXAMPLES }
@@ -34,5 +34,3 @@ console.log(process.argv[3] ?? 'DRAFT', '| wellFormed:', wellFormed, '| model:',
 console.log('='.repeat(72));
 console.log(text);
 console.log('-'.repeat(72));
-console.log('FEHLT markers:', extractFehltMarkers(text).length);
-for (const m of extractFehltMarkers(text)) console.log('  •', m.slice(0, 160));

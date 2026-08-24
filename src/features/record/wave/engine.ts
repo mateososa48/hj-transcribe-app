@@ -46,6 +46,12 @@ export interface WaveEngineOptions {
   /** Live band energy, or null when nothing is being recorded. */
   probe: BandProbe;
   /**
+   * Additive rendering on a dark surface — the ribbon IS the light, the
+   * original Siri look. Light mode composites subtractively onto the page.
+   * This is the Diktat feature's visual signature.
+   */
+  dark?: boolean;
+  /**
    * When true the ribbon stops drifting on its own and only responds to sound.
    * Reduced motion should silence decoration, not an instrument: a recording
    * indicator that cannot move cannot tell you the microphone is working.
@@ -77,11 +83,13 @@ export class WaveEngine {
   private reducedMotion: boolean;
 
   private readonly probe: BandProbe;
+  private readonly dark: boolean;
 
   constructor(host: HTMLElement, options: WaveEngineOptions) {
     this.host = host;
     this.reducedMotion = options.reducedMotion;
     this.probe = options.probe;
+    this.dark = options.dark ?? false;
     this.signal.setProbe(options.probe);
 
     this.canvas = document.createElement('canvas');
@@ -171,7 +179,12 @@ export class WaveEngine {
   private pushPalette(): void {
     const gl = this.gl;
     if (!gl) return;
-    // The ribbon is composited subtractively onto the page's own surface, so it
+    if (this.dark) {
+      gl.uniform3fv(this.u.uPaper!, [0, 0, 0]);
+      gl.uniform1f(this.u.uDark!, 1);
+      return;
+    }
+    // Light mode composites subtractively onto the page's own surface, so it
     // has to know the exact paper colour it is drawing on.
     const paper = surfaceBehind(this.host);
     gl.uniform3fv(this.u.uPaper!, paper);

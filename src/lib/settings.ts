@@ -68,8 +68,8 @@ export async function loadApiKeys(): Promise<ApiKeyMap> {
 export async function clearAllData(): Promise<void> {
   await Promise.all([
     db.sessions.clear(),
-    db.segments.clear(),
-    db.transcripts.clear(),
+    db.chunks.clear(),
+    db.transcriptions.clear(),
     db.results.clear(),
     db.settings.clear(),
   ]);

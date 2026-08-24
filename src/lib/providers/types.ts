@@ -25,6 +25,8 @@ export interface TranscriptWord {
 export interface TranscriptChunk {
   /** Plain transcript text, as returned by the provider. */
   text: string;
+  /** Speaker-separated turns, when diarization was requested and succeeded. */
+  utterances?: TranscriptUtterance[];
   /** Word timings, when the provider supplies them. Used later for playback sync. */
   words?: TranscriptWord[];
   /** Wall-clock duration of the request, for the provider comparison table. */
@@ -37,7 +39,21 @@ export interface TranscribeOptions {
   language: 'de';
   /** Glossary terms: drug names, referring doctors, abbreviations. */
   keyterms: string[];
+  /**
+   * Speaker diarization. Off for dictations (one voice, and diarizing a solo
+   * recording invites phantom second speakers); on for consultations, with the
+   * realistic range for a consulting room.
+   */
+  diarize?: { minSpeakers: number; maxSpeakers: number };
   signal?: AbortSignal;
+}
+
+export interface TranscriptUtterance {
+  /** Provider speaker label: "A", "B", … */
+  speaker: string;
+  text: string;
+  startMs: number;
+  endMs: number;
 }
 
 export interface TranscriptionProvider {
@@ -46,13 +62,14 @@ export interface TranscriptionProvider {
   /** Whether the request stays inside the EU. Surfaced in Einstellungen. */
   readonly euHosted: boolean;
   /**
-   * Transcribe ONE self-contained audio segment.
+   * Transcribe one complete recording.
    *
-   * The blob must be an independently playable file (a complete container with
-   * headers), not a raw MediaRecorder timeslice chunk. See the recorder's
-   * segment-rotation logic for why.
+   * The blob must be a valid container from its first byte — either a whole
+   * MediaRecorder session's chunks concatenated in order, or any complete
+   * audio file. A 30-minute consultation is one call; async providers upload
+   * and poll internally.
    */
-  transcribeSegment(blob: Blob, opts: TranscribeOptions): Promise<TranscriptChunk>;
+  transcribeFile(blob: Blob, opts: TranscribeOptions): Promise<TranscriptChunk>;
 }
 
 /** Providers are constructed with a key held in IndexedDB (app) or env (eval). */

@@ -11,15 +11,14 @@ export type DraftProviderId = 'anthropic' | 'gateway';
 
 export interface BeurteilungRequest {
   transcript: string;
-  vorbrief?: string;
   glossary: string[];
   examples: BeurteilungExample[];
   signal?: AbortSignal;
 }
 
 export interface GespraechRequest {
+  /** Speaker-prefixed lines ("Arzt: …"), or plain text without diarization. */
   transcript: string;
-  vorbrief?: string;
   glossary: string[];
   signal?: AbortSignal;
 }
@@ -27,8 +26,6 @@ export interface GespraechRequest {
 interface DraftMeta {
   /** False when the model did not honour the output contract. */
   wellFormed: boolean;
-  /** [FEHLT: …] markers found, for the review checklist. */
-  fehlt: string[];
   model: string;
   promptVersion: string;
   latencyMs: number;
