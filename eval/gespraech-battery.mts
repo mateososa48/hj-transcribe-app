@@ -57,8 +57,39 @@ async function run(transcript: string) {
   return parseGespraech(json.choices?.[0]?.message?.content ?? '');
 }
 
+/**
+ * What each fixture's medication list must and must not contain.
+ *
+ * Added 2026-08-23 after an adversarial pass found the battery reporting
+ * "clean" on a run that listed BOTH Atorvastatin 40 and Simvastatin 40 as
+ * concurrent therapy — G3 corrects the first into the second, so printing both
+ * invents a drug the patient does not take. The form checks below could never
+ * have seen it: they validate the shape of the lines that are there and say
+ * nothing about which drugs should be there at all.
+ *
+ * A drug that vanishes is equally invisible to a shape check, so both
+ * directions are pinned.
+ */
+const EXPECTED_MEDS: Record<string, { must: RegExp[]; mustNot: RegExp[] }> = {
+  'G1-verlaufskontrolle': {
+    must: [/\bASS 100\b/, /\bClopidogrel 75\b/, /\bBisoprolol 5\b/, /\bRamipril 5\b/, /\bAtorvastatin 40\b/],
+    mustNot: [],
+  },
+  'G2-erstvorstellung': {
+    // "Nehmen Sie Medikamente? Nein, gar keine."
+    must: [/^\s*Keine\s*$/im],
+    mustNot: [/\d/],
+  },
+  'G3-unsauber': {
+    must: [/\bMetoprolol 50\b/, /\bTorasemid 10\b/, /\bXarelto 20\b/, /\bSimvastatin 40\b/, /\bMetformin 1000\b/],
+    // Atorvastatin was a misrecognition the speaker corrected away; 95 was a
+    // dose the speaker corrected away. Either surviving is a fabrication.
+    mustNot: [/Atorvastatin/i, /\b95\b/],
+  },
+};
+
 /** Properties a section must have, judged mechanically. */
-function check(s: Record<string, string>) {
+function check(s: Record<string, string>, fixture?: string) {
   const flags: string[] = [];
   const all = Object.values(s).join('\n');
 
@@ -91,6 +122,15 @@ function check(s: Record<string, string>) {
   const missing = GESPRAECH_SECTIONS.filter((k) => !s[k]?.trim());
   if (missing.length) flags.push(`EMPTY:${missing.join('+')}`);
 
+  const expected = fixture ? EXPECTED_MEDS[fixture] : undefined;
+  if (expected) {
+    const med = s.medikation ?? '';
+    const absent = expected.must.filter((re) => !re.test(med));
+    const forbidden = expected.mustNot.filter((re) => re.test(med));
+    if (absent.length) flags.push(`MED_MISSING:${absent.length}`);
+    if (forbidden.length) flags.push('MED_FABRICATED');
+  }
+
   return { flags, markers: markers.length, longest };
 }
 
@@ -102,7 +142,7 @@ for (const file of files) {
   for (let i = 0; i < RUNS; i++) {
     try {
       const { sections, wellFormed } = await run(src);
-      const { flags, markers, longest } = check(sections);
+      const { flags, markers, longest } = check(sections, file.replace('.txt', ''));
       console.log(
         `${file.replace('.txt', '').padEnd(22)} run${i + 1}  ${wellFormed ? 'tagged  ' : 'UNTAGGED'}  ` +
           `d:${String(sections.diagnosen.length).padStart(4)} a:${String(sections.anamnese.length).padStart(4)} ` +
