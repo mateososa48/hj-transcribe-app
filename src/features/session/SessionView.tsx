@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FilePlus2, FileText, ListTree, RotateCcw, Trash2, Undo2 } from 'lucide-react';
+import { FilePlus2, FileText, ListTree, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -28,14 +28,17 @@ import {
   type Session,
   type Transcription,
 } from '@/lib/db';
-import { deleteSession, restorePreviousSections } from '@/lib/generate';
+import { deleteSession } from '@/lib/generate';
 import { recoverSession } from '@/lib/session/recording-session';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { speakerOrder } from '@/lib/speakers';
 import { usePipelineState, useRecordingState } from '@/features/record/useRecording';
 import { formatDuration, sessionTitle } from '@/features/sessions/useSessions';
 import { useAppStore } from '@/store/app-store';
+import { DIKTAT_DESIGNS } from '@/features/diktat/designs/registry';
+import type { DiktatCtx } from '@/features/diktat/design-context';
 import { ProcessingHandoff } from './ProcessingHandoff';
+import { RegenerateControls } from './RegenerateControls';
 import { getProcessingPreviewPhase } from './processing-handoff-model';
 import { SyncedPlayback } from './SyncedPlayback';
 import { SectionCard } from './SectionCard';
@@ -67,6 +70,7 @@ export function SessionView({
   const goHome = useAppStore((s) => s.goHome);
   const startRecording = useAppStore((s) => s.startRecording);
   const touchSessions = useAppStore((s) => s.touchSessions);
+  const diktatDesign = useAppStore((s) => s.diktatDesign);
   const pipelineState = usePipelineState(sessionId);
   const recording = useRecordingState();
 
@@ -170,6 +174,44 @@ export function SessionView({
     touchSessions();
     await load();
     void pipeline.process(session.id);
+  }
+
+  // The Diktat design experiments: a chosen design owns the whole page. The
+  // Termin feature deliberately never enters this branch.
+  if (!isTermin && diktatDesign !== 'standard') {
+    const Design = DIKTAT_DESIGNS[diktatDesign];
+    const ctx: DiktatCtx = {
+      session,
+      transcription,
+      result,
+      title,
+      setTitle,
+      saveTitle,
+      dateLine: new Date(session.startedAt).toLocaleDateString('de-DE', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+      }),
+      durationLine: formatDuration(session.durationMs),
+      state: isLive
+        ? 'live'
+        : interrupted
+          ? 'interrupted'
+          : activePhase
+            ? 'processing'
+            : showFailed
+              ? 'failed'
+              : 'ready',
+      phase: activePhase,
+      errorText:
+        pipelineState.error ?? transcription?.error ?? 'Die Verarbeitung ist fehlgeschlagen.',
+      canGenerate,
+      running: showRunning,
+      retry: () => void pipeline.process(session.id),
+      recover: recoverNow,
+      reload: () => void load(),
+    };
+    return <Design.Session ctx={ctx} />;
   }
 
   return (
@@ -464,100 +506,6 @@ export function SessionView({
           )}
         </>
       )}
-    </div>
-  );
-}
-
-/**
- * Regenerate, guarded. When his corrections are in the working copy, the
- * button asks first — and after a regenerate, the replaced version stays one
- * click away. Silently eating four minutes of his edits is the exact class of
- * failure this app exists to prevent.
- */
-function RegenerateControls({
-  session,
-  result,
-  running,
-  onChanged,
-}: {
-  session: Session;
-  result: Result;
-  running: boolean;
-  onChanged: () => void;
-}) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const isTermin = session.kind === 'gespraech';
-
-  const regenerate = () => void pipeline.process(session.id);
-
-  /**
-   * Decide at click time, against the database — the in-memory result is
-   * loaded once, but his edits autosave straight to the DB underneath it, and
-   * a stale comparison would skip the warning exactly when it matters.
-   */
-  async function decide() {
-    const fresh = await db.results.get(result.id);
-    const sections = fresh?.sections ?? result.sections;
-    const original = fresh?.original ?? result.original;
-    const edited = Object.entries(sections).some(([key, value]) => (original[key] ?? '') !== value);
-    if (edited) setConfirmOpen(true);
-    else regenerate();
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button
-        variant="ghost"
-        size="lg"
-        disabled={running}
-        onClick={() => void decide()}
-      >
-        <RotateCcw aria-hidden />
-        {isTermin ? 'Notizen neu erstellen' : 'Neu erstellen'}
-      </Button>
-
-      {result.previousSections ? (
-        <Button
-          variant="ghost"
-          size="lg"
-          disabled={running}
-          onClick={async () => {
-            const restored = await restorePreviousSections(result.id);
-            if (restored) {
-              toast.success('Die vorherige Fassung ist wiederhergestellt.');
-              onChanged();
-            }
-          }}
-        >
-          <Undo2 aria-hidden />
-          Vorherige Fassung wiederherstellen
-        </Button>
-      ) : null}
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isTermin ? 'Notizen neu erstellen?' : 'Text neu erstellen?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Sie haben den Text bearbeitet. Beim Neu-Erstellen wird Ihre Fassung ersetzt — Sie
-              können sie danach über „Vorherige Fassung wiederherstellen“ zurückholen.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmOpen(false);
-                regenerate();
-              }}
-            >
-              Neu erstellen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

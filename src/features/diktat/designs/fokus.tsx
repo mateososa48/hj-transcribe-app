@@ -1,0 +1,147 @@
+import { ArrowLeft, Check, ClipboardCopy, Mic, Square } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { RecordingWave } from '@/features/record/RecordingWave';
+import { RegenerateControls } from '@/features/session/RegenerateControls';
+import { SyncedPlayback } from '@/features/session/SyncedPlayback';
+import { cn } from '@/lib/utils';
+import type { DiktatCtx, DiktatDesign } from '../design-context';
+import {
+  DeleteRecordingButton,
+  DiktatEmptyText,
+  DiktatStatus,
+  DiktatTitle,
+  RecorderNotices,
+} from '../design-shared';
+import { useDiktatRecorder } from '../useDiktatRecorder';
+import { useDiktatText } from '../useDiktatText';
+
+/**
+ * FOKUS — the opposite pole of every bordered design here: no frames, no
+ * cards, no bands. A large clock, one round key, and afterwards the text
+ * alone on the page at a generous size. Hierarchy comes from whitespace and
+ * scale only; actions stand quietly underneath as text.
+ */
+
+function Editor({ resultId, initial }: { resultId: string; initial: string }) {
+  const { text, update, copy, copied, areaRef } = useDiktatText(resultId, initial);
+  return (
+    <section className="space-y-5">
+      <div className="flex justify-end">
+        <Button size="lg" variant={copied ? 'secondary' : 'default'} onClick={() => void copy()}>
+          {copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
+          {copied ? 'Kopiert' : 'Kopieren'}
+        </Button>
+      </div>
+      <Textarea
+        ref={areaRef}
+        value={text}
+        onChange={(e) => update(e.target.value)}
+        aria-label="Zusammenfassende Beurteilung"
+        placeholder="Hier wurde nichts eingetragen — Sie können selbst ergänzen."
+        className="min-h-48 rounded-none border-transparent bg-transparent p-0 text-lg leading-[2] shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-lg"
+      />
+    </section>
+  );
+}
+
+function Session({ ctx }: { ctx: DiktatCtx }) {
+  const blocked = ctx.state === 'live' || ctx.state === 'interrupted';
+  return (
+    <div className="mx-auto max-w-[42rem] space-y-10 pb-16">
+      <header className="space-y-1.5 pt-4">
+        <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+          {ctx.dateLine}
+          {ctx.durationLine ? ` · ${ctx.durationLine}` : ''}
+        </p>
+        <DiktatTitle ctx={ctx} className="text-3xl font-medium md:text-3xl" />
+      </header>
+
+      {ctx.state !== 'ready' ? <DiktatStatus ctx={ctx} /> : null}
+
+      {!blocked ? (
+        <>
+          {ctx.result ? (
+            <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+          ) : (
+            <DiktatEmptyText ctx={ctx} />
+          )}
+
+          <section className="space-y-4 pt-6">
+            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Aufnahme</p>
+            <SyncedPlayback
+              sessionId={ctx.session.id}
+              words={ctx.transcription?.words ?? []}
+              fallbackText={ctx.transcription?.text ?? ''}
+            />
+          </section>
+
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            {ctx.result ? (
+              <RegenerateControls
+                session={ctx.session}
+                result={ctx.result}
+                running={ctx.running}
+                onChanged={ctx.reload}
+              />
+            ) : null}
+            <DeleteRecordingButton ctx={ctx} />
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function Record() {
+  const r = useDiktatRecorder();
+  return (
+    <div className="mx-auto flex max-w-[42rem] flex-col">
+      <div>
+        <Button variant="ghost" size="lg" onClick={r.goHome} disabled={r.isRecording}>
+          <ArrowLeft aria-hidden />
+          Zurück
+        </Button>
+      </div>
+
+      <div className="flex flex-col items-center gap-10 pt-14 pb-10 text-center">
+        <div className="space-y-3">
+          <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+            {r.isRecording ? 'Ihr Diktat wird aufgenommen' : 'Neues Diktat'}
+          </p>
+          <div className="text-8xl font-extralight tabular-nums tracking-tight">{r.elapsed}</div>
+        </div>
+
+        <RecordingWave level={r.recording.level} state={r.orbState} className="h-20 opacity-70" />
+        <RecorderNotices recording={r.recording} />
+
+        <div className="flex flex-col items-center gap-4">
+          <Button
+            disabled={r.isBusy}
+            onClick={() => void r.toggle()}
+            aria-label={r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
+            className={cn(
+              'size-24 rounded-full [&_svg]:size-9',
+              r.isRecording && 'btn-gloss bg-destructive text-white hover:bg-destructive/90',
+            )}
+          >
+            {r.isBusy ? <Spinner /> : r.isRecording ? <Square aria-hidden /> : <Mic aria-hidden />}
+          </Button>
+          <p className="text-base text-muted-foreground">
+            {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
+          </p>
+        </div>
+
+        <p className="max-w-[44ch] text-sm text-muted-foreground">
+          {r.isRecording
+            ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
+            : 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export const fokus: DiktatDesign = { Record, Session };

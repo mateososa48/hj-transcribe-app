@@ -1,0 +1,204 @@
+import { ArrowLeft, Check, ClipboardCopy } from 'lucide-react';
+
+import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { RecordingWave } from '@/features/record/RecordingWave';
+import { RegenerateControls } from '@/features/session/RegenerateControls';
+import { SyncedPlayback } from '@/features/session/SyncedPlayback';
+import { cn } from '@/lib/utils';
+import type { DiktatCtx, DiktatDesign } from '../design-context';
+import {
+  DeleteRecordingButton,
+  DiktatEmptyText,
+  DiktatStatus,
+  DiktatTitle,
+  RecorderNotices,
+} from '../design-shared';
+import { useDiktatRecorder } from '../useDiktatRecorder';
+import { useDiktatText } from '../useDiktatText';
+
+/**
+ * PLAKAT — print-shop contrast. Section titles are white type on full black
+ * bars, rules are four pixels thick, corners do not exist, and the clock is
+ * set at poster size. The page reads from across the room; nothing is subtle
+ * and nothing is decorated — black, white, one red word when it matters.
+ */
+
+function Bar({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-stretch justify-between gap-3">
+      <h2 className="inline-flex items-center bg-foreground px-4 py-2 text-sm font-bold uppercase tracking-[0.18em] text-background">
+        {children}
+      </h2>
+      {action}
+    </div>
+  );
+}
+
+function PlakatButton({
+  children,
+  onClick,
+  disabled,
+  danger,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'inline-flex h-12 items-center gap-2 border-2 border-foreground bg-foreground px-6 text-sm font-bold uppercase tracking-[0.14em] text-background transition-colors',
+        'hover:bg-background hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50',
+        danger &&
+          'border-destructive bg-destructive text-white hover:bg-background hover:text-destructive',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Editor({ resultId, initial }: { resultId: string; initial: string }) {
+  const { text, update, copy, copied, areaRef } = useDiktatText(resultId, initial);
+  return (
+    <section className="space-y-5">
+      <Bar
+        action={
+          <PlakatButton onClick={() => void copy()} className="h-auto">
+            {copied ? <Check className="size-4" aria-hidden /> : <ClipboardCopy className="size-4" aria-hidden />}
+            {copied ? 'Kopiert' : 'Kopieren'}
+          </PlakatButton>
+        }
+      >
+        Zusammenfassende Beurteilung
+      </Bar>
+      <Textarea
+        ref={areaRef}
+        value={text}
+        onChange={(e) => update(e.target.value)}
+        aria-label="Zusammenfassende Beurteilung"
+        placeholder="Hier wurde nichts eingetragen — Sie können selbst ergänzen."
+        className="min-h-44 rounded-none border-transparent bg-transparent p-0 leading-[1.85] shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base"
+      />
+    </section>
+  );
+}
+
+function Session({ ctx }: { ctx: DiktatCtx }) {
+  const blocked = ctx.state === 'live' || ctx.state === 'interrupted';
+  return (
+    <div className="space-y-8 pb-16">
+      <header className="space-y-4 border-t-4 border-foreground pt-5">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">
+          Diktat · {ctx.dateLine}
+          {ctx.durationLine ? ` · ${ctx.durationLine}` : ''}
+        </p>
+        <DiktatTitle ctx={ctx} className="text-2xl font-bold uppercase tracking-tight md:text-3xl" />
+      </header>
+
+      {ctx.state !== 'ready' ? <DiktatStatus ctx={ctx} /> : null}
+
+      {!blocked ? (
+        <>
+          {ctx.result ? (
+            <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+          ) : (
+            <section className="space-y-5">
+              <Bar>Zusammenfassende Beurteilung</Bar>
+              <DiktatEmptyText ctx={ctx} />
+            </section>
+          )}
+
+          <section className="space-y-5 border-t-4 border-foreground pt-5">
+            <Bar>Aufnahme</Bar>
+            <div className="[&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none">
+              <SyncedPlayback
+                sessionId={ctx.session.id}
+                words={ctx.transcription?.words ?? []}
+                fallbackText={ctx.transcription?.text ?? ''}
+              />
+            </div>
+          </section>
+
+          <div className="flex flex-wrap items-center gap-3 border-t-4 border-foreground pt-5">
+            {ctx.result ? (
+              <RegenerateControls
+                session={ctx.session}
+                result={ctx.result}
+                running={ctx.running}
+                onChanged={ctx.reload}
+                className="[&_button]:rounded-none [&_button]:font-bold [&_button]:uppercase [&_button]:tracking-wider"
+              />
+            ) : null}
+            <DeleteRecordingButton
+              ctx={ctx}
+              trigger={
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center gap-2 px-3 text-sm font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  Löschen
+                </button>
+              }
+            />
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function Record() {
+  const r = useDiktatRecorder();
+  return (
+    <div className="space-y-8">
+      <button
+        type="button"
+        onClick={r.goHome}
+        disabled={r.isRecording}
+        className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        Zurück
+      </button>
+
+      <div className="border-t-4 border-foreground pt-5">
+        <Bar>{r.isRecording ? 'Aufnahme läuft' : 'Diktat aufnehmen'}</Bar>
+      </div>
+
+      <div className="flex flex-col items-center gap-8 py-2 text-center">
+        <div
+          className={cn(
+            'text-[5.5rem] leading-none font-bold tabular-nums tracking-tight sm:text-[7rem]',
+            r.isRecording && 'text-destructive',
+          )}
+        >
+          {r.elapsed}
+        </div>
+        <RecordingWave level={r.recording.level} state={r.orbState} className="h-28" />
+        <RecorderNotices recording={r.recording} className="rounded-none" />
+        <PlakatButton onClick={() => void r.toggle()} disabled={r.isBusy} danger={r.isRecording}>
+          {r.isBusy ? <Spinner /> : null}
+          {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
+        </PlakatButton>
+        <p className="max-w-[52ch] text-sm text-muted-foreground">
+          {r.isRecording
+            ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
+            : 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
+        </p>
+      </div>
+
+      <div className="border-t-4 border-foreground" aria-hidden />
+    </div>
+  );
+}
+
+export const plakat: DiktatDesign = { Record, Session };

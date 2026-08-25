@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAppStore, type LayoutId } from '@/store/app-store';
+import { DIKTAT_DESIGN_META } from '@/features/diktat/design-meta';
+import { useAppStore, type DiktatDesignId, type LayoutId } from '@/store/app-store';
 import { hasDemoData, removeDemoData, seedDemoData } from './demo-data';
 
 /**
@@ -34,6 +36,8 @@ export const LAYOUT_META: Record<LayoutId, { label: string; blurb: string }> = {
 export function LayoutSwitcher() {
   const layout = useAppStore((s) => s.layout);
   const setLayout = useAppStore((s) => s.setLayout);
+  const diktatDesign = useAppStore((s) => s.diktatDesign);
+  const setDiktatDesign = useAppStore((s) => s.setDiktatDesign);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const [demo, setDemo] = useState(false);
 
@@ -48,21 +52,44 @@ export function LayoutSwitcher() {
           render={
             <Button size="lg" className="shadow-lg">
               <LayoutPanelLeft aria-hidden />
-              Layout: {LAYOUT_META[layout].label}
+              {LAYOUT_META[layout].label} · Diktat: {DIKTAT_DESIGN_META[diktatDesign].label}
             </Button>
           }
         />
-        <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel>Layout-Experimente</DropdownMenuLabel>
-          {(Object.keys(LAYOUT_META) as LayoutId[]).map((id) => (
-            <DropdownMenuItem key={id} onClick={() => setLayout(id)} className="items-start gap-2 py-2">
-              <Check className={id === layout ? 'mt-0.5 size-4' : 'mt-0.5 size-4 opacity-0'} aria-hidden />
-              <span className="flex min-w-0 flex-col">
-                <span className="font-medium">{LAYOUT_META[id].label}</span>
-                <span className="text-xs text-muted-foreground">{LAYOUT_META[id].blurb}</span>
-              </span>
-            </DropdownMenuItem>
-          ))}
+        <DropdownMenuContent align="end" className="max-h-[80vh] w-80 overflow-y-auto">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Layout-Experimente</DropdownMenuLabel>
+            {(Object.keys(LAYOUT_META) as LayoutId[]).map((id) => (
+              <DropdownMenuItem key={id} onClick={() => setLayout(id)} className="items-start gap-2 py-2">
+                <Check className={id === layout ? 'mt-0.5 size-4' : 'mt-0.5 size-4 opacity-0'} aria-hidden />
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-medium">{LAYOUT_META[id].label}</span>
+                  <span className="text-xs text-muted-foreground">{LAYOUT_META[id].blurb}</span>
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Diktat-Design (nur Diktat-Seiten)</DropdownMenuLabel>
+            {(Object.keys(DIKTAT_DESIGN_META) as DiktatDesignId[]).map((id) => (
+              <DropdownMenuItem
+                key={id}
+                onClick={() => setDiktatDesign(id)}
+                className="items-start gap-2 py-2"
+              >
+                <Check
+                  className={id === diktatDesign ? 'mt-0.5 size-4' : 'mt-0.5 size-4 opacity-0'}
+                  aria-hidden
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-medium">{DIKTAT_DESIGN_META[id].label}</span>
+                  <span className="text-xs text-muted-foreground">{DIKTAT_DESIGN_META[id].blurb}</span>
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
           {import.meta.env.DEV ? (
             <>
               <DropdownMenuSeparator />

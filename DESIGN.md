@@ -285,10 +285,11 @@ primitives.
     └──────────────┴──────────────────────────────┘
 
 **Two features that must not feel alike.** Termin records while he talks to a
-patient — it stays inside the frame, calm, glanceable. Diktat is the opposite:
-he is alone and the recording IS the task, so it takes the whole screen, goes
-black, and the ribbon switches to the shader's additive mode — light itself.
-That dark surface is Diktat's signature and appears nowhere else.
+patient — it stays inside the frame, calm, glanceable. Diktat is his solo task:
+also in-frame and on the light surface (an earlier black full-screen takeover
+was asked out), distinguished by the dark CTA card, the glossy finish and the
+recording ribbon. The ribbon's additive dark mode survives as an option
+(`RecordingWave dark`) and is used by the Studio design experiment.
 
 **The recording architecture** (v3): ONE continuous MediaRecorder, flushed to
 IndexedDB every 5 s. Timeslice chunks concatenate into one valid WebM — that
@@ -313,3 +314,25 @@ Sprecher 1 was (click the name → Arzt/Patient/…). Names feed the notes promp
 
 **One setting is load-bearing**: persistent storage. A segment of audio is on
 disk before any network call, and an interrupted session is offered back.
+
+
+## Experiment axes (evaluation phase, not shipped design)
+
+Two independent switchable axes exist for choosing the final shape, both via
+the floating pill (bottom right), `?layout=` / `?design=` URL params and
+localStorage:
+
+- **Layouts** (`src/layouts/`, 7): rearrange the app shell for BOTH features —
+  standard, leiste, posteingang, galerie, blatt, vergleich, protokoll.
+- **Diktat designs** (`src/features/diktat/designs/`, 10 + standard): change
+  the visual language of the DIKTAT screens only (recorder + result page);
+  Termin always renders the shipped design. karteikarte, formular, fenster,
+  studio, manuskript, terminal, akte, fokus, plakat, glas.
+
+Architecture: `SessionView`/`RecordFlow` branch to a design's `Session`/`Record`
+component when a non-standard design is active. Designs are looks only — all
+behaviour lives in shared hooks (`useDiktatRecorder`, `useDiktatText`) and
+shared components (`design-shared.tsx`: title, delete, status, empty state;
+`RegenerateControls`). `design-meta.ts` stays component-free so the switcher
+and node tests can import it. Once winners are chosen, the losing layouts,
+losing designs and the switcher are deleted together.
