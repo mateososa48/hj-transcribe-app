@@ -277,7 +277,7 @@ primitives.
     ┌──────────────┬──────────────────────────────┐
     │ + Termin     │  Title (editable)            │
     │ + Diktat     │  Mo · 12:30 min · 2 Sprecher │
-    │──────────────│  [Notizen][Transkript][Audio]│
+    │──────────────│  [Notizen] [Transkript]      │
     │ Heute        │                              │
     │  · Termin …  │  …                           │
     │  · Diktat …  │                              │
