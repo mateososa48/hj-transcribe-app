@@ -132,7 +132,7 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
           disabled={isBusy}
           className={cn(
             'h-14 px-10 text-lg',
-            isRecording && 'bg-destructive text-white hover:bg-destructive/90',
+            isRecording && 'btn-gloss bg-destructive text-white hover:bg-destructive/90',
           )}
           onClick={() => void handleToggle()}
         >

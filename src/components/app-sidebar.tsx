@@ -86,7 +86,7 @@ export function AppSidebar() {
         {loading ? null : sessions.length === 0 ? (
           <SidebarGroup>
             <SidebarGroupContent>
-              <p className="px-3 py-2 text-sm text-sidebar-foreground/60">
+              <p className="px-3 py-2 text-sm text-muted-foreground">
                 Noch keine Aufnahmen.
               </p>
             </SidebarGroupContent>
@@ -112,7 +112,7 @@ export function AppSidebar() {
                           <span className="flex min-w-0 flex-col">
                             <span className="truncate font-medium">{sessionTitle(session)}</span>
                             {preview ? (
-                              <span className="truncate text-xs text-sidebar-foreground/55">
+                              <span className="truncate text-sm text-muted-foreground">
                                 {preview}
                               </span>
                             ) : null}

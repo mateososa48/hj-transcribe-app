@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { AudioLines, FileText, ListTree, RotateCcw, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FilePlus2, FileText, ListTree, RotateCcw, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,13 +28,13 @@ import {
   type Session,
   type Transcription,
 } from '@/lib/db';
-import { deleteSession } from '@/lib/generate';
+import { deleteSession, restorePreviousSections } from '@/lib/generate';
+import { recoverSession } from '@/lib/session/recording-session';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { speakerOrder } from '@/lib/speakers';
-import { usePipelineState } from '@/features/record/useRecording';
+import { usePipelineState, useRecordingState } from '@/features/record/useRecording';
 import { formatDuration, sessionTitle } from '@/features/sessions/useSessions';
 import { useAppStore } from '@/store/app-store';
-import { AudioPlayer } from './AudioPlayer';
 import { ProcessingHandoff } from './ProcessingHandoff';
 import { getProcessingPreviewPhase } from './processing-handoff-model';
 import { SyncedPlayback } from './SyncedPlayback';
@@ -41,22 +42,26 @@ import { SectionCard } from './SectionCard';
 import { TranscriptView } from './TranscriptView';
 
 /**
- * One recording, opened. For a Termin this is a document with three faces —
- * Notizen, Transkript, Audio — because the notes are a summary and the
- * transcript is the ground truth; keeping both visible is what lets the notes
- * stay lossy without being dangerous. A Diktat is simpler: the text, then the
- * evidence underneath.
+ * One recording, opened. For a Termin this is a document with two faces —
+ * Notizen and Transkript — because the notes are a summary and the transcript
+ * is the ground truth; keeping both visible is what lets the notes stay lossy
+ * without being dangerous. The recording is docked inside the transcript,
+ * where hearing and reading belong together. A Diktat is simpler: the text,
+ * then the evidence underneath.
  */
 export function SessionView({ sessionId }: { sessionId: string }) {
   const goHome = useAppStore((s) => s.goHome);
+  const startRecording = useAppStore((s) => s.startRecording);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const pipelineState = usePipelineState(sessionId);
+  const recording = useRecordingState();
 
   const [session, setSession] = useState<Session | null>(null);
   const [transcription, setTranscription] = useState<Transcription | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
+  const autoResumedFor = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     const [s, t, r] = await Promise.all([
@@ -80,6 +85,24 @@ export function SessionView({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     void load();
   }, [pipelineState.phase, load]);
+
+  const running = pipelineState.phase === 'transcribing' || pipelineState.phase === 'notes';
+  const failed = pipelineState.phase === 'error' || transcription?.status === 'failed';
+
+  /**
+   * Resume an interrupted pipeline. The pipeline lives in memory, so a closed
+   * tab between transcript and notes used to leave a finished transcript with
+   * no notes and no way to ask for them — the missing step now runs itself the
+   * moment the session is opened.
+   */
+  useEffect(() => {
+    if (loading || !session || result || running || failed) return;
+    if (session.status !== 'stopped') return;
+    if (transcription?.status !== 'done' || !transcription.text.trim()) return;
+    if (autoResumedFor.current === sessionId) return;
+    autoResumedFor.current = sessionId;
+    void pipeline.process(sessionId);
+  }, [loading, session, transcription, result, running, failed, sessionId]);
 
   async function saveTitle() {
     if (!session) return;
@@ -111,10 +134,29 @@ export function SessionView({ sessionId }: { sessionId: string }) {
     (pipelineState.phase === 'transcribing' || pipelineState.phase === 'notes'
       ? pipelineState.phase
       : null);
-  const running = activePhase !== null;
-  const failed = !previewPhase && (pipelineState.phase === 'error' || transcription?.status === 'failed');
+  const showRunning = activePhase !== null;
+  const showFailed = !previewPhase && failed;
   const speakerCount = transcription ? speakerOrder(transcription.utterances).length : 0;
   const isTermin = session.kind === 'gespraech';
+  // A session still marked "recording" is either the one running right now or
+  // one that a crash left behind — two very different pages.
+  const isLive =
+    session.status === 'recording' &&
+    recording.sessionId === session.id &&
+    (recording.status === 'recording' ||
+      recording.status === 'requesting-mic' ||
+      recording.status === 'stopping');
+  const interrupted = session.status === 'recording' && !isLive;
+  const canGenerate =
+    !showRunning && transcription?.status === 'done' && Boolean(transcription.text.trim());
+
+  async function recoverNow() {
+    if (!session) return;
+    await recoverSession(session.id);
+    touchSessions();
+    await load();
+    void pipeline.process(session.id);
+  }
 
   return (
     <div className="space-y-8 pb-16">
@@ -126,7 +168,7 @@ export function SessionView({ sessionId }: { sessionId: string }) {
           <AlertDialog>
             <AlertDialogTrigger
               render={
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                <Button variant="ghost" className="text-muted-foreground" disabled={isLive}>
                   <Trash2 aria-hidden />
                   Löschen
                 </Button>
@@ -158,7 +200,9 @@ export function SessionView({ sessionId }: { sessionId: string }) {
           </AlertDialog>
         </div>
 
-        {/* Editable title, Notion-style: looks like a heading, edits in place. */}
+        {/* Editable title, Notion-style: looks like a heading, edits in place.
+            The explicit md:text-2xl matters — the input base carries md:text-sm,
+            which would otherwise shrink the title back to body size on desktop. */}
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -167,7 +211,7 @@ export function SessionView({ sessionId }: { sessionId: string }) {
             if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
           }}
           aria-label="Titel der Aufnahme"
-          className="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2"
+          className="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
         />
 
         <p className="text-sm text-muted-foreground">
@@ -181,120 +225,288 @@ export function SessionView({ sessionId }: { sessionId: string }) {
         </p>
       </div>
 
-      {activePhase ? (
-        <ProcessingHandoff kind={session.kind} phase={activePhase} />
-      ) : failed ? (
-        <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
-          <p className="font-medium text-destructive">
-            {pipelineState.error ?? transcription?.error ?? 'Die Verarbeitung ist fehlgeschlagen.'}
-          </p>
-          <Button size="lg" variant="outline" onClick={() => void pipeline.process(session.id)}>
-            <RotateCcw aria-hidden />
-            Erneut versuchen
-          </Button>
-        </div>
+      {isLive ? (
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Diese Aufnahme läuft gerade</ItemTitle>
+            <ItemDescription>
+              Transkript und Notizen entstehen, sobald Sie die Aufnahme beenden.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button size="lg" onClick={() => startRecording(session.kind)}>
+              Zur Aufnahme
+            </Button>
+          </ItemActions>
+        </Item>
+      ) : interrupted ? (
+        /* The same offer the start screen makes — reachable from the sidebar
+           too, so the newest list entry never reads as a lost recording. */
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Unterbrochene Aufnahme gefunden</ItemTitle>
+            <ItemDescription>
+              Diese Aufnahme wurde nicht ordentlich beendet. Der Ton ist gespeichert und kann
+              weiterverwendet werden.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="outline" size="lg">
+                    Verwerfen
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Aufnahme wirklich verwerfen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Der gespeicherte Ton dieser Aufnahme wird endgültig gelöscht. Das lässt sich
+                    nicht rückgängig machen.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={async () => {
+                      await deleteSession(session.id);
+                      touchSessions();
+                      toast.success('Aufnahme verworfen.');
+                      goHome();
+                    }}
+                  >
+                    Endgültig verwerfen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button size="lg" onClick={() => void recoverNow()}>
+              Weiterverwenden
+            </Button>
+          </ItemActions>
+        </Item>
+      ) : (
+        <>
+          {activePhase ? (
+            <ProcessingHandoff kind={session.kind} phase={activePhase} />
+          ) : showFailed ? (
+            <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
+              <p className="font-medium text-destructive">
+                {pipelineState.error ?? transcription?.error ?? 'Die Verarbeitung ist fehlgeschlagen.'}
+              </p>
+              <Button size="lg" variant="outline" onClick={() => void pipeline.process(session.id)}>
+                <RotateCcw aria-hidden />
+                Erneut versuchen
+              </Button>
+            </div>
+          ) : null}
+
+          {isTermin ? (
+            <Tabs defaultValue="notizen">
+              <TabsList className="group-data-horizontal/tabs:h-11">
+                <TabsTrigger value="notizen" className="px-3 text-base">
+                  <FileText aria-hidden /> Notizen
+                </TabsTrigger>
+                <TabsTrigger value="transkript" className="px-3 text-base">
+                  <ListTree aria-hidden /> Transkript
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="notizen" className="pt-6 text-base">
+                {result ? (
+                  <div className="space-y-8">
+                    {KIND_SECTIONS.gespraech.map((section) => (
+                      <SectionCard
+                        key={section}
+                        resultId={result.id}
+                        section={section}
+                        initialText={result.sections[section] ?? ''}
+                      />
+                    ))}
+                    <Separator />
+                    <RegenerateControls
+                      session={session}
+                      result={result}
+                      running={showRunning}
+                      onChanged={() => void load()}
+                    />
+                  </div>
+                ) : showRunning ? (
+                  <p className="text-muted-foreground">Die Notizen erscheinen hier gleich.</p>
+                ) : canGenerate ? (
+                  <div className="space-y-4">
+                    <p className="max-w-[56ch] text-muted-foreground">
+                      Das Transkript ist fertig, die Notizen wurden noch nicht erstellt.
+                    </p>
+                    <Button size="lg" onClick={() => void pipeline.process(session.id)}>
+                      <FilePlus2 aria-hidden />
+                      Notizen erstellen
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Noch keine Notizen zu dieser Aufnahme.</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="transkript" className="pt-6 text-base">
+                {transcription?.status === 'done' ? (
+                  <TranscriptView
+                    session={session}
+                    utterances={transcription.utterances}
+                    text={transcription.text}
+                    onSessionChanged={() => void load()}
+                  />
+                ) : (
+                  <p className="text-muted-foreground">
+                    {showRunning ? 'Das Transkript erscheint hier gleich.' : 'Noch kein Transkript.'}
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="space-y-10">
+              {result ? (
+                <SectionCard
+                  resultId={result.id}
+                  section="beurteilung"
+                  initialText={result.sections.beurteilung ?? ''}
+                />
+              ) : showRunning ? (
+                <p className="text-muted-foreground">Der Text erscheint hier gleich.</p>
+              ) : canGenerate ? (
+                <div className="space-y-4">
+                  <p className="max-w-[56ch] text-muted-foreground">
+                    Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
+                  </p>
+                  <Button size="lg" onClick={() => void pipeline.process(session.id)}>
+                    <FilePlus2 aria-hidden />
+                    Text erstellen
+                  </Button>
+                </div>
+              ) : null}
+
+              {result ? (
+                <RegenerateControls
+                  session={session}
+                  result={result}
+                  running={showRunning}
+                  onChanged={() => void load()}
+                />
+              ) : null}
+
+              <Separator />
+              <section className="space-y-3">
+                <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
+                {/* The evidence under the polished text: playback with the spoken
+                    word highlighted as it plays. A wrong number is far easier to
+                    hear-and-see here than to spot inside finished prose. */}
+                <SyncedPlayback
+                  sessionId={session.id}
+                  words={transcription?.words ?? []}
+                  fallbackText={transcription?.text ?? ''}
+                />
+              </section>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Regenerate, guarded. When his corrections are in the working copy, the
+ * button asks first — and after a regenerate, the replaced version stays one
+ * click away. Silently eating four minutes of his edits is the exact class of
+ * failure this app exists to prevent.
+ */
+function RegenerateControls({
+  session,
+  result,
+  running,
+  onChanged,
+}: {
+  session: Session;
+  result: Result;
+  running: boolean;
+  onChanged: () => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const isTermin = session.kind === 'gespraech';
+
+  const regenerate = () => void pipeline.process(session.id);
+
+  /**
+   * Decide at click time, against the database — the in-memory result is
+   * loaded once, but his edits autosave straight to the DB underneath it, and
+   * a stale comparison would skip the warning exactly when it matters.
+   */
+  async function decide() {
+    const fresh = await db.results.get(result.id);
+    const sections = fresh?.sections ?? result.sections;
+    const original = fresh?.original ?? result.original;
+    const edited = Object.entries(sections).some(([key, value]) => (original[key] ?? '') !== value);
+    if (edited) setConfirmOpen(true);
+    else regenerate();
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button
+        variant="ghost"
+        size="lg"
+        disabled={running}
+        onClick={() => void decide()}
+      >
+        <RotateCcw aria-hidden />
+        {isTermin ? 'Notizen neu erstellen' : 'Neu erstellen'}
+      </Button>
+
+      {result.previousSections ? (
+        <Button
+          variant="ghost"
+          size="lg"
+          disabled={running}
+          onClick={async () => {
+            const restored = await restorePreviousSections(result.id);
+            if (restored) {
+              toast.success('Die vorherige Fassung ist wiederhergestellt.');
+              onChanged();
+            }
+          }}
+        >
+          <Undo2 aria-hidden />
+          Vorherige Fassung wiederherstellen
+        </Button>
       ) : null}
 
-      {isTermin ? (
-        <Tabs defaultValue="notizen">
-          <TabsList>
-            <TabsTrigger value="notizen">
-              <FileText aria-hidden /> Notizen
-            </TabsTrigger>
-            <TabsTrigger value="transkript">
-              <ListTree aria-hidden /> Transkript
-            </TabsTrigger>
-            <TabsTrigger value="audio">
-              <AudioLines aria-hidden /> Audio
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="notizen" className="pt-6">
-            {result ? (
-              <div className="space-y-8">
-                {KIND_SECTIONS.gespraech.map((section) => (
-                  <SectionCard
-                    key={section}
-                    resultId={result.id}
-                    section={section}
-                    initialText={result.sections[section] ?? ''}
-                  />
-                ))}
-                <Separator />
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  disabled={running}
-                  onClick={() => void pipeline.process(session.id)}
-                >
-                  <RotateCcw aria-hidden />
-                  Notizen neu erstellen
-                </Button>
-              </div>
-            ) : running ? (
-              <p className="text-muted-foreground">Die Notizen erscheinen hier gleich.</p>
-            ) : (
-              <p className="text-muted-foreground">Noch keine Notizen zu dieser Aufnahme.</p>
-            )}
-          </TabsContent>
-
-          <TabsContent value="transkript" className="pt-6">
-            {transcription?.status === 'done' ? (
-              <TranscriptView
-                session={session}
-                utterances={transcription.utterances}
-                text={transcription.text}
-                onSessionChanged={() => void load()}
-              />
-            ) : (
-              <p className="text-muted-foreground">
-                {running ? 'Das Transkript erscheint hier gleich.' : 'Noch kein Transkript.'}
-              </p>
-            )}
-          </TabsContent>
-
-          <TabsContent value="audio" className="pt-6">
-            <AudioPlayer sessionId={session.id} />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <div className="space-y-10">
-          {result ? (
-            <SectionCard
-              resultId={result.id}
-              section="beurteilung"
-              initialText={result.sections.beurteilung ?? ''}
-            />
-          ) : running ? (
-            <p className="text-muted-foreground">Der Text erscheint hier gleich.</p>
-          ) : null}
-
-          {result ? (
-            <Button
-              variant="ghost"
-              size="lg"
-              disabled={running}
-              onClick={() => void pipeline.process(session.id)}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isTermin ? 'Notizen neu erstellen?' : 'Text neu erstellen?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Sie haben den Text bearbeitet. Beim Neu-Erstellen wird Ihre Fassung ersetzt — Sie
+              können sie danach über „Vorherige Fassung wiederherstellen“ zurückholen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOpen(false);
+                regenerate();
+              }}
             >
-              <RotateCcw aria-hidden />
               Neu erstellen
-            </Button>
-          ) : null}
-
-          <Separator />
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
-            {/* The evidence under the polished text: playback with the spoken
-                word highlighted as it plays. A wrong number is far easier to
-                hear-and-see here than to spot inside finished prose. */}
-            <SyncedPlayback
-              sessionId={session.id}
-              words={transcription?.words ?? []}
-              fallbackText={transcription?.text ?? ''}
-            />
-          </section>
-        </div>
-      )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

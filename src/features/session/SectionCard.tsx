@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ClipboardCopy } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -37,11 +38,20 @@ export function SectionCard({
   const columnar = section === 'medikation';
   const [text, setText] = useState(initialText);
   const [copied, setCopied] = useState(false);
+  /**
+   * Stays on the heading until the text changes: he clicks Kopieren, turns to
+   * Word, pastes, comes back — the 2-second button flip is long gone, and this
+   * is what still tells him the section was already transferred.
+   */
+  const [copiedOnce, setCopiedOnce] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => setText(initialText), [initialText]);
+  useEffect(() => {
+    setText(initialText);
+    setCopiedOnce(false);
+  }, [initialText]);
 
   /**
    * Debounced autosave. He reads and corrects slowly; losing four minutes of
@@ -96,6 +106,7 @@ export function SectionCard({
     }
 
     setCopied(true);
+    setCopiedOnce(true);
     if (copiedTimer.current) clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setCopied(false), 2200);
 
@@ -106,39 +117,46 @@ export function SectionCard({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold tracking-tight">
-          {SECTION_LABELS[section] ?? section}
-        </h2>
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {SECTION_LABELS[section] ?? section}
+          </h2>
+          {copiedOnce ? (
+            <Badge variant="secondary">
+              <Check aria-hidden />
+              Kopiert
+            </Badge>
+          ) : null}
+        </div>
         {!empty ? (
-          <Button size="sm" variant={copied ? 'secondary' : 'outline'} onClick={() => void handleCopy()}>
+          <Button size="lg" variant={copied ? 'secondary' : 'outline'} onClick={() => void handleCopy()}>
             {copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
             {copied ? 'Kopiert' : 'Kopieren'}
           </Button>
         ) : null}
       </div>
-      {empty ? (
-        <p className="text-sm text-muted-foreground">Im Gespräch nicht besprochen.</p>
-      ) : null}
 
-      {empty ? null : (
+      {/* Always editable — when the notes omitted something that WAS said, he
+          must be able to write it in himself rather than being locked out. */}
       <Textarea
         ref={areaRef}
         value={text}
         onChange={(e) => {
           setText(e.target.value);
+          setCopiedOnce(false);
           scheduleSave(e.target.value);
         }}
         aria-label={SECTION_LABELS[section] ?? section}
+        placeholder="Hier wurde nichts eingetragen — Sie können selbst ergänzen."
         // Styled as a letter sheet, not a form field: the border only announces
         // itself on hover/focus, the padding is a page margin, and the leading
         // is reading rhythm. field-sizing:content still grows it with the text.
         className={cn(
           'min-h-32 rounded-xl border-transparent bg-card px-6 py-5 text-base leading-[1.85] shadow-none',
           'transition-colors hover:border-border focus-visible:border-border',
-          columnar && 'font-mono text-[0.95rem] leading-[1.9] [tab-size:18]',
+          columnar && !empty && 'font-mono text-[0.95rem] leading-[1.9] [tab-size:18]',
         )}
       />
-      )}
     </section>
   );
 }

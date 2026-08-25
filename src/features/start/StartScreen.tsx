@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, CalendarPlus, Mic } from 'lucide-react';
 import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { findRecoverableSessions, recoverSession } from '@/lib/session/recording-session';
@@ -51,18 +62,40 @@ export function StartScreen() {
                 </ItemDescription>
               </ItemContent>
               <ItemActions>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={async () => {
-                    await deleteSession(session.id);
-                    setRecoverable(await findRecoverableSessions());
-                    touchSessions();
-                    toast.success('Aufnahme verworfen.');
-                  }}
-                >
-                  Verwerfen
-                </Button>
+                {/* The one click that can destroy a whole consultation's audio
+                    gets the same guard as every other destructive action. */}
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={
+                      <Button variant="outline" size="lg">
+                        Verwerfen
+                      </Button>
+                    }
+                  />
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Aufnahme wirklich verwerfen?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Der gespeicherte Ton dieser Aufnahme wird endgültig gelöscht. Das lässt
+                        sich nicht rückgängig machen.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        onClick={async () => {
+                          await deleteSession(session.id);
+                          setRecoverable(await findRecoverableSessions());
+                          touchSessions();
+                          toast.success('Aufnahme verworfen.');
+                        }}
+                      >
+                        Endgültig verwerfen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <Button
                   size="lg"
                   onClick={async () => {
@@ -113,7 +146,7 @@ export function StartScreen() {
           type="button"
           onClick={() => startRecording('beurteilung')}
           className={cn(
-            'group flex flex-col items-start gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-7 text-left text-neutral-50',
+            'btn-gloss group flex flex-col items-start gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-7 text-left text-neutral-50',
             'transition-colors hover:border-neutral-600 hover:bg-neutral-900',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
           )}

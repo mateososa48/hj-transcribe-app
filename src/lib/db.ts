@@ -133,6 +133,12 @@ export interface Result {
   updatedAt: number;
   sections: Record<string, string>;
   original: Record<string, string>;
+  /**
+   * The working copy that a regenerate replaced — his corrections may live in
+   * it, so one click must be able to bring it back. Cleared on restore; only
+   * one level deep.
+   */
+  previousSections?: Record<string, string>;
   model: string;
   promptVersion: string;
   wellFormed: boolean;

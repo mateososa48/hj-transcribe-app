@@ -1,0 +1,14 @@
+{
+  "formatVersion": "1.0.0",
+  "status": "blocked",
+  "authoritySha256": null,
+  "suppliedFacts": [],
+  "missingMaterialFacts": true,
+  "missingFacts": [
+    "approved external reference source"
+  ],
+  "governingIdea": null,
+  "selection": null,
+  "rejection": null
+}
+

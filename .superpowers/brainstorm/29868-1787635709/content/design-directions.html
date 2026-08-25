@@ -1,0 +1,139 @@
+<style>
+  .direction-grid { display:grid; gap:24px; margin-top:24px; }
+  .direction-card { border:1px solid #d9dde3; border-radius:22px; padding:14px; background:#fff; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .direction-card:hover { transform:translateY(-2px); box-shadow:0 20px 50px rgba(24,32,43,.10); }
+  .direction-card.selected { border-color:#222a33; box-shadow:0 0 0 3px rgba(34,42,51,.12), 0 20px 50px rgba(24,32,43,.10); }
+  .direction-label { display:flex; gap:12px; align-items:flex-start; padding:16px 8px 8px; }
+  .direction-letter { flex:0 0 auto; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#20262d; color:#fff; font-size:13px; font-weight:700; }
+  .direction-label h3 { margin:0 0 4px; }
+  .direction-label p { margin:0; color:#66717f; }
+  .rec { display:inline-flex; align-items:center; gap:7px; font-size:10px; color:#4c5968; }
+  .rec::before { content:""; width:6px; height:6px; border-radius:50%; background:#e84b58; box-shadow:0 0 0 3px rgba(232,75,88,.12); }
+  .mini-app { overflow:hidden; min-height:330px; border:1px solid rgba(88,101,118,.18); border-radius:15px; color:#18202a; background:#f3f5f7; box-shadow:inset 0 1px rgba(255,255,255,.9); font-family:ui-sans-serif,system-ui,sans-serif; }
+  .glass { background:rgba(255,255,255,.68); border:1px solid rgba(255,255,255,.86); box-shadow:0 8px 24px rgba(24,32,43,.08), inset 0 1px rgba(255,255,255,.95); backdrop-filter:blur(18px) saturate(120%); }
+  .mini-button { display:inline-flex; align-items:center; justify-content:center; min-height:34px; border-radius:10px; padding:0 13px; font-size:10px; font-weight:700; letter-spacing:.01em; }
+  .mini-button.dark { color:#fff; background:linear-gradient(180deg,#343c45,#171d23); border:1px solid #0d1115; box-shadow:inset 0 1px rgba(255,255,255,.22),0 5px 12px rgba(23,29,35,.20); }
+  .mini-button.light { background:rgba(255,255,255,.72); border:1px solid rgba(112,125,140,.22); box-shadow:inset 0 1px #fff,0 4px 12px rgba(24,32,43,.06); }
+  .tiny { font-size:9px; line-height:1.4; color:#677381; }
+  .small { font-size:11px; line-height:1.45; }
+  .micro-title { font-size:16px; line-height:1.08; font-weight:720; letter-spacing:-.025em; }
+  .rule { height:1px; background:#e2e5e9; }
+
+  .a { display:grid; grid-template-columns:118px 1fr; padding:10px; gap:10px; background:radial-gradient(circle at 6% 7%,rgba(212,224,232,.8),transparent 32%),#eef1f3; }
+  .a .rail { border-radius:13px; padding:12px 9px; display:flex; flex-direction:column; }
+  .a .brand { font-size:10px; font-weight:750; padding:4px 5px 13px; }
+  .a .nav { padding:8px; border-radius:8px; font-size:9px; margin-bottom:4px; }
+  .a .nav.on { background:rgba(255,255,255,.78); box-shadow:0 3px 12px rgba(35,45,55,.06); }
+  .a .rail-space { flex:1; }
+  .a .trust { padding:8px 5px 2px; font-size:8px; line-height:1.35; color:#66717f; }
+  .a .canvas { background:#fff; border:1px solid rgba(96,108,122,.14); border-radius:13px; padding:26px 28px; box-shadow:0 12px 30px rgba(25,34,43,.07); }
+  .a .lead { max-width:300px; }
+  .a .actions { display:grid; grid-template-columns:1.25fr .85fr; gap:10px; margin-top:23px; }
+  .a .action { min-height:116px; border-radius:13px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; }
+  .a .action.primary { background:linear-gradient(145deg,#252d35,#12171c); color:#fff; box-shadow:inset 0 1px rgba(255,255,255,.2),0 10px 22px rgba(18,23,28,.18); }
+  .a .action.secondary { background:#f5f6f7; border:1px solid #e2e5e8; }
+  .a .action-title { font-size:12px; font-weight:730; }
+
+  .b { display:grid; grid-template-columns:1fr 134px; padding:0; background:#f8f7f3; }
+  .b .page { padding:28px 31px 56px; background:linear-gradient(90deg,transparent 31px,rgba(176,104,104,.18) 31px,rgba(176,104,104,.18) 32px,transparent 32px),repeating-linear-gradient(#fbfaf7 0,#fbfaf7 29px,#e5e5df 30px); }
+  .b .date { font-family:ui-monospace,monospace; font-size:8px; letter-spacing:.08em; color:#6f766f; text-transform:uppercase; }
+  .b .page h4 { font-family:Georgia,serif; font-size:20px; margin:16px 0 7px; font-weight:500; }
+  .b .task-row { margin-top:29px; display:flex; gap:8px; align-items:center; }
+  .b .log { border-left:1px solid #deddd7; padding:20px 13px; background:rgba(255,255,255,.48); }
+  .b .log-head { font-size:9px; font-weight:750; margin-bottom:13px; }
+  .b .log-item { padding:10px 0; border-top:1px solid rgba(90,96,100,.12); }
+  .b .dock { position:absolute; left:50%; transform:translateX(-50%); bottom:13px; display:flex; gap:5px; border-radius:14px; padding:6px; }
+  .b-wrap { position:relative; }
+
+  .c { padding:15px; background:radial-gradient(circle at 85% 0,rgba(217,226,232,.75),transparent 32%),#f5f6f7; }
+  .c .topbar { display:flex; align-items:center; justify-content:space-between; padding:4px 4px 14px; }
+  .c .workspace { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .c .mode { min-height:240px; border-radius:17px; padding:21px; display:flex; flex-direction:column; }
+  .c .mode h4 { font-size:17px; margin:40px 0 7px; letter-spacing:-.02em; }
+  .c .mode p { margin:0; }
+  .c .mode .mini-button { margin-top:auto; align-self:flex-start; }
+  .c .mode.feature { background:#fff; border:1px solid rgba(95,108,123,.17); box-shadow:0 12px 30px rgba(26,34,42,.07); }
+  .c .mode.glass { background:rgba(255,255,255,.58); }
+  @media (max-width:760px){ .a{grid-template-columns:82px 1fr}.a .canvas{padding:20px}.a .actions,.c .workspace{grid-template-columns:1fr}.mini-app{min-height:420px}.b{grid-template-columns:1fr 104px}.direction-card{padding:8px} }
+</style>
+
+<h2>Which light clinical direction feels right?</h2>
+<p class="subtitle">All three keep the app bright, legible, and calm. The difference is the structure and where the glass material appears. Click one to select it.</p>
+
+<div class="direction-grid">
+  <div class="direction-card" data-choice="a-clinical-acrylic" onclick="toggleSelect(this)">
+    <div class="mini-app a">
+      <aside class="rail glass">
+        <div class="brand">Arztbrief</div>
+        <div class="nav on">＋ Neue Aufnahme</div>
+        <div class="nav">Heute · 09:42</div>
+        <div class="nav">Gestern · 15:10</div>
+        <div class="rail-space"></div>
+        <div class="trust">● Nur auf diesem Computer</div>
+      </aside>
+      <main class="canvas">
+        <div class="rec">Bereit für eine Aufnahme</div>
+        <div class="lead">
+          <div class="micro-title" style="margin-top:16px">Was möchten Sie dokumentieren?</div>
+          <p class="small" style="color:#66717f">Zwei klare Arbeitswege. Die Notizen bleiben ruhig und lesbar, die Werkzeuge fühlen sich präzise an.</p>
+        </div>
+        <div class="actions">
+          <div class="action primary">
+            <div class="tiny" style="color:#abb4bc">NACH DEM TERMIN</div>
+            <div><div class="action-title">Diktat starten</div><div class="tiny" style="color:#abb4bc;margin-top:4px">Beurteilung frei einsprechen</div></div>
+            <span class="mini-button light" style="align-self:flex-start;color:#18202a">Mikrofon öffnen →</span>
+          </div>
+          <div class="action secondary">
+            <div class="tiny">WÄHREND DES TERMINES</div>
+            <div><div class="action-title">Termin aufnehmen</div><div class="tiny" style="margin-top:4px">Gespräch und Notizen sichern</div></div>
+            <span class="mini-button light" style="align-self:flex-start">Aufnehmen →</span>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div class="direction-label"><span class="direction-letter">A</span><div><h3>Clinical Acrylic Workstation</h3><p>Recommended. A quiet paper-white workspace, a frosted navigation rail, and tactile glass controls. Distinctive without making the medical content translucent.</p></div></div>
+  </div>
+
+  <div class="direction-card b-wrap" data-choice="b-paper-ledger" onclick="toggleSelect(this)">
+    <div class="mini-app b">
+      <main class="page">
+        <div class="date">Montag · 24. August</div>
+        <h4>Guten Tag, Herr Professor.</h4>
+        <p class="small" style="max-width:300px;color:#606961">Beginnen Sie mit einer Aufnahme. Alles bleibt auf diesem Computer.</p>
+        <div class="task-row">
+          <span class="mini-button dark">● Diktat starten</span>
+          <span class="mini-button light">Termin aufnehmen</span>
+        </div>
+      </main>
+      <aside class="log">
+        <div class="log-head">AUFNAHMEN</div>
+        <div class="log-item"><div class="small">Diktat</div><div class="tiny">Heute · 09:42</div></div>
+        <div class="log-item"><div class="small">Termin</div><div class="tiny">Gestern · 15:10</div></div>
+        <div class="log-item"><div class="small">Diktat</div><div class="tiny">21. Aug · 11:03</div></div>
+      </aside>
+      <div class="dock glass"><span class="mini-button light">⌕ Suchen</span><span class="mini-button light">＋ Neu</span></div>
+    </div>
+    <div class="direction-label"><span class="direction-letter">B</span><div><h3>Clinical Paper Ledger</h3><p>The interface behaves like a clean clinical notebook: editorial typography, a chronological margin, and one floating glass action dock. Most distinctive, but less conventional.</p></div></div>
+  </div>
+
+  <div class="direction-card" data-choice="c-soft-modular" onclick="toggleSelect(this)">
+    <div class="mini-app c">
+      <div class="topbar"><strong style="font-size:11px">Arztbrief-Assistent</strong><span class="tiny">Nur lokal gespeichert</span></div>
+      <div class="workspace">
+        <section class="mode feature">
+          <span class="rec">Bereit</span>
+          <h4>Diktat</h4>
+          <p class="small" style="color:#66717f">Beurteilung frei einsprechen und als fertigen Text übernehmen.</p>
+          <span class="mini-button dark">Diktat starten</span>
+        </section>
+        <section class="mode glass">
+          <span class="tiny">GESPRÄCH</span>
+          <h4>Termin</h4>
+          <p class="small" style="color:#66717f">Während des Gesprächs aufnehmen. Danach Transkript und Notizen prüfen.</p>
+          <span class="mini-button light">Termin aufnehmen</span>
+        </section>
+      </div>
+    </div>
+    <div class="direction-label"><span class="direction-letter">C</span><div><h3>Soft Modular Clinic</h3><p>A polished evolution of the current card layout, with clearer hierarchy and subtle glass panels. Lowest implementation risk, but also the least radical change.</p></div></div>
+  </div>
+</div>

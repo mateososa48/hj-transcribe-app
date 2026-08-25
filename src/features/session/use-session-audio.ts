@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
 
-import { PlayerBar } from '@/components/player-bar';
-import { Spinner } from '@/components/ui/spinner';
 import { assembleAudio } from '@/lib/db';
 
-/** Playback for one session's recording (the Termin Audio tab). */
-export function AudioPlayer({ sessionId }: { sessionId: string }) {
+/**
+ * Object URL for a session's assembled recording. `url` is null while the
+ * chunks are being read; `missing` becomes true when the session has no audio
+ * left (deleted or never persisted). The URL is revoked on unmount.
+ */
+export function useSessionAudio(sessionId: string): { url: string | null; missing: boolean } {
   const [url, setUrl] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
     let objectUrl: string | null = null;
     let cancelled = false;
+    setUrl(null);
+    setMissing(false);
     void assembleAudio(sessionId).then((blob) => {
       if (cancelled) return;
       if (!blob) {
@@ -27,17 +31,5 @@ export function AudioPlayer({ sessionId }: { sessionId: string }) {
     };
   }, [sessionId]);
 
-  if (missing) {
-    return (
-      <p className="text-muted-foreground">Zu dieser Aufnahme ist kein Ton mehr gespeichert.</p>
-    );
-  }
-  if (!url) {
-    return (
-      <p className="flex items-center gap-3 text-muted-foreground">
-        <Spinner /> Aufnahme wird geladen …
-      </p>
-    );
-  }
-  return <PlayerBar src={url} />;
+  return { url, missing };
 }

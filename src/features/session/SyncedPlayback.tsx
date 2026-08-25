@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { PlayerBar } from '@/components/player-bar';
 import { Spinner } from '@/components/ui/spinner';
-import { assembleAudio, type TimedWord } from '@/lib/db';
+import type { TimedWord } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { useSessionAudio } from './use-session-audio';
 
 /**
  * The recording with a follow-along transcript.
@@ -25,30 +26,11 @@ export function SyncedPlayback({
   words: TimedWord[];
   fallbackText: string;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [missing, setMissing] = useState(false);
+  const { url, missing } = useSessionAudio(sessionId);
   const [activeIndex, setActiveIndex] = useState(-1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRef = useRef<HTMLButtonElement | null>(null);
   const rafRef = useRef(0);
-
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    let cancelled = false;
-    void assembleAudio(sessionId).then((blob) => {
-      if (cancelled) return;
-      if (!blob) {
-        setMissing(true);
-        return;
-      }
-      objectUrl = URL.createObjectURL(blob);
-      setUrl(objectUrl);
-    });
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [sessionId]);
 
   // Follow the voice. rAF only while playing; timeupdate alone is too coarse
   // (4 Hz) and makes the highlight visibly lag the audio.
@@ -146,7 +128,7 @@ export function SyncedPlayback({
               </span>
             ))}
           </p>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             Der gesprochene Text läuft mit. Klicken Sie auf ein Wort, um dorthin zu springen.
           </p>
         </div>

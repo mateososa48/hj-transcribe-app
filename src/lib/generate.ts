@@ -99,6 +99,9 @@ export async function generate(sessionId: string, kind: SessionKind): Promise<Ge
     // Regenerating replaces the model's copy too — the pairing between what he
     // edits and what it said has to stay truthful.
     original: { ...sections },
+    // Keep the text being replaced: his corrections may live in it, and
+    // "regenerate ate my edits" must always be one click reversible.
+    ...(existing ? { previousSections: { ...existing.sections } } : {}),
     model: response.model,
     promptVersion: response.promptVersion,
     wellFormed: response.wellFormed,
@@ -113,6 +116,22 @@ export async function generate(sessionId: string, kind: SessionKind): Promise<Ge
     model: response.model,
     latencyMs: response.latencyMs,
   };
+}
+
+/** Bring back the working copy a regenerate replaced. One level, one shot. */
+export async function restorePreviousSections(resultId: string): Promise<boolean> {
+  let restored = false;
+  await db.results
+    .where('id')
+    .equals(resultId)
+    .modify((result) => {
+      if (!result.previousSections) return;
+      result.sections = result.previousSections;
+      delete result.previousSections;
+      result.updatedAt = Date.now();
+      restored = true;
+    });
+  return restored;
 }
 
 /** Autosaved as he types. */
