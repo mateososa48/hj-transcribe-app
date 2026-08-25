@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AudioLines, Check, FileText, ListTree, Loader2, RotateCcw, Trash2 } from 'lucide-react';
+import { AudioLines, FileText, ListTree, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -34,6 +34,8 @@ import { usePipelineState } from '@/features/record/useRecording';
 import { formatDuration, sessionTitle } from '@/features/sessions/useSessions';
 import { useAppStore } from '@/store/app-store';
 import { AudioPlayer } from './AudioPlayer';
+import { ProcessingHandoff } from './ProcessingHandoff';
+import { getProcessingPreviewPhase } from './processing-handoff-model';
 import { SyncedPlayback } from './SyncedPlayback';
 import { SectionCard } from './SectionCard';
 import { TranscriptView } from './TranscriptView';
@@ -103,8 +105,14 @@ export function SessionView({ sessionId }: { sessionId: string }) {
     return <p className="text-muted-foreground">Diese Aufnahme gibt es nicht mehr.</p>;
   }
 
-  const running = pipelineState.phase === 'transcribing' || pipelineState.phase === 'notes';
-  const failed = pipelineState.phase === 'error' || transcription?.status === 'failed';
+  const previewPhase = getProcessingPreviewPhase(window.location.search, import.meta.env.DEV);
+  const activePhase =
+    previewPhase ??
+    (pipelineState.phase === 'transcribing' || pipelineState.phase === 'notes'
+      ? pipelineState.phase
+      : null);
+  const running = activePhase !== null;
+  const failed = !previewPhase && (pipelineState.phase === 'error' || transcription?.status === 'failed');
   const speakerCount = transcription ? speakerOrder(transcription.utterances).length : 0;
   const isTermin = session.kind === 'gespraech';
 
@@ -173,23 +181,8 @@ export function SessionView({ sessionId }: { sessionId: string }) {
         </p>
       </div>
 
-      {running ? (
-        <div className="space-y-3 rounded-xl border border-border bg-card px-5 py-4">
-          <PipelineStep
-            done={pipelineState.phase === 'notes'}
-            active={pipelineState.phase === 'transcribing'}
-            label="Aufnahme wird in Text umgewandelt"
-          />
-          <PipelineStep
-            done={false}
-            active={pipelineState.phase === 'notes'}
-            label={isTermin ? 'Notizen werden erstellt' : 'Text wird erstellt'}
-          />
-          <p className="text-sm text-muted-foreground">
-            Das dauert je nach Länge der Aufnahme etwa eine Minute. Sie können das Fenster offen
-            lassen.
-          </p>
-        </div>
+      {activePhase ? (
+        <ProcessingHandoff kind={session.kind} phase={activePhase} />
       ) : failed ? (
         <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
           <p className="font-medium text-destructive">
@@ -303,30 +296,5 @@ export function SessionView({ sessionId }: { sessionId: string }) {
         </div>
       )}
     </div>
-  );
-}
-
-function PipelineStep({
-  done,
-  active,
-  label,
-}: {
-  done: boolean;
-  active: boolean;
-  label: string;
-}) {
-  return (
-    <p className="flex items-center gap-3 text-base">
-      {done ? (
-        <Check className="size-5 text-foreground" aria-hidden />
-      ) : active ? (
-        <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
-      ) : (
-        <span className="grid size-5 place-items-center" aria-hidden>
-          <span className="size-1.5 rounded-full bg-border" />
-        </span>
-      )}
-      <span className={done || active ? '' : 'text-muted-foreground'}>{label}</span>
-    </p>
   );
 }
