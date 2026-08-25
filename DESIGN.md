@@ -318,29 +318,20 @@ disk before any network call, and an interrupted session is offered back.
 
 ## Experiment status
 
-**Layouts: resolved.** The sidebar shell ("standard") won its evaluation
-2026-08-25; the six alternatives (leiste, posteingang, galerie, blatt,
-vergleich, protokoll) are deleted — git history has them. The app renders
-`StandardLayout` directly, and `SessionView` is back to tabs-only.
+Both evaluations are RESOLVED and the harness is deleted (git has it all):
 
-**Diktat-page layouts: under evaluation.** Eight ARRANGEMENTS of the
-finished Diktat page (`src/features/diktat/designs/` — spalten, reiter,
-mappen, abschnitte, karten, tonzuerst, klappen, pruefen) plus the shipped
-standard, switched via the floating pill, `?design=` or localStorage. All of
-them keep the shipped design language — same cards, type and buttons; only
-the placement of title, Beurteilung, player and follow-along transcript
-varies. The recorder, the sidebar and the Termin feature are untouched.
-
-Width is adaptive: the shell gives a session nearly the whole content area
-(`MAIN_WIDTHS` in StandardLayout), and every design answers with a
-letter-left / evidence-right arrangement at xl in its own idiom, so the
-Beurteilung keeps a readable measure instead of 150-character lines.
-
-Architecture: `SessionView` hands the page to an arrangement component when
-a non-standard layout is active. Arrangements compose shared blocks from
-`design-shared.tsx` (DiktatHeader/Letter/Evidence/Regen + status/delete),
-which reuse the shipped `SectionCard`, `SyncedPlayback` and
-`RegenerateControls` — so every layout is behaviourally identical.
-`design-meta.ts` stays component-free so the switcher and node tests can
-import it. Once a winner is chosen, the losers and the switcher are deleted
-together.
+- **Shell**: the sidebar layout ("standard") won; the six alternatives are
+  gone. The content column width adapts per view (`MAIN_WIDTHS` in
+  StandardLayout) — a session gets nearly the whole area.
+- **Diktat page**: the two-column arrangement won. `DiktatContent.tsx` is the
+  final page: two framed panels with tinted header strips — the Beurteilung
+  left (header carries the primary glossy Kopieren; footer holds regenerate +
+  undo), the Aufnahme right (player row, rule, follow-along transcript as
+  rows of one panel, sticky at xl). While the pipeline runs the page shows
+  ONLY the ProcessingHandoff animation; on completion a check mark pops,
+  fades, and the panels appear (skipped entirely when reopening an old
+  Diktat — the sequence only plays if this mount watched the run). The
+  sequence timers live in a ref cleared on unmount only: the result object
+  changes identity on reload, and per-run effect cleanup would cancel the
+  check mark mid-flight.
+- The Termin page is untouched by all of this.

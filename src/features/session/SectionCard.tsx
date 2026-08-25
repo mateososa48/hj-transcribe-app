@@ -23,14 +23,10 @@ export function SectionCard({
   resultId,
   section,
   initialText,
-  hideTitle = false,
 }: {
   resultId: string;
   section: string;
   initialText: string;
-  /** When the surrounding arrangement already names the section (a folder
-   *  tab, a band), the card keeps only the copy button. */
-  hideTitle?: boolean;
 }) {
   /**
    * The medication list is two tab-separated columns. The tab is what makes it
@@ -122,11 +118,9 @@ export function SectionCard({
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          {!hideTitle ? (
-            <h2 className="text-lg font-semibold tracking-tight">
-              {SECTION_LABELS[section] ?? section}
-            </h2>
-          ) : null}
+          <h2 className="text-lg font-semibold tracking-tight">
+            {SECTION_LABELS[section] ?? section}
+          </h2>
           {copiedOnce ? (
             <Badge variant="secondary">
               <Check aria-hidden />

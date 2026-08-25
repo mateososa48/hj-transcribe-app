@@ -30,10 +30,12 @@ export function PlayerBar({
   audioRef: externalRef,
   /** Known duration in seconds, used until the element reports a finite one. */
   fallbackDuration,
+  className,
 }: {
   src: string;
   audioRef?: RefObject<HTMLAudioElement | null>;
   fallbackDuration?: number;
+  className?: string;
 }) {
   const internalRef = useRef<HTMLAudioElement | null>(null);
   const audioRef = externalRef ?? internalRef;
@@ -143,7 +145,12 @@ export function PlayerBar({
   return (
     // On narrow screens the timeline takes its own full row — squeezed between
     // the time labels it degrades to an unscrubbable sliver.
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-4 py-3.5">
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-4 py-3.5',
+        className,
+      )}
+    >
       {externalRef ? null : <audio ref={internalRef} src={src} preload="metadata" />}
 
       <Button

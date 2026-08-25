@@ -80,24 +80,30 @@ export function SyncedPlayback({
   }, [activeIndex]);
 
   if (missing) {
-    return <p className="text-muted-foreground">Zu dieser Aufnahme ist kein Ton mehr gespeichert.</p>;
+    return <p className="px-5 py-4 text-muted-foreground sm:px-6">Zu dieser Aufnahme ist kein Ton mehr gespeichert.</p>;
   }
   if (!url) {
     return (
-      <p className="flex items-center gap-3 text-muted-foreground">
+      <p className="flex items-center gap-3 px-5 py-4 text-muted-foreground sm:px-6">
         <Spinner /> Aufnahme wird geladen …
       </p>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* Headless element; PlayerBar drives it, the word sync reads it. */}
       <audio ref={audioRef} src={url} preload="metadata" className="hidden" />
-      <PlayerBar src={url} audioRef={audioRef} />
+      {/* Rows of the Aufnahme panel, not free-standing cards: the panel frame
+          does the bounding, a rule separates player from transcript. */}
+      <PlayerBar
+        src={url}
+        audioRef={audioRef}
+        className="rounded-none border-0 bg-transparent px-5 py-4 sm:px-6"
+      />
 
       {words.length > 0 ? (
-        <div className="max-h-72 overflow-y-auto rounded-xl border border-border bg-card px-5 py-4">
+        <div className="max-h-[30rem] overflow-y-auto border-t border-border px-5 py-4 sm:px-6">
           <p className="max-w-[80ch] text-base leading-loose">
             {words.map((word, i) => (
               // The space is a real text node — adjacent inline buttons would
@@ -133,9 +139,11 @@ export function SyncedPlayback({
           </p>
         </div>
       ) : fallbackText.trim() ? (
-        <p className="max-w-[80ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
-          {fallbackText}
-        </p>
+        <div className="max-h-[30rem] overflow-y-auto border-t border-border px-5 py-4 sm:px-6">
+          <p className="max-w-[80ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
+            {fallbackText}
+          </p>
+        </div>
       ) : null}
     </div>
   );

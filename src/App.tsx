@@ -1,18 +1,15 @@
 import { Toaster } from '@/components/ui/sonner';
-import { DesignSwitcher } from '@/layouts/DesignSwitcher';
 import { StandardLayout } from '@/layouts/StandardLayout';
 
 /**
- * The shell is settled: the sidebar layout won the layout evaluation and the
- * six alternatives are deleted (git has them). What is still being chosen is
- * the design of the finished-Diktat page — the floating switcher below flips
- * between those candidates and disappears once one wins.
+ * The shell and the Diktat page are both settled now: the sidebar layout and
+ * the two-panel Diktat arrangement won their evaluations, and the losing
+ * candidates plus the switcher are deleted — git history has all of them.
  */
 export default function App() {
   return (
     <>
       <StandardLayout />
-      <DesignSwitcher />
       <Toaster position="bottom-right" />
     </>
   );

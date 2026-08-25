@@ -35,12 +35,10 @@ import { speakerOrder } from '@/lib/speakers';
 import { usePipelineState, useRecordingState } from '@/features/record/useRecording';
 import { formatDuration, sessionTitle } from '@/features/sessions/useSessions';
 import { useAppStore } from '@/store/app-store';
-import { DIKTAT_DESIGNS } from '@/features/diktat/designs/registry';
-import type { DiktatCtx } from '@/features/diktat/design-context';
+import { DiktatContent } from './DiktatContent';
 import { ProcessingHandoff } from './ProcessingHandoff';
 import { RegenerateControls } from './RegenerateControls';
 import { getProcessingPreviewPhase } from './processing-handoff-model';
-import { SyncedPlayback } from './SyncedPlayback';
 import { SectionCard } from './SectionCard';
 import { TranscriptView } from './TranscriptView';
 
@@ -56,7 +54,6 @@ export function SessionView({ sessionId }: { sessionId: string }) {
   const goHome = useAppStore((s) => s.goHome);
   const startRecording = useAppStore((s) => s.startRecording);
   const touchSessions = useAppStore((s) => s.touchSessions);
-  const diktatDesign = useAppStore((s) => s.diktatDesign);
   const pipelineState = usePipelineState(sessionId);
   const recording = useRecordingState();
 
@@ -160,44 +157,6 @@ export function SessionView({ sessionId }: { sessionId: string }) {
     touchSessions();
     await load();
     void pipeline.process(session.id);
-  }
-
-  // The Diktat design experiments: a chosen design owns the whole page. The
-  // Termin feature deliberately never enters this branch.
-  if (!isTermin && diktatDesign !== 'standard') {
-    const Design = DIKTAT_DESIGNS[diktatDesign];
-    const ctx: DiktatCtx = {
-      session,
-      transcription,
-      result,
-      title,
-      setTitle,
-      saveTitle,
-      dateLine: new Date(session.startedAt).toLocaleDateString('de-DE', {
-        weekday: 'long',
-        day: '2-digit',
-        month: 'long',
-      }),
-      durationLine: formatDuration(session.durationMs),
-      state: isLive
-        ? 'live'
-        : interrupted
-          ? 'interrupted'
-          : activePhase
-            ? 'processing'
-            : showFailed
-              ? 'failed'
-              : 'ready',
-      phase: activePhase,
-      errorText:
-        pipelineState.error ?? transcription?.error ?? 'Die Verarbeitung ist fehlgeschlagen.',
-      canGenerate,
-      running: showRunning,
-      retry: () => void pipeline.process(session.id),
-      recover: recoverNow,
-      reload: () => void load(),
-    };
-    return <Design ctx={ctx} />;
   }
 
   return (
@@ -332,9 +291,9 @@ export function SessionView({ sessionId }: { sessionId: string }) {
         </Item>
       ) : (
         <>
-          {activePhase ? (
+          {isTermin && activePhase ? (
             <ProcessingHandoff kind={session.kind} phase={activePhase} />
-          ) : showFailed ? (
+          ) : isTermin && showFailed ? (
             <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
               <p className="font-medium text-destructive">
                 {pipelineState.error ?? transcription?.error ?? 'Die Verarbeitung ist fehlgeschlagen.'}
@@ -416,52 +375,19 @@ export function SessionView({ sessionId }: { sessionId: string }) {
               );
             })()
           ) : (
-            <div className="space-y-10">
-              <div className="min-w-0 space-y-10">
-                {result ? (
-                  <SectionCard
-                    resultId={result.id}
-                    section="beurteilung"
-                    initialText={result.sections.beurteilung ?? ''}
-                  />
-                ) : showRunning ? (
-                  <p className="text-muted-foreground">Der Text erscheint hier gleich.</p>
-                ) : canGenerate ? (
-                  <div className="space-y-4">
-                    <p className="max-w-[56ch] text-muted-foreground">
-                      Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
-                    </p>
-                    <Button size="lg" onClick={() => void pipeline.process(session.id)}>
-                      <FilePlus2 aria-hidden />
-                      Text erstellen
-                    </Button>
-                  </div>
-                ) : null}
-
-                {result ? (
-                  <RegenerateControls
-                    session={session}
-                    result={result}
-                    running={showRunning}
-                    onChanged={() => void load()}
-                  />
-                ) : null}
-              </div>
-
-              <div className="min-w-0">
-                <Separator className="mb-10" />
-                <section className="space-y-3">
-                  <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
-                  {/* The evidence under the polished text: playback with the spoken
-                      word highlighted as it plays. */}
-                  <SyncedPlayback
-                    sessionId={session.id}
-                    words={transcription?.words ?? []}
-                    fallbackText={transcription?.text ?? ''}
-                  />
-                </section>
-              </div>
-            </div>
+            <DiktatContent
+              session={session}
+              transcription={transcription}
+              result={result}
+              phase={activePhase}
+              failed={showFailed}
+              errorText={
+                pipelineState.error ?? transcription?.error ?? 'Die Verarbeitung ist fehlgeschlagen.'
+              }
+              canGenerate={canGenerate}
+              running={showRunning}
+              onChanged={() => void load()}
+            />
           )}
         </>
       )}
