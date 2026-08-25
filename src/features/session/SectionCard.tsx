@@ -129,12 +129,13 @@ export function SectionCard({
           scheduleSave(e.target.value);
         }}
         aria-label={SECTION_LABELS[section] ?? section}
-        // The base textarea sets field-sizing:content, so it grows with the
-        // text; a tall min-height would leave a large empty box under a
-        // two-line section.
+        // Styled as a letter sheet, not a form field: the border only announces
+        // itself on hover/focus, the padding is a page margin, and the leading
+        // is reading rhythm. field-sizing:content still grows it with the text.
         className={cn(
-          'min-h-32 text-base leading-relaxed',
-          columnar && 'font-mono text-[0.95rem] [tab-size:18]',
+          'min-h-32 rounded-xl border-transparent bg-card px-6 py-5 text-base leading-[1.85] shadow-none',
+          'transition-colors hover:border-border focus-visible:border-border',
+          columnar && 'font-mono text-[0.95rem] leading-[1.9] [tab-size:18]',
         )}
       />
       )}

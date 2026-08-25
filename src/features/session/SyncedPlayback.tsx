@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { PlayerBar } from '@/components/player-bar';
 import { Spinner } from '@/components/ui/spinner';
 import { assembleAudio, type TimedWord } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -48,24 +49,6 @@ export function SyncedPlayback({
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [sessionId]);
-
-  // MediaRecorder WebM reports Infinity until seeked once — the standard fix.
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !url) return;
-    const fixDuration = () => {
-      if (audio.duration === Infinity) {
-        const restore = () => {
-          audio.currentTime = 0;
-          audio.removeEventListener('seeked', restore);
-        };
-        audio.addEventListener('seeked', restore);
-        audio.currentTime = Number.MAX_SAFE_INTEGER;
-      }
-    };
-    audio.addEventListener('loadedmetadata', fixDuration);
-    return () => audio.removeEventListener('loadedmetadata', fixDuration);
-  }, [url]);
 
   // Follow the voice. rAF only while playing; timeupdate alone is too coarse
   // (4 Hz) and makes the highlight visibly lag the audio.
@@ -127,7 +110,9 @@ export function SyncedPlayback({
 
   return (
     <div className="space-y-4">
-      <audio ref={audioRef} src={url} controls preload="metadata" className="w-full" />
+      {/* Headless element; PlayerBar drives it, the word sync reads it. */}
+      <audio ref={audioRef} src={url} preload="metadata" className="hidden" />
+      <PlayerBar src={url} audioRef={audioRef} />
 
       {words.length > 0 ? (
         <div className="max-h-72 overflow-y-auto rounded-xl border border-border bg-card px-5 py-4">
