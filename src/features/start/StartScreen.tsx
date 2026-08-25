@@ -107,7 +107,8 @@ export function StartScreen() {
           </span>
         </button>
 
-        {/* Diktat: the focus card — dark, previewing its full-screen mode. */}
+        {/* Diktat: the dark card is the feature's signature on this page —
+            the recorder itself runs in the normal light frame. */}
         <button
           type="button"
           onClick={() => startRecording('beurteilung')}
@@ -129,7 +130,7 @@ export function StartScreen() {
           </span>
           <span className="text-base leading-relaxed text-neutral-400">
             Sprechen Sie frei, wie zu einem Kollegen. Daraus entsteht die Zusammenfassende
-            Beurteilung — fertig zum Einfügen in Word.
+            Beurteilung — mit der Aufnahme zum Mitlesen und Nachhören.
           </span>
         </button>
       </div>

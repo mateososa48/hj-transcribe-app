@@ -2,6 +2,7 @@ import { loadExamples } from '../../prompts/examples/dev/index.ts';
 import { db, newId, type Result, type SessionKind, type Utterance } from '@/lib/db.ts';
 import { DRAFT_PROVIDERS, DraftError, type DraftProvider } from '@/lib/providers/index.ts';
 import { loadApiKeys, loadSettings } from '@/lib/settings.ts';
+import { BULLET_SECTIONS, toBulletText } from '@/lib/format.ts';
 import { speakerDisplayName } from '@/lib/speakers.ts';
 
 /**
@@ -80,6 +81,11 @@ export async function generate(sessionId: string, kind: SessionKind): Promise<Ge
 
   const sections: Record<string, string> =
     'sections' in response ? { ...response.sections } : { beurteilung: response.text };
+  // List sections are stored the way a letter looks: real bullets, not the
+  // model's "- " markers. Editing and copying then start from the right shape.
+  for (const key of Object.keys(sections)) {
+    if (BULLET_SECTIONS.has(key)) sections[key] = toBulletText(sections[key] ?? '');
+  }
 
   const now = Date.now();
   const existing = await db.results.where('sessionId').equals(sessionId).first();

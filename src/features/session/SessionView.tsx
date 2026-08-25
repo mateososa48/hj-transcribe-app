@@ -34,6 +34,7 @@ import { usePipelineState } from '@/features/record/useRecording';
 import { formatDuration, sessionTitle } from '@/features/sessions/useSessions';
 import { useAppStore } from '@/store/app-store';
 import { AudioPlayer } from './AudioPlayer';
+import { SyncedPlayback } from './SyncedPlayback';
 import { SectionCard } from './SectionCard';
 import { TranscriptView } from './TranscriptView';
 
@@ -287,24 +288,17 @@ export function SessionView({ sessionId }: { sessionId: string }) {
             </Button>
           ) : null}
 
-          {transcription?.status === 'done' && transcription.text.trim() ? (
-            <>
-              <Separator />
-              <section className="space-y-3">
-                <h2 className="text-lg font-semibold tracking-tight">Erkanntes Diktat</h2>
-                {/* The ground truth under the polished text — a wrong number is
-                    far easier to spot here than inside finished prose. */}
-                <p className="max-w-[70ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
-                  {transcription.text}
-                </p>
-              </section>
-            </>
-          ) : null}
-
           <Separator />
           <section className="space-y-3">
             <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
-            <AudioPlayer sessionId={session.id} />
+            {/* The evidence under the polished text: playback with the spoken
+                word highlighted as it plays. A wrong number is far easier to
+                hear-and-see here than to spot inside finished prose. */}
+            <SyncedPlayback
+              sessionId={session.id}
+              words={transcription?.words ?? []}
+              fallbackText={transcription?.text ?? ''}
+            />
           </section>
         </div>
       )}

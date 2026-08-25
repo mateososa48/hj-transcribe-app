@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SECTION_LABELS } from '@/lib/db';
 import { saveSection } from '@/lib/generate';
+import { BULLET_SECTIONS, bulletsToHtml, bulletsToPlain } from '@/lib/format';
 
 const AUTOSAVE_MS = 800;
 
@@ -70,7 +71,21 @@ export function SectionCard({
     await saveSection(resultId, section, text);
 
     try {
-      await navigator.clipboard.writeText(text);
+      // Bullet sections go onto the clipboard as text/html too — that flavour
+      // is what makes Word and Google Docs paste a REAL bulleted list instead
+      // of literal dash characters. Everything else stays plain (the
+      // medication tabs must survive byte-for-byte).
+      if (BULLET_SECTIONS.has(section) && /^\s*[•-]\s/m.test(text)) {
+        const html = bulletsToHtml(text);
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([bulletsToPlain(text)], { type: 'text/plain' }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
     } catch {
       // The Clipboard API is refused often enough to plan for — an older Edge,
       // a hardened policy, a page that lost user activation. Selecting the text

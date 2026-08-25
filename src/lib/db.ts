@@ -81,6 +81,13 @@ export interface AudioChunk {
 
 export type TranscriptionStatus = 'uploading' | 'processing' | 'done' | 'failed';
 
+/** One recognised word with its position in the recording, for playback sync. */
+export interface TimedWord {
+  text: string;
+  startMs: number;
+  endMs: number;
+}
+
 /** One diarized utterance: who said what, when (ms from recording start). */
 export interface Utterance {
   /** Provider speaker label: "A", "B", … Absent for dictations. */
@@ -100,6 +107,12 @@ export interface Transcription {
   text: string;
   /** Speaker-separated, in time order. Empty for dictations. */
   utterances: Utterance[];
+  /**
+   * Word-level timings, verbatim as recognised (NOT dosing-repaired — repairs
+   * would break the audio alignment). Drives the follow-along highlight during
+   * playback. Absent on rows recorded before 2026-08-25.
+   */
+  words?: TimedWord[];
   error?: string;
   createdAt: number;
   updatedAt: number;

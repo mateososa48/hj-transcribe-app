@@ -86,6 +86,23 @@ export class RecordingSession {
     for (const listener of this.audioListeners) listener(snapshot);
   }
 
+  /**
+   * Clear the leftovers of the LAST recording (frozen timer, stale error) when
+   * a fresh recorder screen mounts. The singleton survives navigation by
+   * design, so without this the new-dictation screen opened showing the
+   * previous session's duration. No-op while something is actually recording.
+   */
+  reset(): void {
+    if (
+      this.state.status === 'recording' ||
+      this.state.status === 'requesting-mic' ||
+      this.state.status === 'stopping'
+    ) {
+      return;
+    }
+    this.set({ ...INITIAL });
+  }
+
   private set(patch: Partial<RecordingState>): void {
     this.state = { ...this.state, ...patch };
     for (const listener of this.listeners) listener(this.state);

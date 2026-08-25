@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import type { SessionKind } from '@/lib/db';
@@ -11,16 +12,28 @@ import type { OrbState } from './RecordingOrb';
 import { RecordingWave } from './RecordingWave';
 import { recordingSession, useElapsed, useRecordingState } from './useRecording';
 
+const COPY: Record<SessionKind, { heading: string; idle: string; running: string; stop: string; after: string }> = {
+  gespraech: {
+    heading: 'Termin aufnehmen',
+    idle: 'Starten Sie die Aufnahme, bevor der Patient hereinkommt. Sie können ganz normal sprechen.',
+    running: 'Die Aufnahme läuft — führen Sie das Gespräch ganz normal.',
+    stop: 'Termin beenden',
+    after:
+      'Nach dem Termin entstehen automatisch: Notizen in Abschnitten, das Transkript nach Sprechern getrennt und die Aufnahme zum Nachhören.',
+  },
+  beurteilung: {
+    heading: 'Diktat aufnehmen',
+    idle: 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.',
+    running: 'Ihr Diktat wird aufgenommen.',
+    stop: 'Diktat beenden',
+    after: 'Nach dem Diktat entsteht die Zusammenfassende Beurteilung — fertig zum Einfügen in Word.',
+  },
+};
+
 /**
- * The two recorders, deliberately unalike.
- *
- * TERMIN runs while he talks to a patient: it stays inside the app frame,
- * calm, glanceable from across the desk — the recording is the background of
- * the appointment, not its subject.
- *
- * DIKTAT is the opposite: he is alone, the recording IS the task. It takes the
- * whole screen, goes dark, and the ribbon becomes light itself (the shader's
- * additive mode). Nothing else is on screen because nothing else matters.
+ * One recorder layout for both features, inside the app frame with the sidebar
+ * in place. (An earlier version gave Diktat a black full-screen takeover; it
+ * looked the part and was asked out — the sidebar stays, the page stays white.)
  */
 export function RecordFlow({ kind }: { kind: SessionKind }) {
   const goHome = useAppStore((s) => s.goHome);
@@ -28,6 +41,13 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
   const touchSessions = useAppStore((s) => s.touchSessions);
   const recording = useRecordingState();
   const [starting, setStarting] = useState(false);
+  const copy = COPY[kind];
+
+  // A fresh recorder screen starts at 00:00 — without this, the singleton
+  // still holds the last session's frozen timer and shows e.g. 04:00.
+  useEffect(() => {
+    recordingSession.reset();
+  }, [kind]);
 
   const elapsed = useElapsed(
     recording.startedAt,
@@ -52,7 +72,6 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
       if (sessionId) {
         touchSessions();
         openSession(sessionId);
-        // Fire the pipeline; the session view renders its progress.
         void pipeline.process(sessionId);
       }
       return;
@@ -66,78 +85,6 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
     }
   }
 
-  const alerts = (
-    <>
-      {recording.inputWarning ? (
-        <div
-          role="alert"
-          className="flex max-w-[56ch] items-start gap-3 rounded-lg bg-destructive/15 px-4 py-3 text-destructive"
-        >
-          <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
-          <p className="text-base">{recording.inputWarning}</p>
-        </div>
-      ) : null}
-      {recording.error ? (
-        <div
-          role="alert"
-          className="flex max-w-[56ch] items-start gap-3 rounded-lg bg-destructive/15 px-4 py-3 text-destructive"
-        >
-          <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
-          <p className="text-base">{recording.error}</p>
-        </div>
-      ) : null}
-    </>
-  );
-
-  if (kind === 'beurteilung') {
-    // ── Diktat: full-screen focus mode ────────────────────────────────────
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-black text-neutral-50">
-        <div className="flex items-center justify-between px-6 py-5">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={goHome}
-            disabled={isRecording}
-            className="text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-          >
-            <ArrowLeft aria-hidden />
-            Zurück
-          </Button>
-          <span className="text-sm font-medium tracking-wide text-neutral-500 uppercase">
-            Diktat
-          </span>
-        </div>
-
-        <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6 pb-16">
-          <p className="max-w-[46ch] text-center text-lg text-neutral-400">
-            {isRecording
-              ? 'Ihr Diktat wird aufgenommen.'
-              : 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
-          </p>
-          <div className="text-8xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
-          <RecordingWave level={recording.level} state={orbState} dark className="h-52" />
-          {alerts}
-          <Button
-            size="lg"
-            disabled={isBusy}
-            onClick={() => void handleToggle()}
-            className={cn(
-              'h-16 px-12 text-lg',
-              isRecording
-                ? 'bg-destructive text-white hover:bg-destructive/90'
-                : 'bg-neutral-50 text-neutral-950 hover:bg-neutral-200',
-            )}
-          >
-            {isBusy ? <Spinner /> : null}
-            {isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Termin: calm, in-frame ──────────────────────────────────────────────
   return (
     <div className="space-y-10">
       <div className="flex items-center justify-between">
@@ -145,24 +92,41 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
           <ArrowLeft aria-hidden />
           Zurück
         </Button>
-        <span className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-          Termin
-        </span>
+        <Badge variant={kind === 'gespraech' ? 'secondary' : 'outline'}>
+          {kind === 'gespraech' ? 'Termin' : 'Diktat'}
+        </Badge>
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Termin aufnehmen</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{copy.heading}</h1>
         <p className="max-w-[56ch] text-lg text-muted-foreground">
-          {isRecording
-            ? 'Die Aufnahme läuft — führen Sie das Gespräch ganz normal.'
-            : 'Starten Sie die Aufnahme, bevor der Patient hereinkommt. Sie können ganz normal sprechen.'}
+          {isRecording ? copy.running : copy.idle}
         </p>
       </div>
 
       <div className="flex flex-col items-center gap-6 rounded-xl border border-border bg-card px-6 py-10">
         <div className="text-6xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
         <RecordingWave level={recording.level} state={orbState} className="h-36" />
-        {alerts}
+
+        {recording.inputWarning ? (
+          <div
+            role="alert"
+            className="flex max-w-[56ch] items-start gap-3 rounded-lg bg-destructive/15 px-4 py-3 text-destructive"
+          >
+            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
+            <p className="text-base">{recording.inputWarning}</p>
+          </div>
+        ) : null}
+        {recording.error ? (
+          <div
+            role="alert"
+            className="flex max-w-[56ch] items-start gap-3 rounded-lg bg-destructive/15 px-4 py-3 text-destructive"
+          >
+            <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
+            <p className="text-base">{recording.error}</p>
+          </div>
+        ) : null}
+
         <Button
           size="lg"
           disabled={isBusy}
@@ -173,8 +137,9 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
           onClick={() => void handleToggle()}
         >
           {isBusy ? <Spinner /> : null}
-          {isRecording ? 'Termin beenden' : 'Aufnahme starten'}
+          {isRecording ? copy.stop : 'Aufnahme starten'}
         </Button>
+
         {isRecording ? (
           <p className="text-sm text-muted-foreground">
             Die Aufnahme wird laufend auf diesem Computer gesichert.
@@ -183,10 +148,7 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
       </div>
 
       {!isRecording ? (
-        <p className="max-w-[56ch] text-sm text-muted-foreground">
-          Nach dem Termin entstehen automatisch: Notizen in Abschnitten, das Transkript nach
-          Sprechern getrennt und die Aufnahme zum Nachhören.
-        </p>
+        <p className="max-w-[56ch] text-sm text-muted-foreground">{copy.after}</p>
       ) : null}
     </div>
   );

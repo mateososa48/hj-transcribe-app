@@ -1,4 +1,4 @@
-import { assembleAudio, db, newId, type SessionKind, type Transcription, type Utterance } from '@/lib/db.ts';
+import { assembleAudio, db, newId, type SessionKind, type TimedWord, type Transcription, type Utterance } from '@/lib/db.ts';
 import { generate } from '@/lib/generate.ts';
 import { TRANSCRIPTION_PROVIDERS } from '@/lib/providers/index.ts';
 import { repairTranscript } from '@/lib/transcription/repair.ts';
@@ -141,6 +141,12 @@ class PipelineManager {
 
       row.text = repairTranscript(chunk.text);
       row.utterances = utterances;
+      const words: TimedWord[] = (chunk.words ?? []).map((w) => ({
+        text: w.text,
+        startMs: w.startMs,
+        endMs: w.endMs,
+      }));
+      if (words.length) row.words = words;
       row.status = 'done';
       delete row.error;
       row.updatedAt = Date.now();
