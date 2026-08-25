@@ -62,15 +62,20 @@ export function sessionTitle(session: Session): string {
   return `${session.kind === 'gespraech' ? 'Termin' : 'Diktat'} ${day}, ${time} Uhr`;
 }
 
-/** Bucket key for the sidebar's date groups. */
-export function dayGroup(ts: number): string {
+/**
+ * Title without the kind prefix, for lists already grouped by kind — "Diktat"
+ * on every row under a "Diktate" heading is noise.
+ */
+export function sessionTimeTitle(session: Session): string {
+  if (session.label?.trim()) return session.label;
+  const when = new Date(session.startedAt);
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
-  const dayMs = 86_400_000;
-  if (ts >= midnight.getTime()) return 'Heute';
-  if (ts >= midnight.getTime() - dayMs) return 'Gestern';
-  if (ts >= midnight.getTime() - 6 * dayMs) return 'Diese Woche';
-  return 'Älter';
+  const time = when.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  if (session.startedAt >= midnight.getTime()) return `Heute, ${time} Uhr`;
+  if (session.startedAt >= midnight.getTime() - 86_400_000) return `Gestern, ${time} Uhr`;
+  const day = when.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  return `${day}, ${time} Uhr`;
 }
 
 export function formatDuration(ms: number | undefined): string {
