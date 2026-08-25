@@ -24,7 +24,10 @@ function Editor({ resultId, initial }: { resultId: string; initial: string }) {
   const { text, update, copy, copied, areaRef } = useDiktatText(resultId, initial);
   return (
     <section className="space-y-5">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+          Zusammenfassende Beurteilung
+        </p>
         <Button size="lg" variant={copied ? 'secondary' : 'default'} onClick={() => void copy()}>
           {copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
           {copied ? 'Kopiert' : 'Kopieren'}
@@ -45,7 +48,7 @@ function Editor({ resultId, initial }: { resultId: string; initial: string }) {
 function Session({ ctx }: { ctx: DiktatCtx }) {
   const blocked = ctx.state === 'live' || ctx.state === 'interrupted';
   return (
-    <div className="mx-auto max-w-[42rem] space-y-10 pb-16">
+    <div className="mx-auto max-w-[56rem] space-y-10 pb-16">
       <header className="space-y-1.5 pt-4">
         <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
           {ctx.dateLine}

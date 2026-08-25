@@ -59,7 +59,7 @@ function StatusLine({ left, right }: { left: React.ReactNode; right?: React.Reac
 function Editor({ resultId, initial }: { resultId: string; initial: string }) {
   const { text, update, copy, copied, areaRef } = useDiktatText(resultId, initial);
   return (
-    <section className="border border-foreground/30">
+    <section className="min-w-0 border border-foreground/30">
       <div className="flex items-center justify-between gap-2 border-b border-foreground/30 px-3 py-2">
         <h2 className="min-w-0 truncate font-mono text-xs uppercase tracking-wider text-muted-foreground">
           Zusammenfassende_Beurteilung
@@ -97,6 +97,7 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
 
       {!blocked ? (
         <div className="space-y-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
           {ctx.result ? (
             <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
           ) : (
@@ -105,7 +106,7 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
             </div>
           )}
 
-          <section className="border border-foreground/30">
+          <section className="min-w-0 border border-foreground/30">
             <h2 className="border-b border-foreground/30 px-3 py-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Aufnahme
             </h2>
@@ -119,6 +120,7 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
               </div>
             </div>
           </section>
+          </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {ctx.result ? (

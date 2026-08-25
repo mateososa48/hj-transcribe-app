@@ -1,3 +1,5 @@
+import '@fontsource-variable/source-serif-4';
+
 import { Check, ClipboardCopy, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,7 @@ import { useDiktatText } from '../useDiktatText';
  * galley proof than to an app — because what he reads here IS a letter.
  */
 
-const serif = "[font-family:ui-serif,Georgia,Cambria,'Times_New_Roman',Times,serif]";
+const serif = "[font-family:'Source_Serif_4_Variable',ui-serif,Georgia,Cambria,serif]";
 
 function Rules({ double }: { double?: boolean }) {
   return (
@@ -67,7 +69,7 @@ function Editor({ resultId, initial }: { resultId: string; initial: string }) {
 function Session({ ctx }: { ctx: DiktatCtx }) {
   const blocked = ctx.state === 'live' || ctx.state === 'interrupted';
   return (
-    <div className="mx-auto max-w-[44rem] space-y-8 pb-16">
+    <div className="mx-auto max-w-[44rem] space-y-8 pb-16 xl:max-w-[76rem]">
       <header className="space-y-4 text-center">
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
           Diktat · {ctx.dateLine}
@@ -84,25 +86,36 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
 
       {!blocked ? (
         <>
-          {ctx.result ? (
-            <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
-          ) : (
-            <DiktatEmptyText ctx={ctx} />
-          )}
+          <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-12">
+            <div className="min-w-0 xl:mx-auto xl:w-full xl:max-w-[46rem]">
+              {ctx.result ? (
+                <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+              ) : (
+                <DiktatEmptyText ctx={ctx} />
+              )}
+            </div>
+
+            <aside className="mt-8 min-w-0 xl:mt-0 xl:border-l xl:border-foreground/20 xl:pl-8">
+              <div className="space-y-4">
+                <div className="xl:hidden">
+                  <Rules />
+                </div>
+                <section className="space-y-4 xl:pt-1">
+                  <h2 className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                    Aufnahme
+                  </h2>
+                  <SyncedPlayback
+                    sessionId={ctx.session.id}
+                    words={ctx.transcription?.words ?? []}
+                    fallbackText={ctx.transcription?.text ?? ''}
+                  />
+                </section>
+              </div>
+            </aside>
+          </div>
 
           <div className="space-y-8">
             <Rules />
-            <section className="space-y-4">
-              <h2 className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                Aufnahme
-              </h2>
-              <SyncedPlayback
-                sessionId={ctx.session.id}
-                words={ctx.transcription?.words ?? []}
-                fallbackText={ctx.transcription?.text ?? ''}
-              />
-            </section>
-
             <div className="flex flex-wrap items-center justify-center gap-3">
               {ctx.result ? (
                 <RegenerateControls

@@ -93,25 +93,31 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
               </div>
             ) : null}
 
-            {ctx.result ? (
-              <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
-            ) : (
-              <>
-                <Band>Zusammenfassende Beurteilung</Band>
-                <div className="px-5 py-4">
-                  <DiktatEmptyText ctx={ctx} />
-                </div>
-              </>
-            )}
+            <div className="xl:grid xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              <div className="min-w-0">
+                {ctx.result ? (
+                  <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+                ) : (
+                  <>
+                    <Band>Zusammenfassende Beurteilung</Band>
+                    <div className="px-5 py-4">
+                      <DiktatEmptyText ctx={ctx} />
+                    </div>
+                  </>
+                )}
+              </div>
 
-            <Band>Aufnahme</Band>
-            <div className="px-5 py-4">
-              <div className="[&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none">
-                <SyncedPlayback
-                  sessionId={ctx.session.id}
-                  words={ctx.transcription?.words ?? []}
-                  fallbackText={ctx.transcription?.text ?? ''}
-                />
+              <div className="min-w-0 xl:border-l-2 xl:border-foreground">
+                <Band>Aufnahme</Band>
+                <div className="px-5 py-4">
+                  <div className="[&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none">
+                    <SyncedPlayback
+                      sessionId={ctx.session.id}
+                      words={ctx.transcription?.words ?? []}
+                      fallbackText={ctx.transcription?.text ?? ''}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

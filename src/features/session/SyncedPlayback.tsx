@@ -98,7 +98,7 @@ export function SyncedPlayback({
 
       {words.length > 0 ? (
         <div className="max-h-72 overflow-y-auto rounded-xl border border-border bg-card px-5 py-4">
-          <p className="max-w-[70ch] text-base leading-loose">
+          <p className="max-w-[80ch] text-base leading-loose">
             {words.map((word, i) => (
               // The space is a real text node — adjacent inline buttons would
               // otherwise render flush ("DieEjektionsfraktionliegt").
@@ -133,7 +133,7 @@ export function SyncedPlayback({
           </p>
         </div>
       ) : fallbackText.trim() ? (
-        <p className="max-w-[70ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
+        <p className="max-w-[80ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
           {fallbackText}
         </p>
       ) : null}

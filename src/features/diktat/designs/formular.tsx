@@ -96,11 +96,13 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
           )}
 
           <Row label="Aufnahme">
-            <SyncedPlayback
-              sessionId={ctx.session.id}
-              words={ctx.transcription?.words ?? []}
-              fallbackText={ctx.transcription?.text ?? ''}
-            />
+            <div className="[&>div]:gap-5 xl:[&>div]:grid xl:[&>div]:grid-cols-[24rem_minmax(0,1fr)] xl:[&>div]:items-start xl:[&>div]:space-y-0">
+              <SyncedPlayback
+                sessionId={ctx.session.id}
+                words={ctx.transcription?.words ?? []}
+                fallbackText={ctx.transcription?.text ?? ''}
+              />
+            </div>
           </Row>
 
           <Row label="Aktionen">

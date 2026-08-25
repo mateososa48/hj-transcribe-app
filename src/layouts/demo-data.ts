@@ -139,7 +139,7 @@ export async function seedDemoData(): Promise<void> {
   // ── the complete Diktat: audio + words for the follow-along ──────────────
   const diktatId = `${DEMO}diktat-voll`;
   const diktatText =
-    'Bezüglich der koronaren Herzkrankheit ist der Patient beschwerdefrei. Eine Angina pectoris wird verneint. Die Ejektionsfraktion liegt bei 55 %. Sicherheitshalber würde ich eine Kontrolle in 6 Monaten empfehlen.';
+    'Herr Brandner stellte sich zu einer routinemäßigen kardiologischen Kontrolle vor. Klinisch zeigten sich keine auffälligen Befunde. Im EKG bestand ein normaler Sinusrhythmus und echokardiographisch zeigte sich eine gute globale und regionale linksventrikuläre Funktion ohne signifikante Herzklappenauffälligkeiten. Bezüglich der Trikuspidalklappeninsuffizienz Grad 1 zeigten sich ein grenzwertiger Durchmesser der unteren Hohlvene, ein grenzwertiges Volumen des rechten Vorhofs sowie ein grenzwertiger Druck in der Lungenarterie. Eine Fehlmündung einer Lungenvene kann nicht ausgeschlossen werden. Diesbezüglich würde ich eine Kontrollechokardiographie innerhalb von 6 Monaten sowie ein Langzeit-EKG empfehlen, ebenso eine routinemäßige Laboruntersuchung einschließlich proBNP.';
   const diktatAudioS = 20;
   sessions.push({
     id: diktatId,
@@ -181,7 +181,7 @@ export async function seedDemoData(): Promise<void> {
       updatedAt: now - 5 * hour,
       sections: {
         beurteilung:
-          '• Bezüglich der koronaren Herzkrankheit ist der Patient beschwerdefrei. Eine Angina pectoris wird verneint.\n• Die Ejektionsfraktion liegt bei 55 %.\n• Sicherheitshalber würde ich eine Kontrolle in 6 Monaten empfehlen.',
+          '• Herr Brandner stellte sich zu einer routinemäßigen kardiologischen Kontrolle vor. Klinisch zeigten sich keine auffälligen Befunde.\n• Im EKG bestand ein normaler Sinusrhythmus. Echokardiographisch zeigte sich eine gute globale und regionale linksventrikuläre Funktion ohne signifikante Herzklappenauffälligkeiten.\n• Bezüglich der Trikuspidalklappeninsuffizienz Grad 1 zeigten sich ein grenzwertiger Durchmesser der unteren Hohlvene, ein grenzwertiges Volumen des rechten Vorhofs sowie ein grenzwertiger Druck in der Lungenarterie. Insbesondere kann eine Fehlmündung einer Lungenvene nicht ausgeschlossen werden.\n• Diesbezüglich würde ich eine Kontrollechokardiographie innerhalb von 6 Monaten sowie ein Langzeit-EKG empfehlen. Ebenso empfiehlt sich eine routinemäßige Laboruntersuchung einschließlich proBNP.',
       },
       original: {},
       model: 'demo',

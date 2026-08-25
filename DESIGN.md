@@ -330,6 +330,11 @@ standard, switched via the floating pill, `?design=` or localStorage. Scope is
 deliberately narrow: the recorder, the sidebar and the whole Termin feature
 always render the shipped design.
 
+Width is adaptive: the shell gives a session nearly the whole content area
+(`MAIN_WIDTHS` in StandardLayout), and every design answers with a
+letter-left / evidence-right arrangement at xl in its own idiom, so the
+Beurteilung keeps a readable measure instead of 150-character lines.
+
 Architecture: `SessionView` hands the page to a design component when a
 non-standard design is active. Designs are looks only — behaviour lives in
 `useDiktatText` (autosave + rich copy), `design-shared.tsx` (title, delete,

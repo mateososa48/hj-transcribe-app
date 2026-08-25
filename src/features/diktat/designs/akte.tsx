@@ -95,28 +95,34 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
 
       {!blocked ? (
         <>
-          {ctx.result ? (
-            <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
-          ) : (
-            <Folder tab="Zusammenfassende Beurteilung">
-              <DiktatEmptyText ctx={ctx} />
-            </Folder>
-          )}
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
+            <div className="min-w-0">
+              {ctx.result ? (
+                <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+              ) : (
+                <Folder tab="Zusammenfassende Beurteilung">
+                  <DiktatEmptyText ctx={ctx} />
+                </Folder>
+              )}
+            </div>
 
-          <Folder
-            tab={
-              <>
-                <Paperclip className="size-4 text-muted-foreground" aria-hidden />
-                Anlage — Aufnahme
-              </>
-            }
-          >
-            <SyncedPlayback
-              sessionId={ctx.session.id}
-              words={ctx.transcription?.words ?? []}
-              fallbackText={ctx.transcription?.text ?? ''}
-            />
-          </Folder>
+            <div className="min-w-0">
+              <Folder
+                tab={
+                  <>
+                    <Paperclip className="size-4 text-muted-foreground" aria-hidden />
+                    Anlage — Aufnahme
+                  </>
+                }
+              >
+                <SyncedPlayback
+                  sessionId={ctx.session.id}
+                  words={ctx.transcription?.words ?? []}
+                  fallbackText={ctx.transcription?.text ?? ''}
+                />
+              </Folder>
+            </div>
+          </div>
 
           {ctx.result ? (
             <RegenerateControls

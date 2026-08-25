@@ -104,25 +104,29 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
 
       {!blocked ? (
         <>
-          {ctx.result ? (
-            <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
-          ) : (
-            <section className="space-y-5">
-              <Bar>Zusammenfassende Beurteilung</Bar>
-              <DiktatEmptyText ctx={ctx} />
-            </section>
-          )}
-
-          <section className="space-y-5 border-t-4 border-foreground pt-5">
-            <Bar>Aufnahme</Bar>
-            <div className="[&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none">
-              <SyncedPlayback
-                sessionId={ctx.session.id}
-                words={ctx.transcription?.words ?? []}
-                fallbackText={ctx.transcription?.text ?? ''}
-              />
+          <div className="xl:grid xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:gap-10">
+            <div className="min-w-0">
+              {ctx.result ? (
+                <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+              ) : (
+                <section className="space-y-5">
+                  <Bar>Zusammenfassende Beurteilung</Bar>
+                  <DiktatEmptyText ctx={ctx} />
+                </section>
+              )}
             </div>
-          </section>
+
+            <section className="min-w-0 mt-8 space-y-5 border-t-4 border-foreground pt-5 xl:mt-0 xl:border-t-0 xl:border-l-4 xl:pt-0 xl:pl-8">
+              <Bar>Aufnahme</Bar>
+              <div className="[&_.rounded-lg]:rounded-none [&_.rounded-xl]:rounded-none">
+                <SyncedPlayback
+                  sessionId={ctx.session.id}
+                  words={ctx.transcription?.words ?? []}
+                  fallbackText={ctx.transcription?.text ?? ''}
+                />
+              </div>
+            </section>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t-4 border-foreground pt-5">
             {ctx.result ? (

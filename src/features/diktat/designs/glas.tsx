@@ -32,6 +32,10 @@ function Stage({ children }: { children: React.ReactNode }) {
         aria-hidden
         className="pointer-events-none absolute -right-20 top-40 size-80 rounded-full bg-white/70 blur-3xl"
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-28 left-1/4 h-72 w-[36rem] rounded-full bg-sky-100/70 blur-3xl"
+      />
       <div className="relative space-y-6">{children}</div>
     </div>
   );
@@ -41,7 +45,7 @@ function Glass({ children, className }: { children: React.ReactNode; className?:
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/80 bg-white/60 p-5 shadow-lg shadow-neutral-900/5 backdrop-blur-xl sm:p-6',
+        'rounded-2xl border border-white/80 bg-white/60 p-5 backdrop-blur-xl sm:p-6 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.9),0_16px_40px_-12px_rgba(23,23,23,0.18)]',
         className,
       )}
     >
@@ -97,31 +101,34 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
 
         {!blocked ? (
           <>
-            {ctx.result ? (
-              <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
-            ) : (
-              <Glass>
-                <DiktatEmptyText ctx={ctx} />
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
+              <div className="min-w-0 space-y-4">
+                {ctx.result ? (
+                  <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+                ) : (
+                  <Glass>
+                    <DiktatEmptyText ctx={ctx} />
+                  </Glass>
+                )}
+                {ctx.result ? (
+                  <RegenerateControls
+                    session={ctx.session}
+                    result={ctx.result}
+                    running={ctx.running}
+                    onChanged={ctx.reload}
+                  />
+                ) : null}
+              </div>
+
+              <Glass className="min-w-0">
+                <h2 className="mb-3 text-lg font-semibold tracking-tight">Aufnahme</h2>
+                <SyncedPlayback
+                  sessionId={ctx.session.id}
+                  words={ctx.transcription?.words ?? []}
+                  fallbackText={ctx.transcription?.text ?? ''}
+                />
               </Glass>
-            )}
-
-            <Glass>
-              <h2 className="mb-3 text-lg font-semibold tracking-tight">Aufnahme</h2>
-              <SyncedPlayback
-                sessionId={ctx.session.id}
-                words={ctx.transcription?.words ?? []}
-                fallbackText={ctx.transcription?.text ?? ''}
-              />
-            </Glass>
-
-            {ctx.result ? (
-              <RegenerateControls
-                session={ctx.session}
-                result={ctx.result}
-                running={ctx.running}
-                onChanged={ctx.reload}
-              />
-            ) : null}
+            </div>
           </>
         ) : null}
       </Stage>

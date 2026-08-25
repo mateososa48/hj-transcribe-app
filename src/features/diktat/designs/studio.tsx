@@ -49,7 +49,7 @@ function Paper({ children, className }: { children: React.ReactNode; className?:
 function Editor({ resultId, initial }: { resultId: string; initial: string }) {
   const { text, update, copy, copied, areaRef } = useDiktatText(resultId, initial);
   return (
-    <section className="space-y-3">
+    <section className="min-w-0 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <StageLabel>Zusammenfassende Beurteilung</StageLabel>
         <Button
@@ -111,30 +111,32 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
 
           {!blocked ? (
             <>
-              {ctx.result ? (
-                <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
-              ) : (
-                <section className="space-y-3">
-                  <StageLabel>Zusammenfassende Beurteilung</StageLabel>
+              <div className="grid gap-7 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
+                {ctx.result ? (
+                  <Editor resultId={ctx.result.id} initial={ctx.result.sections.beurteilung ?? ''} />
+                ) : (
+                  <section className="min-w-0 space-y-3">
+                    <StageLabel>Zusammenfassende Beurteilung</StageLabel>
+                    <Paper>
+                      <DiktatEmptyText ctx={ctx} />
+                    </Paper>
+                  </section>
+                )}
+
+                <section className="min-w-0 space-y-3">
+                  <StageLabel>Aufnahme</StageLabel>
                   <Paper>
-                    <DiktatEmptyText ctx={ctx} />
+                    <SyncedPlayback
+                      sessionId={ctx.session.id}
+                      words={ctx.transcription?.words ?? []}
+                      fallbackText={ctx.transcription?.text ?? ''}
+                    />
                   </Paper>
                 </section>
-              )}
-
-              <section className="space-y-3">
-                <StageLabel>Aufnahme</StageLabel>
-                <Paper>
-                  <SyncedPlayback
-                    sessionId={ctx.session.id}
-                    words={ctx.transcription?.words ?? []}
-                    fallbackText={ctx.transcription?.text ?? ''}
-                  />
-                </Paper>
-              </section>
+              </div>
 
               {ctx.result ? (
-                <div className="[&_button]:text-neutral-400 [&_button:hover]:bg-neutral-800 [&_button:hover]:text-neutral-100">
+                <div className="[&_button]:text-neutral-300 [&_button:hover]:bg-neutral-800 [&_button:hover]:text-white">
                   <RegenerateControls
                     session={ctx.session}
                     result={ctx.result}
