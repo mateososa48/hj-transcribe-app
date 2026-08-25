@@ -1,9 +1,7 @@
-import { ArrowLeft, Check, ClipboardCopy, Trash2 } from 'lucide-react';
+import { Check, ClipboardCopy, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RecordingWave } from '@/features/record/RecordingWave';
 import { RegenerateControls } from '@/features/session/RegenerateControls';
 import { SyncedPlayback } from '@/features/session/SyncedPlayback';
 import { cn } from '@/lib/utils';
@@ -13,9 +11,7 @@ import {
   DiktatEmptyText,
   DiktatStatus,
   DiktatTitle,
-  RecorderNotices,
 } from '../design-shared';
-import { useDiktatRecorder } from '../useDiktatRecorder';
 import { useDiktatText } from '../useDiktatText';
 
 /**
@@ -133,47 +129,4 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
   );
 }
 
-function Record() {
-  const r = useDiktatRecorder();
-  return (
-    <div className="mx-auto max-w-[44rem] space-y-8">
-      <Button variant="ghost" size="lg" onClick={r.goHome} disabled={r.isRecording}>
-        <ArrowLeft aria-hidden />
-        Zurück
-      </Button>
-
-      <header className="space-y-4 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
-          {r.isRecording ? 'Die Aufnahme läuft' : 'Neues Diktat'}
-        </p>
-        <h1 className={cn(serif, 'text-3xl font-medium')}>Diktat aufnehmen</h1>
-        <Rules double />
-      </header>
-
-      <div className="flex flex-col items-center gap-7 py-4">
-        <div className={cn(serif, 'text-7xl tabular-nums tracking-tight')}>{r.elapsed}</div>
-        <RecordingWave level={r.recording.level} state={r.orbState} className="h-24" />
-        <RecorderNotices recording={r.recording} />
-        <Button
-          size="lg"
-          disabled={r.isBusy}
-          onClick={() => void r.toggle()}
-          className={cn(
-            'h-14 px-10 text-lg',
-            r.isRecording && 'btn-gloss bg-destructive text-white hover:bg-destructive/90',
-          )}
-        >
-          {r.isBusy ? <Spinner /> : null}
-          {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-        </Button>
-        <p className={cn(serif, 'max-w-[48ch] text-center text-base italic text-muted-foreground')}>
-          {r.isRecording
-            ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
-            : 'Sprechen Sie frei, wie zu einem Kollegen — Satzzeichen müssen Sie nicht mitsprechen.'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-export const manuskript: DiktatDesign = { Record, Session };
+export const manuskript: DiktatDesign = Session;

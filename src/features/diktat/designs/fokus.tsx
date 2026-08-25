@@ -1,21 +1,16 @@
-import { ArrowLeft, Check, ClipboardCopy, Mic, Square } from 'lucide-react';
+import { Check, ClipboardCopy } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RecordingWave } from '@/features/record/RecordingWave';
 import { RegenerateControls } from '@/features/session/RegenerateControls';
 import { SyncedPlayback } from '@/features/session/SyncedPlayback';
-import { cn } from '@/lib/utils';
 import type { DiktatCtx, DiktatDesign } from '../design-context';
 import {
   DeleteRecordingButton,
   DiktatEmptyText,
   DiktatStatus,
   DiktatTitle,
-  RecorderNotices,
 } from '../design-shared';
-import { useDiktatRecorder } from '../useDiktatRecorder';
 import { useDiktatText } from '../useDiktatText';
 
 /**
@@ -95,53 +90,4 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
   );
 }
 
-function Record() {
-  const r = useDiktatRecorder();
-  return (
-    <div className="mx-auto flex max-w-[42rem] flex-col">
-      <div>
-        <Button variant="ghost" size="lg" onClick={r.goHome} disabled={r.isRecording}>
-          <ArrowLeft aria-hidden />
-          Zurück
-        </Button>
-      </div>
-
-      <div className="flex flex-col items-center gap-10 pt-14 pb-10 text-center">
-        <div className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-            {r.isRecording ? 'Ihr Diktat wird aufgenommen' : 'Neues Diktat'}
-          </p>
-          <div className="text-8xl font-extralight tabular-nums tracking-tight">{r.elapsed}</div>
-        </div>
-
-        <RecordingWave level={r.recording.level} state={r.orbState} className="h-20 opacity-70" />
-        <RecorderNotices recording={r.recording} />
-
-        <div className="flex flex-col items-center gap-4">
-          <Button
-            disabled={r.isBusy}
-            onClick={() => void r.toggle()}
-            aria-label={r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-            className={cn(
-              'size-24 rounded-full [&_svg]:size-9',
-              r.isRecording && 'btn-gloss bg-destructive text-white hover:bg-destructive/90',
-            )}
-          >
-            {r.isBusy ? <Spinner /> : r.isRecording ? <Square aria-hidden /> : <Mic aria-hidden />}
-          </Button>
-          <p className="text-base text-muted-foreground">
-            {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-          </p>
-        </div>
-
-        <p className="max-w-[44ch] text-sm text-muted-foreground">
-          {r.isRecording
-            ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
-            : 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-export const fokus: DiktatDesign = { Record, Session };
+export const fokus: DiktatDesign = Session;

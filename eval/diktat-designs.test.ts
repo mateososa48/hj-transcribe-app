@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { DIKTAT_DESIGN_META } from '../src/features/diktat/design-meta.ts';
-import { DIKTAT_DESIGN_IDS, LAYOUT_IDS } from '../src/store/app-store.ts';
+import { DIKTAT_DESIGN_IDS } from '../src/store/app-store.ts';
 
 /**
  * The Diktat design experiment axis: ten designs plus the shipped standard,
@@ -23,11 +23,4 @@ test('every design id has switcher metadata, and nothing extra', () => {
     assert.ok(meta.blurb.trim().length >= 15, `${id}: blurb should describe the design`);
     assert.ok(meta.blurb.length <= 120, `${id}: blurb too long for the menu`);
   }
-});
-
-test('the two experiment axes stay distinct', () => {
-  const overlap = DIKTAT_DESIGN_IDS.filter(
-    (id) => id !== 'standard' && (LAYOUT_IDS as string[]).includes(id),
-  );
-  assert.deepEqual(overlap, [], 'a design id must not shadow a layout id');
 });

@@ -1,8 +1,6 @@
-import { ArrowLeft } from 'lucide-react';
+import {  } from 'lucide-react';
 
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RecordingWave } from '@/features/record/RecordingWave';
 import { RegenerateControls } from '@/features/session/RegenerateControls';
 import { SyncedPlayback } from '@/features/session/SyncedPlayback';
 import { cn } from '@/lib/utils';
@@ -12,9 +10,7 @@ import {
   DiktatEmptyText,
   DiktatStatus,
   DiktatTitle,
-  RecorderNotices,
 } from '../design-shared';
-import { useDiktatRecorder } from '../useDiktatRecorder';
 import { useDiktatText } from '../useDiktatText';
 
 /**
@@ -145,50 +141,4 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
   );
 }
 
-function Record() {
-  const r = useDiktatRecorder();
-  return (
-    <div className="space-y-4 font-mono">
-      <button
-        type="button"
-        onClick={r.goHome}
-        disabled={r.isRecording}
-        className="inline-flex items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        zurück
-      </button>
-
-      <StatusLine
-        left={
-          <>
-            <span className={cn(r.isRecording && 'text-destructive motion-safe:animate-pulse')} aria-hidden>
-              ●
-            </span>
-            {r.isRecording ? 'REC' : 'BEREIT'}
-          </>
-        }
-        right={r.elapsed}
-      />
-
-      <div className="border border-foreground/30 px-6 py-10">
-        <div className="flex flex-col items-center gap-7">
-          <div className="text-7xl font-semibold tabular-nums tracking-tight">{r.elapsed}</div>
-          <RecordingWave level={r.recording.level} state={r.orbState} className="h-24" />
-          <RecorderNotices recording={r.recording} className="rounded-none" />
-          <TermButton onClick={() => void r.toggle()} disabled={r.isBusy} danger={r.isRecording}>
-            {r.isBusy ? <Spinner /> : null}
-            {r.isRecording ? '[ ■ Diktat beenden ]' : '[ ● Aufnahme starten ]'}
-          </TermButton>
-          <p className="max-w-[52ch] text-center text-sm text-muted-foreground">
-            {r.isRecording
-              ? '// Die Aufnahme wird laufend auf diesem Computer gesichert.'
-              : '// Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export const terminal: DiktatDesign = { Record, Session };
+export const terminal: DiktatDesign = Session;

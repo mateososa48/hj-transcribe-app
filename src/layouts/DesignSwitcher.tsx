@@ -13,29 +13,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DIKTAT_DESIGN_META } from '@/features/diktat/design-meta';
-import { useAppStore, type DiktatDesignId, type LayoutId } from '@/store/app-store';
+import { useAppStore, type DiktatDesignId } from '@/store/app-store';
 import { hasDemoData, removeDemoData, seedDemoData } from './demo-data';
 
 /**
- * The evaluation harness for the layout experiments: a floating pill that
- * switches between the seven arrangements in place, on the same data — the
- * only honest way to compare structure. Ships nowhere by itself; once a
- * winner is chosen the losers and this switcher are deleted together.
+ * The evaluation harness for the Diktat design experiments: a floating pill
+ * that switches the finished-Diktat page between eleven treatments in place,
+ * on the same data — the only honest way to compare design languages. Ships
+ * nowhere by itself; once a winner is chosen the losers and this switcher are
+ * deleted together.
  */
-
-export const LAYOUT_META: Record<LayoutId, { label: string; blurb: string }> = {
-  standard: { label: 'Standard', blurb: 'Seitenleiste mit Gruppen — der aktuelle Stand.' },
-  leiste: { label: 'Leiste', blurb: 'Schmale Kopfleiste, eine ruhige Spalte, Verlauf auf der Startseite.' },
-  posteingang: { label: 'Posteingang', blurb: 'Listenspalte wie in einem Mailprogramm, Inhalt rechts.' },
-  galerie: { label: 'Galerie', blurb: 'Karten auf einem Schreibtisch, Aufnahme öffnet als eigene Seite.' },
-  blatt: { label: 'Blatt', blurb: 'Ein durchgehendes Blatt — Notizen und Transkript untereinander.' },
-  vergleich: { label: 'Vergleich', blurb: 'Notizen links, Transkript rechts — Prüfen ohne Umschalten.' },
-  protokoll: { label: 'Protokoll', blurb: 'Chronik: Aufnahmen klappen direkt in der Liste auf.' },
-};
-
-export function LayoutSwitcher() {
-  const layout = useAppStore((s) => s.layout);
-  const setLayout = useAppStore((s) => s.setLayout);
+export function DesignSwitcher() {
   const diktatDesign = useAppStore((s) => s.diktatDesign);
   const setDiktatDesign = useAppStore((s) => s.setDiktatDesign);
   const touchSessions = useAppStore((s) => s.touchSessions);
@@ -52,27 +40,13 @@ export function LayoutSwitcher() {
           render={
             <Button size="lg" className="shadow-lg">
               <LayoutPanelLeft aria-hidden />
-              {LAYOUT_META[layout].label} · Diktat: {DIKTAT_DESIGN_META[diktatDesign].label}
+              Diktat-Design: {DIKTAT_DESIGN_META[diktatDesign].label}
             </Button>
           }
         />
         <DropdownMenuContent align="end" className="max-h-[80vh] w-80 overflow-y-auto">
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Layout-Experimente</DropdownMenuLabel>
-            {(Object.keys(LAYOUT_META) as LayoutId[]).map((id) => (
-              <DropdownMenuItem key={id} onClick={() => setLayout(id)} className="items-start gap-2 py-2">
-                <Check className={id === layout ? 'mt-0.5 size-4' : 'mt-0.5 size-4 opacity-0'} aria-hidden />
-                <span className="flex min-w-0 flex-col">
-                  <span className="font-medium">{LAYOUT_META[id].label}</span>
-                  <span className="text-xs text-muted-foreground">{LAYOUT_META[id].blurb}</span>
-                </span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Diktat-Design (nur Diktat-Seiten)</DropdownMenuLabel>
+            <DropdownMenuLabel>Diktat-Design (nur die fertige Diktat-Seite)</DropdownMenuLabel>
             {(Object.keys(DIKTAT_DESIGN_META) as DiktatDesignId[]).map((id) => (
               <DropdownMenuItem
                 key={id}

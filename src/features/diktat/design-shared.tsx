@@ -1,4 +1,4 @@
-import { AlertTriangle, FilePlus2, RotateCcw, Trash2 } from 'lucide-react';
+import { FilePlus2, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { ProcessingHandoff } from '@/features/session/ProcessingHandoff';
-import type { RecordingState } from '@/lib/session/recording-session';
 import { deleteSession } from '@/lib/generate';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/app-store';
@@ -201,33 +200,4 @@ export function DiktatEmptyText({ ctx, className }: { ctx: DiktatCtx; className?
     return <p className={cn('text-muted-foreground', className)}>Noch kein Text zu dieser Aufnahme.</p>;
   }
   return null;
-}
-
-/** Microphone warning / recorder error, wherever the design puts them. */
-export function RecorderNotices({
-  recording,
-  className,
-}: {
-  recording: RecordingState;
-  className?: string;
-}) {
-  const notices = [recording.inputWarning, recording.error].filter(Boolean) as string[];
-  if (notices.length === 0) return null;
-  return (
-    <>
-      {notices.map((text) => (
-        <div
-          key={text}
-          role="alert"
-          className={cn(
-            'flex max-w-[56ch] items-start gap-3 rounded-lg bg-destructive/15 px-4 py-3 text-destructive',
-            className,
-          )}
-        >
-          <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
-          <p className="text-base">{text}</p>
-        </div>
-      ))}
-    </>
-  );
 }

@@ -34,8 +34,8 @@ export interface DiktatCtx {
   reload: () => void;
 }
 
-/** One design experiment: its recorder screen and its result page. */
-export interface DiktatDesign {
-  Record: React.FC;
-  Session: React.FC<{ ctx: DiktatCtx }>;
-}
+/**
+ * One design experiment: the finished-Diktat page. Only the result page is
+ * under experiment — the recorder and the sidebar are settled and shipped.
+ */
+export type DiktatDesign = React.FC<{ ctx: DiktatCtx }>;

@@ -1,21 +1,16 @@
-import { ArrowLeft, Check, ClipboardCopy, Trash2 } from 'lucide-react';
+import { Check, ClipboardCopy, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RecordingWave } from '@/features/record/RecordingWave';
 import { RegenerateControls } from '@/features/session/RegenerateControls';
 import { SyncedPlayback } from '@/features/session/SyncedPlayback';
-import { cn } from '@/lib/utils';
 import type { DiktatCtx, DiktatDesign } from '../design-context';
 import {
   DeleteRecordingButton,
   DiktatEmptyText,
   DiktatStatus,
   DiktatTitle,
-  RecorderNotices,
 } from '../design-shared';
-import { useDiktatRecorder } from '../useDiktatRecorder';
 import { useDiktatText } from '../useDiktatText';
 
 /**
@@ -148,61 +143,4 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
   );
 }
 
-function Record() {
-  const r = useDiktatRecorder();
-  return (
-    <div className="space-y-6">
-      <Button
-        variant="ghost"
-        size="lg"
-        className="rounded-none"
-        onClick={r.goHome}
-        disabled={r.isRecording}
-      >
-        <ArrowLeft aria-hidden />
-        Zurück
-      </Button>
-
-      <Frame>
-        <div className="flex items-center justify-between gap-3 border-b-2 border-foreground bg-muted px-5 py-2">
-          <h1 className="text-xs font-bold uppercase tracking-[0.16em]">Diktat — Aufnahme</h1>
-          {r.isRecording ? (
-            <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-destructive">
-              <span className="size-2.5 bg-destructive motion-safe:animate-pulse" aria-hidden />
-              Läuft
-            </span>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col items-center gap-6 px-6 py-10">
-          <div className="font-mono text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl">
-            {r.elapsed}
-          </div>
-          <RecordingWave level={r.recording.level} state={r.orbState} className="h-28" />
-          <RecorderNotices recording={r.recording} className="rounded-none" />
-          <Button
-            size="lg"
-            disabled={r.isBusy}
-            onClick={() => void r.toggle()}
-            className={cn(
-              'h-13 rounded-none border-2 border-foreground bg-foreground px-8 text-base font-bold uppercase tracking-wider text-background shadow-none hover:bg-background hover:text-foreground',
-              r.isRecording &&
-                'border-destructive bg-destructive text-white hover:bg-background hover:text-destructive',
-            )}
-          >
-            {r.isBusy ? <Spinner /> : null}
-            {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-          </Button>
-        </div>
-
-        <p className="border-t-2 border-foreground px-5 py-3 text-sm text-muted-foreground">
-          {r.isRecording
-            ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
-            : 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
-        </p>
-      </Frame>
-    </div>
-  );
-}
-
-export const karteikarte: DiktatDesign = { Record, Session };
+export const karteikarte: DiktatDesign = Session;

@@ -1,9 +1,7 @@
-import { ArrowLeft, Check, ClipboardCopy, Trash2 } from 'lucide-react';
+import { Check, ClipboardCopy, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RecordingWave } from '@/features/record/RecordingWave';
 import { RegenerateControls } from '@/features/session/RegenerateControls';
 import { SyncedPlayback } from '@/features/session/SyncedPlayback';
 import type { DiktatCtx, DiktatDesign } from '../design-context';
@@ -12,9 +10,7 @@ import {
   DiktatEmptyText,
   DiktatStatus,
   DiktatTitle,
-  RecorderNotices,
 } from '../design-shared';
-import { useDiktatRecorder } from '../useDiktatRecorder';
 import { useDiktatText } from '../useDiktatText';
 
 /**
@@ -134,49 +130,4 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
   );
 }
 
-function Record() {
-  const r = useDiktatRecorder();
-  return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="lg" onClick={r.goHome} disabled={r.isRecording}>
-        <ArrowLeft aria-hidden />
-        Zurück
-      </Button>
-
-      <div className="divide-y divide-border rounded-lg border border-border bg-card">
-        <Row label="Vorgang">
-          <p className="pt-1 text-xl font-semibold tracking-tight">Diktat aufnehmen</p>
-        </Row>
-        <Row label="Aufnahme">
-          <div className="flex flex-col items-start gap-5">
-            <div className="text-6xl font-semibold tabular-nums tracking-tight">{r.elapsed}</div>
-            <RecordingWave level={r.recording.level} state={r.orbState} className="h-24 w-full" />
-            <RecorderNotices recording={r.recording} />
-            <Button
-              size="lg"
-              disabled={r.isBusy}
-              onClick={() => void r.toggle()}
-              className={
-                r.isRecording
-                  ? 'btn-gloss h-13 bg-destructive px-8 text-lg text-white hover:bg-destructive/90'
-                  : 'h-13 px-8 text-lg'
-              }
-            >
-              {r.isBusy ? <Spinner /> : null}
-              {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-            </Button>
-          </div>
-        </Row>
-        <Row label="Hinweis">
-          <p className="max-w-[56ch] pt-1 text-sm text-muted-foreground">
-            {r.isRecording
-              ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
-              : 'Sprechen Sie frei, wie zu einem Kollegen. Nach dem Diktat entsteht die Zusammenfassende Beurteilung — fertig zum Einfügen in Word.'}
-          </p>
-        </Row>
-      </div>
-    </div>
-  );
-}
-
-export const formular: DiktatDesign = { Record, Session };
+export const formular: DiktatDesign = Session;

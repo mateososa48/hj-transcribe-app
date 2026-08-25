@@ -316,23 +316,23 @@ Sprecher 1 was (click the name → Arzt/Patient/…). Names feed the notes promp
 disk before any network call, and an interrupted session is offered back.
 
 
-## Experiment axes (evaluation phase, not shipped design)
+## Experiment status
 
-Two independent switchable axes exist for choosing the final shape, both via
-the floating pill (bottom right), `?layout=` / `?design=` URL params and
-localStorage:
+**Layouts: resolved.** The sidebar shell ("standard") won its evaluation
+2026-08-25; the six alternatives (leiste, posteingang, galerie, blatt,
+vergleich, protokoll) are deleted — git history has them. The app renders
+`StandardLayout` directly, and `SessionView` is back to tabs-only.
 
-- **Layouts** (`src/layouts/`, 7): rearrange the app shell for BOTH features —
-  standard, leiste, posteingang, galerie, blatt, vergleich, protokoll.
-- **Diktat designs** (`src/features/diktat/designs/`, 10 + standard): change
-  the visual language of the DIKTAT screens only (recorder + result page);
-  Termin always renders the shipped design. karteikarte, formular, fenster,
-  studio, manuskript, terminal, akte, fokus, plakat, glas.
+**Diktat-page designs: under evaluation.** Ten treatments of the FINISHED
+Diktat page (`src/features/diktat/designs/` — karteikarte, formular, fenster,
+studio, manuskript, terminal, akte, fokus, plakat, glas) plus the shipped
+standard, switched via the floating pill, `?design=` or localStorage. Scope is
+deliberately narrow: the recorder, the sidebar and the whole Termin feature
+always render the shipped design.
 
-Architecture: `SessionView`/`RecordFlow` branch to a design's `Session`/`Record`
-component when a non-standard design is active. Designs are looks only — all
-behaviour lives in shared hooks (`useDiktatRecorder`, `useDiktatText`) and
-shared components (`design-shared.tsx`: title, delete, status, empty state;
-`RegenerateControls`). `design-meta.ts` stays component-free so the switcher
-and node tests can import it. Once winners are chosen, the losing layouts,
-losing designs and the switcher are deleted together.
+Architecture: `SessionView` hands the page to a design component when a
+non-standard design is active. Designs are looks only — behaviour lives in
+`useDiktatText` (autosave + rich copy), `design-shared.tsx` (title, delete,
+status, empty state) and `RegenerateControls`. `design-meta.ts` stays
+component-free so the switcher and node tests can import it. Once a winner is
+chosen, the losing designs and the switcher are deleted together.

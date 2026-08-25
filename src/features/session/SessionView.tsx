@@ -52,21 +52,7 @@ import { TranscriptView } from './TranscriptView';
  * where hearing and reading belong together. A Diktat is simpler: the text,
  * then the evidence underneath.
  */
-/**
- * How the finished content is arranged — the layout experiments vary this.
- *  - 'tabs':  Notizen | Transkript behind tabs (the shipped default)
- *  - 'paper': one continuous sheet — notes, then transcript, no tabs
- *  - 'split': notes and transcript side by side for direct checking
- */
-export type SessionBody = 'tabs' | 'paper' | 'split';
-
-export function SessionView({
-  sessionId,
-  body = 'tabs',
-}: {
-  sessionId: string;
-  body?: SessionBody;
-}) {
+export function SessionView({ sessionId }: { sessionId: string }) {
   const goHome = useAppStore((s) => s.goHome);
   const startRecording = useAppStore((s) => s.startRecording);
   const touchSessions = useAppStore((s) => s.touchSessions);
@@ -211,7 +197,7 @@ export function SessionView({
       recover: recoverNow,
       reload: () => void load(),
     };
-    return <Design.Session ctx={ctx} />;
+    return <Design ctx={ctx} />;
   }
 
   return (
@@ -410,33 +396,6 @@ export function SessionView({
                   </p>
                 );
 
-              if (body === 'paper') {
-                // One continuous sheet: read the notes, scroll into the evidence.
-                return (
-                  <div className="space-y-10">
-                    {notesBlock}
-                    <Separator />
-                    <section className="space-y-5">
-                      <h2 className="text-lg font-semibold tracking-tight">Transkript</h2>
-                      {transcriptBlock}
-                    </section>
-                  </div>
-                );
-              }
-
-              if (body === 'split') {
-                // Notes beside their ground truth — checking without switching.
-                return (
-                  <div className="grid gap-10 xl:grid-cols-2 xl:gap-8">
-                    <div className="min-w-0">{notesBlock}</div>
-                    <div className="min-w-0 xl:border-l xl:border-border xl:pl-8">
-                      <h2 className="mb-5 text-lg font-semibold tracking-tight">Transkript</h2>
-                      {transcriptBlock}
-                    </div>
-                  </div>
-                );
-              }
-
               return (
                 <Tabs defaultValue="notizen">
                   <TabsList className="group-data-horizontal/tabs:h-11">
@@ -457,7 +416,7 @@ export function SessionView({
               );
             })()
           ) : (
-            <div className={body === 'split' ? 'grid gap-10 xl:grid-cols-2 xl:gap-8' : 'space-y-10'}>
+            <div className="space-y-10">
               <div className="min-w-0 space-y-10">
                 {result ? (
                   <SectionCard
@@ -489,8 +448,8 @@ export function SessionView({
                 ) : null}
               </div>
 
-              <div className={body === 'split' ? 'min-w-0 xl:border-l xl:border-border xl:pl-8' : 'min-w-0'}>
-                {body !== 'split' ? <Separator className="mb-10" /> : null}
+              <div className="min-w-0">
+                <Separator className="mb-10" />
                 <section className="space-y-3">
                   <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
                   {/* The evidence under the polished text: playback with the spoken

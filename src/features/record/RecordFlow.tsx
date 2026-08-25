@@ -7,7 +7,6 @@ import { Spinner } from '@/components/ui/spinner';
 import type { SessionKind } from '@/lib/db';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { cn } from '@/lib/utils';
-import { DIKTAT_DESIGNS } from '@/features/diktat/designs/registry';
 import { useAppStore } from '@/store/app-store';
 import type { OrbState } from './RecordingOrb';
 import { RecordingWave } from './RecordingWave';
@@ -41,7 +40,6 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
   const openSession = useAppStore((s) => s.openSession);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const recording = useRecordingState();
-  const diktatDesign = useAppStore((s) => s.diktatDesign);
   const [starting, setStarting] = useState(false);
   const copy = COPY[kind];
 
@@ -67,13 +65,6 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
         : isRecording
           ? 'recording'
           : 'idle';
-
-  // The Diktat design experiments own their recorder screen entirely. The
-  // Termin recorder is untouched by them.
-  if (kind === 'beurteilung' && diktatDesign !== 'standard') {
-    const Design = DIKTAT_DESIGNS[diktatDesign];
-    return <Design.Record />;
-  }
 
   async function handleToggle() {
     if (isRecording) {
@@ -140,7 +131,7 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
           size="lg"
           disabled={isBusy}
           className={cn(
-            'h-14 px-10 text-lg',
+            'h-14 rounded-full px-10 text-lg',
             isRecording && 'btn-gloss bg-destructive text-white hover:bg-destructive/90',
           )}
           onClick={() => void handleToggle()}

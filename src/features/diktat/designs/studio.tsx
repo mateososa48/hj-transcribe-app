@@ -1,9 +1,7 @@
-import { ArrowLeft, Check, ClipboardCopy, Trash2 } from 'lucide-react';
+import { Check, ClipboardCopy, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RecordingWave } from '@/features/record/RecordingWave';
 import { RegenerateControls } from '@/features/session/RegenerateControls';
 import { SyncedPlayback } from '@/features/session/SyncedPlayback';
 import { cn } from '@/lib/utils';
@@ -13,9 +11,7 @@ import {
   DiktatEmptyText,
   DiktatStatus,
   DiktatTitle,
-  RecorderNotices,
 } from '../design-shared';
-import { useDiktatRecorder } from '../useDiktatRecorder';
 import { useDiktatText } from '../useDiktatText';
 
 /**
@@ -155,64 +151,4 @@ function Session({ ctx }: { ctx: DiktatCtx }) {
   );
 }
 
-function Record() {
-  const r = useDiktatRecorder();
-  return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="lg" onClick={r.goHome} disabled={r.isRecording}>
-        <ArrowLeft aria-hidden />
-        Zurück
-      </Button>
-
-      <Stage>
-        <div className="flex flex-col items-center gap-8 py-6">
-          <div className="flex items-center gap-3">
-            <span
-              className={cn(
-                'size-3 rounded-full',
-                r.isRecording ? 'bg-red-500 motion-safe:animate-pulse' : 'bg-neutral-700',
-              )}
-              aria-hidden
-            />
-            <StageLabel>{r.isRecording ? 'Aufnahme läuft' : 'Aufnahmebereit'}</StageLabel>
-          </div>
-
-          <div
-            className={cn(
-              'font-mono text-7xl font-semibold tabular-nums tracking-tight sm:text-8xl',
-              r.isRecording ? 'text-red-400' : 'text-neutral-200',
-            )}
-          >
-            {r.elapsed}
-          </div>
-
-          <RecordingWave level={r.recording.level} state={r.orbState} dark className="h-28" />
-          <RecorderNotices recording={r.recording} className="bg-red-500/15 text-red-300" />
-
-          <Button
-            size="lg"
-            disabled={r.isBusy}
-            onClick={() => void r.toggle()}
-            className={cn(
-              'h-14 px-10 text-lg',
-              r.isRecording
-                ? 'btn-gloss bg-red-600 text-white hover:bg-red-600/90'
-                : 'btn-gloss bg-neutral-100 text-neutral-900 hover:bg-white',
-            )}
-          >
-            {r.isBusy ? <Spinner /> : null}
-            {r.isRecording ? 'Diktat beenden' : 'Aufnahme starten'}
-          </Button>
-
-          <p className="max-w-[48ch] text-center text-sm text-neutral-500">
-            {r.isRecording
-              ? 'Die Aufnahme wird laufend auf diesem Computer gesichert.'
-              : 'Sprechen Sie frei, wie zu einem Kollegen. Satzzeichen müssen Sie nicht mitsprechen.'}
-          </p>
-        </div>
-      </Stage>
-    </div>
-  );
-}
-
-export const studio: DiktatDesign = { Record, Session };
+export const studio: DiktatDesign = Session;
