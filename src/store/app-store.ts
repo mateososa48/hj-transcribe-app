@@ -3,38 +3,34 @@ import { create } from 'zustand';
 import type { SessionKind } from '@/lib/db';
 
 /**
- * The Diktat design experiments. Where the app shell is settled (the sidebar
- * layout won its evaluation), the finished-Diktat page is still being chosen:
- * a design changes the visual language (borders, corners, sectioning, type)
- * of the Diktat RESULT page only. The recorder and the Termin feature always
- * render the shipped design. Chosen via the floating switcher, ?design= or
- * localStorage, so candidates can be compared on the same data.
+ * The Diktat layout experiments. The design language is settled (the shipped
+ * one); what is being chosen is the ARRANGEMENT of the finished-Diktat page —
+ * how title, Beurteilung, player and follow-along transcript sit relative to
+ * each other (tabs, columns, ruled sections, folders, …). The recorder and
+ * the Termin feature always render the shipped page. Chosen via the floating
+ * switcher, ?design= or localStorage, so candidates compare on the same data.
  */
 export type DiktatDesignId =
   | 'standard'
-  | 'karteikarte'
-  | 'formular'
-  | 'fenster'
-  | 'studio'
-  | 'manuskript'
-  | 'terminal'
-  | 'akte'
-  | 'fokus'
-  | 'plakat'
-  | 'glas';
+  | 'spalten'
+  | 'reiter'
+  | 'mappen'
+  | 'abschnitte'
+  | 'karten'
+  | 'tonzuerst'
+  | 'klappen'
+  | 'pruefen';
 
 export const DIKTAT_DESIGN_IDS: DiktatDesignId[] = [
   'standard',
-  'karteikarte',
-  'formular',
-  'fenster',
-  'studio',
-  'manuskript',
-  'terminal',
-  'akte',
-  'fokus',
-  'plakat',
-  'glas',
+  'spalten',
+  'reiter',
+  'mappen',
+  'abschnitte',
+  'karten',
+  'tonzuerst',
+  'klappen',
+  'pruefen',
 ];
 
 const DESIGN_KEY = 'arztbrief-diktat-design';

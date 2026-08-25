@@ -9,10 +9,10 @@ import { DIKTAT_DESIGN_IDS } from '../src/store/app-store.ts';
  * every id described for the switcher, no id colliding with the layout axis.
  */
 
-test('exactly ten design experiments plus standard', () => {
-  assert.equal(DIKTAT_DESIGN_IDS.length, 11);
+test('exactly eight layout experiments plus standard', () => {
+  assert.equal(DIKTAT_DESIGN_IDS.length, 9);
   assert.equal(DIKTAT_DESIGN_IDS[0], 'standard');
-  assert.equal(new Set(DIKTAT_DESIGN_IDS).size, 11, 'design ids must be unique');
+  assert.equal(new Set(DIKTAT_DESIGN_IDS).size, 9, 'design ids must be unique');
 });
 
 test('every design id has switcher metadata, and nothing extra', () => {

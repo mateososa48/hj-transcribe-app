@@ -323,21 +323,24 @@ disk before any network call, and an interrupted session is offered back.
 vergleich, protokoll) are deleted — git history has them. The app renders
 `StandardLayout` directly, and `SessionView` is back to tabs-only.
 
-**Diktat-page designs: under evaluation.** Ten treatments of the FINISHED
-Diktat page (`src/features/diktat/designs/` — karteikarte, formular, fenster,
-studio, manuskript, terminal, akte, fokus, plakat, glas) plus the shipped
-standard, switched via the floating pill, `?design=` or localStorage. Scope is
-deliberately narrow: the recorder, the sidebar and the whole Termin feature
-always render the shipped design.
+**Diktat-page layouts: under evaluation.** Eight ARRANGEMENTS of the
+finished Diktat page (`src/features/diktat/designs/` — spalten, reiter,
+mappen, abschnitte, karten, tonzuerst, klappen, pruefen) plus the shipped
+standard, switched via the floating pill, `?design=` or localStorage. All of
+them keep the shipped design language — same cards, type and buttons; only
+the placement of title, Beurteilung, player and follow-along transcript
+varies. The recorder, the sidebar and the Termin feature are untouched.
 
 Width is adaptive: the shell gives a session nearly the whole content area
 (`MAIN_WIDTHS` in StandardLayout), and every design answers with a
 letter-left / evidence-right arrangement at xl in its own idiom, so the
 Beurteilung keeps a readable measure instead of 150-character lines.
 
-Architecture: `SessionView` hands the page to a design component when a
-non-standard design is active. Designs are looks only — behaviour lives in
-`useDiktatText` (autosave + rich copy), `design-shared.tsx` (title, delete,
-status, empty state) and `RegenerateControls`. `design-meta.ts` stays
-component-free so the switcher and node tests can import it. Once a winner is
-chosen, the losing designs and the switcher are deleted together.
+Architecture: `SessionView` hands the page to an arrangement component when
+a non-standard layout is active. Arrangements compose shared blocks from
+`design-shared.tsx` (DiktatHeader/Letter/Evidence/Regen + status/delete),
+which reuse the shipped `SectionCard`, `SyncedPlayback` and
+`RegenerateControls` — so every layout is behaviourally identical.
+`design-meta.ts` stays component-free so the switcher and node tests can
+import it. Once a winner is chosen, the losers and the switcher are deleted
+together.

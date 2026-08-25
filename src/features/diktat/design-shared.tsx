@@ -12,10 +12,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { ProcessingHandoff } from '@/features/session/ProcessingHandoff';
+import { RegenerateControls } from '@/features/session/RegenerateControls';
+import { SectionCard } from '@/features/session/SectionCard';
+import { SyncedPlayback } from '@/features/session/SyncedPlayback';
 import { deleteSession } from '@/lib/generate';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/app-store';
@@ -200,4 +204,62 @@ export function DiktatEmptyText({ ctx, className }: { ctx: DiktatCtx; className?
     return <p className={cn('text-muted-foreground', className)}>Noch kein Text zu dieser Aufnahme.</p>;
   }
   return null;
+}
+
+/* ── Building blocks for the layout experiments ─────────────────────────────
+   The arrangements below compose these — always the shipped look; only the
+   placement differs per experiment. */
+
+/** The shipped page header: kind badge + delete, editable title, meta line. */
+export function DiktatHeader({ ctx }: { ctx: DiktatCtx }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <Badge variant="outline">Diktat</Badge>
+        <DeleteRecordingButton ctx={ctx} />
+      </div>
+      <DiktatTitle ctx={ctx} />
+      <p className="text-sm text-muted-foreground">
+        {ctx.dateLine}
+        {ctx.durationLine ? ` · ${ctx.durationLine}` : ''}
+      </p>
+    </div>
+  );
+}
+
+/** The Beurteilung in the shipped letter-sheet style, or its empty state. */
+export function DiktatLetter({ ctx, hideTitle }: { ctx: DiktatCtx; hideTitle?: boolean }) {
+  if (!ctx.result) return <DiktatEmptyText ctx={ctx} />;
+  return (
+    <SectionCard
+      resultId={ctx.result.id}
+      section="beurteilung"
+      initialText={ctx.result.sections.beurteilung ?? ''}
+      {...(hideTitle !== undefined ? { hideTitle } : {})}
+    />
+  );
+}
+
+/** Playback with the follow-along transcript — the shipped evidence block. */
+export function DiktatEvidence({ ctx }: { ctx: DiktatCtx }) {
+  return (
+    <SyncedPlayback
+      sessionId={ctx.session.id}
+      words={ctx.transcription?.words ?? []}
+      fallbackText={ctx.transcription?.text ?? ''}
+    />
+  );
+}
+
+/** Regenerate + undo, only once there is a result. */
+export function DiktatRegen({ ctx }: { ctx: DiktatCtx }) {
+  if (!ctx.result) return null;
+  return (
+    <RegenerateControls
+      session={ctx.session}
+      result={ctx.result}
+      running={ctx.running}
+      onChanged={ctx.reload}
+    />
+  );
 }

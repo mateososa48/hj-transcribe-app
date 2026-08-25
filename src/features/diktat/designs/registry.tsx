@@ -1,30 +1,27 @@
 import type { DiktatDesignId } from '@/store/app-store';
 import type { DiktatDesign } from '../design-context';
-import { akte } from './akte';
-import { fenster } from './fenster';
-import { fokus } from './fokus';
-import { formular } from './formular';
-import { glas } from './glas';
-import { karteikarte } from './karteikarte';
-import { manuskript } from './manuskript';
-import { plakat } from './plakat';
-import { studio } from './studio';
-import { terminal } from './terminal';
+import { abschnitte } from './abschnitte';
+import { karten } from './karten';
+import { klappen } from './klappen';
+import { mappen } from './mappen';
+import { pruefen } from './pruefen';
+import { reiter } from './reiter';
+import { spalten } from './spalten';
+import { tonzuerst } from './tonzuerst';
 
 /**
- * The ten finished-Diktat-page design experiments. 'standard' is intentionally
- * absent: it is not a component here but the shipped rendering path in
+ * The eight Diktat layout experiments — same design language as the shipped
+ * page, different arrangements of title, text, player and transcript.
+ * 'standard' is intentionally absent: it is the shipped rendering path in
  * SessionView — the branch simply never fires for it.
  */
 export const DIKTAT_DESIGNS: Record<Exclude<DiktatDesignId, 'standard'>, DiktatDesign> = {
-  karteikarte,
-  formular,
-  fenster,
-  studio,
-  manuskript,
-  terminal,
-  akte,
-  fokus,
-  plakat,
-  glas,
+  spalten,
+  reiter,
+  mappen,
+  abschnitte,
+  karten,
+  tonzuerst,
+  klappen,
+  pruefen,
 };

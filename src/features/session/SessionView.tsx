@@ -416,7 +416,7 @@ export function SessionView({ sessionId }: { sessionId: string }) {
               );
             })()
           ) : (
-            <div className="gap-10 space-y-10 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:items-start xl:space-y-0">
+            <div className="space-y-10">
               <div className="min-w-0 space-y-10">
                 {result ? (
                   <SectionCard
@@ -448,8 +448,8 @@ export function SessionView({ sessionId }: { sessionId: string }) {
                 ) : null}
               </div>
 
-              <div className="min-w-0 xl:sticky xl:top-10 xl:self-start">
-                <Separator className="mb-10 xl:hidden" />
+              <div className="min-w-0">
+                <Separator className="mb-10" />
                 <section className="space-y-3">
                   <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
                   {/* The evidence under the polished text: playback with the spoken
