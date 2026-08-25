@@ -49,7 +49,21 @@ import { TranscriptView } from './TranscriptView';
  * where hearing and reading belong together. A Diktat is simpler: the text,
  * then the evidence underneath.
  */
-export function SessionView({ sessionId }: { sessionId: string }) {
+/**
+ * How the finished content is arranged — the layout experiments vary this.
+ *  - 'tabs':  Notizen | Transkript behind tabs (the shipped default)
+ *  - 'paper': one continuous sheet — notes, then transcript, no tabs
+ *  - 'split': notes and transcript side by side for direct checking
+ */
+export type SessionBody = 'tabs' | 'paper' | 'split';
+
+export function SessionView({
+  sessionId,
+  body = 'tabs',
+}: {
+  sessionId: string;
+  body?: SessionBody;
+}) {
   const goHome = useAppStore((s) => s.goHome);
   const startRecording = useAppStore((s) => s.startRecording);
   const touchSessions = useAppStore((s) => s.touchSessions);
@@ -305,54 +319,43 @@ export function SessionView({ sessionId }: { sessionId: string }) {
           ) : null}
 
           {isTermin ? (
-            <Tabs defaultValue="notizen">
-              <TabsList className="group-data-horizontal/tabs:h-11">
-                <TabsTrigger value="notizen" className="px-3 text-base">
-                  <FileText aria-hidden /> Notizen
-                </TabsTrigger>
-                <TabsTrigger value="transkript" className="px-3 text-base">
-                  <ListTree aria-hidden /> Transkript
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="notizen" className="pt-6 text-base">
-                {result ? (
-                  <div className="space-y-8">
-                    {KIND_SECTIONS.gespraech.map((section) => (
-                      <SectionCard
-                        key={section}
-                        resultId={result.id}
-                        section={section}
-                        initialText={result.sections[section] ?? ''}
-                      />
-                    ))}
-                    <Separator />
-                    <RegenerateControls
-                      session={session}
-                      result={result}
-                      running={showRunning}
-                      onChanged={() => void load()}
+            (() => {
+              const notesBlock = result ? (
+                <div className="space-y-8">
+                  {KIND_SECTIONS.gespraech.map((section) => (
+                    <SectionCard
+                      key={section}
+                      resultId={result.id}
+                      section={section}
+                      initialText={result.sections[section] ?? ''}
                     />
-                  </div>
-                ) : showRunning ? (
-                  <p className="text-muted-foreground">Die Notizen erscheinen hier gleich.</p>
-                ) : canGenerate ? (
-                  <div className="space-y-4">
-                    <p className="max-w-[56ch] text-muted-foreground">
-                      Das Transkript ist fertig, die Notizen wurden noch nicht erstellt.
-                    </p>
-                    <Button size="lg" onClick={() => void pipeline.process(session.id)}>
-                      <FilePlus2 aria-hidden />
-                      Notizen erstellen
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">Noch keine Notizen zu dieser Aufnahme.</p>
-                )}
-              </TabsContent>
+                  ))}
+                  <Separator />
+                  <RegenerateControls
+                    session={session}
+                    result={result}
+                    running={showRunning}
+                    onChanged={() => void load()}
+                  />
+                </div>
+              ) : showRunning ? (
+                <p className="text-muted-foreground">Die Notizen erscheinen hier gleich.</p>
+              ) : canGenerate ? (
+                <div className="space-y-4">
+                  <p className="max-w-[56ch] text-muted-foreground">
+                    Das Transkript ist fertig, die Notizen wurden noch nicht erstellt.
+                  </p>
+                  <Button size="lg" onClick={() => void pipeline.process(session.id)}>
+                    <FilePlus2 aria-hidden />
+                    Notizen erstellen
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Noch keine Notizen zu dieser Aufnahme.</p>
+              );
 
-              <TabsContent value="transkript" className="pt-6 text-base">
-                {transcription?.status === 'done' ? (
+              const transcriptBlock =
+                transcription?.status === 'done' ? (
                   <TranscriptView
                     session={session}
                     utterances={transcription.utterances}
@@ -363,52 +366,100 @@ export function SessionView({ sessionId }: { sessionId: string }) {
                   <p className="text-muted-foreground">
                     {showRunning ? 'Das Transkript erscheint hier gleich.' : 'Noch kein Transkript.'}
                   </p>
-                )}
-              </TabsContent>
-            </Tabs>
+                );
+
+              if (body === 'paper') {
+                // One continuous sheet: read the notes, scroll into the evidence.
+                return (
+                  <div className="space-y-10">
+                    {notesBlock}
+                    <Separator />
+                    <section className="space-y-5">
+                      <h2 className="text-lg font-semibold tracking-tight">Transkript</h2>
+                      {transcriptBlock}
+                    </section>
+                  </div>
+                );
+              }
+
+              if (body === 'split') {
+                // Notes beside their ground truth — checking without switching.
+                return (
+                  <div className="grid gap-10 xl:grid-cols-2 xl:gap-8">
+                    <div className="min-w-0">{notesBlock}</div>
+                    <div className="min-w-0 xl:border-l xl:border-border xl:pl-8">
+                      <h2 className="mb-5 text-lg font-semibold tracking-tight">Transkript</h2>
+                      {transcriptBlock}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <Tabs defaultValue="notizen">
+                  <TabsList className="group-data-horizontal/tabs:h-11">
+                    <TabsTrigger value="notizen" className="px-3 text-base">
+                      <FileText aria-hidden /> Notizen
+                    </TabsTrigger>
+                    <TabsTrigger value="transkript" className="px-3 text-base">
+                      <ListTree aria-hidden /> Transkript
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="notizen" className="pt-6 text-base">
+                    {notesBlock}
+                  </TabsContent>
+                  <TabsContent value="transkript" className="pt-6 text-base">
+                    {transcriptBlock}
+                  </TabsContent>
+                </Tabs>
+              );
+            })()
           ) : (
-            <div className="space-y-10">
-              {result ? (
-                <SectionCard
-                  resultId={result.id}
-                  section="beurteilung"
-                  initialText={result.sections.beurteilung ?? ''}
-                />
-              ) : showRunning ? (
-                <p className="text-muted-foreground">Der Text erscheint hier gleich.</p>
-              ) : canGenerate ? (
-                <div className="space-y-4">
-                  <p className="max-w-[56ch] text-muted-foreground">
-                    Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
-                  </p>
-                  <Button size="lg" onClick={() => void pipeline.process(session.id)}>
-                    <FilePlus2 aria-hidden />
-                    Text erstellen
-                  </Button>
-                </div>
-              ) : null}
+            <div className={body === 'split' ? 'grid gap-10 xl:grid-cols-2 xl:gap-8' : 'space-y-10'}>
+              <div className="min-w-0 space-y-10">
+                {result ? (
+                  <SectionCard
+                    resultId={result.id}
+                    section="beurteilung"
+                    initialText={result.sections.beurteilung ?? ''}
+                  />
+                ) : showRunning ? (
+                  <p className="text-muted-foreground">Der Text erscheint hier gleich.</p>
+                ) : canGenerate ? (
+                  <div className="space-y-4">
+                    <p className="max-w-[56ch] text-muted-foreground">
+                      Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
+                    </p>
+                    <Button size="lg" onClick={() => void pipeline.process(session.id)}>
+                      <FilePlus2 aria-hidden />
+                      Text erstellen
+                    </Button>
+                  </div>
+                ) : null}
 
-              {result ? (
-                <RegenerateControls
-                  session={session}
-                  result={result}
-                  running={showRunning}
-                  onChanged={() => void load()}
-                />
-              ) : null}
+                {result ? (
+                  <RegenerateControls
+                    session={session}
+                    result={result}
+                    running={showRunning}
+                    onChanged={() => void load()}
+                  />
+                ) : null}
+              </div>
 
-              <Separator />
-              <section className="space-y-3">
-                <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
-                {/* The evidence under the polished text: playback with the spoken
-                    word highlighted as it plays. A wrong number is far easier to
-                    hear-and-see here than to spot inside finished prose. */}
-                <SyncedPlayback
-                  sessionId={session.id}
-                  words={transcription?.words ?? []}
-                  fallbackText={transcription?.text ?? ''}
-                />
-              </section>
+              <div className={body === 'split' ? 'min-w-0 xl:border-l xl:border-border xl:pl-8' : 'min-w-0'}>
+                {body !== 'split' ? <Separator className="mb-10" /> : null}
+                <section className="space-y-3">
+                  <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
+                  {/* The evidence under the polished text: playback with the spoken
+                      word highlighted as it plays. */}
+                  <SyncedPlayback
+                    sessionId={session.id}
+                    words={transcription?.words ?? []}
+                    fallbackText={transcription?.text ?? ''}
+                  />
+                </section>
+              </div>
             </div>
           )}
         </>

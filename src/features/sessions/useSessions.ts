@@ -78,6 +78,15 @@ export function sessionTimeTitle(session: Session): string {
   return `${day}, ${time} Uhr`;
 }
 
+/** What came out of a recording, one line — shared by every list layout. */
+export function sessionSubtitle({ session, preview, hasResult }: SessionSummary): string {
+  if (session.status === 'recording') return 'Aufnahme läuft …';
+  if (session.kind === 'beurteilung') {
+    return hasResult ? 'Zusammenfassende Beurteilung' : 'Noch kein Text';
+  }
+  return preview || (hasResult ? 'Notizen' : 'Noch keine Notizen');
+}
+
 export function formatDuration(ms: number | undefined): string {
   if (!ms || ms <= 0) return '';
   const total = Math.round(ms / 1000);

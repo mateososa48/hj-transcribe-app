@@ -169,7 +169,7 @@ export function StartScreen() {
       </div>
 
       <p className="max-w-[60ch] text-sm text-muted-foreground">
-        Jede Aufnahme erscheint links in der Liste — mit Notizen, Transkript und Ton zum
+        Jede Aufnahme wird hier gespeichert — mit Notizen, Transkript und Ton zum
         Nachhören.
       </p>
     </div>

@@ -16,6 +16,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
+  sessionSubtitle,
   sessionTimeTitle,
   sessionTitle,
   useSessions,
@@ -42,14 +43,6 @@ const GROUPS: Array<{ kind: SessionKind; label: string; icon: typeof Mic }> = [
   { kind: 'beurteilung', label: 'Diktate', icon: Mic },
   { kind: 'gespraech', label: 'Termine', icon: MessagesSquare },
 ];
-
-function subtitleFor({ session, preview, hasResult }: SessionSummary): string {
-  if (session.status === 'recording') return 'Aufnahme läuft …';
-  if (session.kind === 'beurteilung') {
-    return hasResult ? 'Zusammenfassende Beurteilung' : 'Noch kein Text';
-  }
-  return preview || (hasResult ? 'Notizen' : 'Noch keine Notizen');
-}
 
 export function AppSidebar() {
   const view = useAppStore((s) => s.view);
@@ -251,7 +244,7 @@ function Row({
         <Icon aria-hidden className="text-sidebar-foreground/50" />
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{sessionTimeTitle(session)}</span>
-          <span className="truncate text-xs text-sidebar-foreground/55">{subtitleFor(item)}</span>
+          <span className="truncate text-xs text-sidebar-foreground/55">{sessionSubtitle(item)}</span>
         </span>
       </SidebarMenuButton>
     </SidebarMenuItem>
