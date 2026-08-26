@@ -21,26 +21,55 @@ const escapeHtml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
- * Bullet lines -> nested <ul>. Two levels, matching his letters: a top-level
- * item, and indented detail items beneath it. Non-bullet lines (rare — a
- * continuation wrapped by hand) are folded into the previous item.
+ * Bullet text -> HTML: bullet runs become nested <ul> (two levels, matching
+ * his letters), and non-bullet lines OUTSIDE any item become <p> paragraphs.
+ * A non-bullet line directly after an item is a hand-wrapped continuation and
+ * folds into it — but a line before the first bullet (or between runs) must
+ * never be dropped: what he sees and what Word pastes has to be everything
+ * he wrote.
  */
 export function bulletsToHtml(text: string): string {
   const lines = text.split('\n');
-  let html = '<ul>';
+  let html = '';
+  let inUl = false;
   let openLi = false;
   let inNested = false;
+
+  const closeList = () => {
+    if (inNested) {
+      html += '</li></ul>';
+      inNested = false;
+    }
+    if (openLi) {
+      html += '</li>';
+      openLi = false;
+    }
+    if (inUl) {
+      html += '</ul>';
+      inUl = false;
+    }
+  };
 
   for (const raw of lines) {
     if (!raw.trim()) continue;
     const m = raw.match(/^(\s*)[•-]\s+(.*)$/);
     if (!m) {
-      // Continuation of the previous item.
-      if (openLi) html += ' ' + escapeHtml(raw.trim());
+      if (openLi) {
+        // Continuation of the previous item.
+        html += ' ' + escapeHtml(raw.trim());
+      } else {
+        // Free-standing prose — a paragraph, never silently dropped.
+        closeList();
+        html += '<p>' + escapeHtml(raw.trim()) + '</p>';
+      }
       continue;
     }
     const nested = (m[1] ?? '').length >= 2;
     const content = escapeHtml(m[2] ?? '');
+    if (!inUl) {
+      html += '<ul>';
+      inUl = true;
+    }
     if (nested) {
       if (!inNested) {
         html += '<ul>';
@@ -60,9 +89,8 @@ export function bulletsToHtml(text: string): string {
       openLi = true;
     }
   }
-  if (inNested) html += '</li></ul>';
-  if (openLi) html += '</li>';
-  return html + '</ul>';
+  closeList();
+  return html;
 }
 
 /** Plain-text flavour for the same copy: bullets as "• ", indentation kept. */

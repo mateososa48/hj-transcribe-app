@@ -234,3 +234,33 @@ h1, h2, h3 {
       0 1px 2px color-mix(in oklab, black 25%, transparent);
   }
 }
+
+/* The Beurteilung read view: real bullets. Native list rendering gives the
+   hanging indent; the marker is set a notch larger than the text so the
+   points read as points, not as stray characters. */
+.beurteilung-list ul {
+  list-style: disc;
+  padding-left: 1.7em;
+  display: grid;
+  gap: 0.65em;
+}
+.beurteilung-list ul ul {
+  list-style: circle;
+  margin-top: 0.65em;
+  padding-left: 1.4em;
+}
+.beurteilung-list li {
+  padding-left: 0.35em;
+  line-height: 1.8;
+}
+.beurteilung-list li::marker {
+  color: var(--foreground);
+  font-size: 1.25em;
+}
+.beurteilung-list p {
+  line-height: 1.8;
+}
+.beurteilung-list p + ul,
+.beurteilung-list ul + p {
+  margin-top: 0.65em;
+}

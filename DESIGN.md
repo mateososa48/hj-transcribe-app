@@ -335,3 +335,14 @@ Both evaluations are RESOLVED and the harness is deleted (git has it all):
   changes identity on reload, and per-run effect cleanup would cancel the
   check mark mid-flight.
 - The Termin page is untouched by all of this.
+
+**Round three (open): page treatment + real bullets.** The Beurteilung now
+renders as a REAL bulleted list (BeurteilungText: bulletsToHtml — the exact
+clipboard HTML — with native discs, hanging indents, 1.25em markers; click
+anywhere to edit in a textarea, blur saves). bulletsToHtml no longer drops
+prose outside items (leading/inter-run lines become <p> — previously they
+vanished from screen AND paste). Four treatments of the same two-column page
+are switchable via the pill / ?variante=: aktuell (framed panels), blatt
+(paper sheets, shadow not borders), leiste (command bar + quiet captions),
+kontrast (black header bands). One behaviour underneath: useBeurteilung +
+BeurteilungText + SyncedPlayback + RegenerateControls.

@@ -1,5 +1,6 @@
 import { Toaster } from '@/components/ui/sonner';
 import { StandardLayout } from '@/layouts/StandardLayout';
+import { VariantSwitcher } from '@/layouts/VariantSwitcher';
 
 /**
  * The shell and the Diktat page are both settled now: the sidebar layout and
@@ -10,6 +11,7 @@ export default function App() {
   return (
     <>
       <StandardLayout />
+      <VariantSwitcher />
       <Toaster position="bottom-right" />
     </>
   );

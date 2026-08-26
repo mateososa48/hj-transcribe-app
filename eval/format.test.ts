@@ -47,3 +47,10 @@ test('wrapped continuation lines fold into their item', () => {
 test('HTML in the letter text is escaped, not injected', () => {
   assert.equal(bulletsToHtml('• LVEF <55 % & steigend'), '<ul><li>LVEF &lt;55 % &amp; steigend</li></ul>');
 });
+
+test('bulletsToHtml never drops prose outside items', () => {
+  const html = bulletsToHtml('Vorbemerkung ohne Punkt.\n• Erster Punkt\n• Zweiter Punkt');
+  assert.equal(html, '<p>Vorbemerkung ohne Punkt.</p><ul><li>Erster Punkt</li><li>Zweiter Punkt</li></ul>');
+  const tail = bulletsToHtml('• Punkt eins');
+  assert.equal(tail, '<ul><li>Punkt eins</li></ul>');
+});
