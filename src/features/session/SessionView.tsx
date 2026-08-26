@@ -292,7 +292,12 @@ export function SessionView({ sessionId }: { sessionId: string }) {
       ) : (
         <>
           {isTermin && activePhase ? (
-            <ProcessingHandoff kind={session.kind} phase={activePhase} />
+            <ProcessingHandoff
+              kind={session.kind}
+              phase={activePhase}
+              sessionId={session.id}
+              audioDurationMs={session.durationMs}
+            />
           ) : isTermin && showFailed ? (
             <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
               <p className="font-medium text-destructive">

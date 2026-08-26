@@ -76,7 +76,12 @@ export function DiktatContent({
   }, [phase, result, failed]);
 
   if (phase) {
-    return <ProcessingHandoff kind="beurteilung" phase={phase} />;
+    return <ProcessingHandoff
+        kind="beurteilung"
+        phase={phase}
+        sessionId={session.id}
+        audioDurationMs={session.durationMs}
+      />;
   }
 
   if (arrival === 'success' || arrival === 'closing') {
@@ -143,7 +148,12 @@ export function DiktatContent({
           </header>
 
           {result ? (
-            <BeurteilungText b={b} className="flex-1 px-5 py-4 sm:px-6" />
+            <>
+              <BeurteilungText b={b} className="flex-1 px-5 py-4 sm:px-6" />
+              <footer className="shrink-0 border-t border-border px-5 py-3 sm:px-6">
+                <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
+              </footer>
+            </>
           ) : (
             <div className="flex-1 space-y-4 px-5 py-5 sm:px-6">
               {canGenerate ? (
@@ -177,11 +187,6 @@ export function DiktatContent({
               fallbackText={transcription?.text ?? ''}
             />
             <ErgaenzungList sessionId={session.id} version={ergVersion} />
-            {result ? (
-              <div className="shrink-0 border-t border-border px-5 py-3 sm:px-6">
-                <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
-              </div>
-            ) : null}
           </section>
         </div>
       </div>

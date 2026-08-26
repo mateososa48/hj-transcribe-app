@@ -26,9 +26,18 @@ export type PipelinePhase =
 export interface PipelineState {
   phase: PipelinePhase;
   error: string | null;
+  /**
+   * When the CURRENT phase began, epoch ms; 0 while idle.
+   *
+   * The processing screen counts up from this rather than from its own mount,
+   * so leaving the session and coming back shows the true elapsed time. The
+   * same wall-clock mistake once made a two-minute dictation report 09:41 —
+   * see `formatElapsed` in features/record/elapsed.ts.
+   */
+  phaseStartedAt: number;
 }
 
-const IDLE: PipelineState = { phase: 'idle', error: null };
+const IDLE: PipelineState = { phase: 'idle', error: null, phaseStartedAt: 0 };
 
 class PipelineManager {
   private readonly states = new Map<string, PipelineState>();
@@ -64,7 +73,7 @@ class PipelineManager {
       let transcription = await db.transcriptions.where('sessionId').equals(sessionId).first();
 
       if (!transcription || transcription.status !== 'done') {
-        this.set(sessionId, { phase: 'transcribing', error: null });
+        this.set(sessionId, { phase: 'transcribing', error: null, phaseStartedAt: Date.now() });
         transcription = await this.transcribe(sessionId, session.kind);
       }
 
@@ -72,18 +81,20 @@ class PipelineManager {
         this.set(sessionId, {
           phase: 'error',
           error: 'In der Aufnahme wurde keine Sprache erkannt.',
+          phaseStartedAt: Date.now(),
         });
         return;
       }
 
-      this.set(sessionId, { phase: 'notes', error: null });
+      this.set(sessionId, { phase: 'notes', error: null, phaseStartedAt: Date.now() });
       await generate(sessionId, session.kind);
 
-      this.set(sessionId, { phase: 'done', error: null });
+      this.set(sessionId, { phase: 'done', error: null, phaseStartedAt: Date.now() });
     } catch (error) {
       this.set(sessionId, {
         phase: 'error',
         error: error instanceof Error ? error.message : 'Die Verarbeitung ist fehlgeschlagen.',
+        phaseStartedAt: Date.now(),
       });
     } finally {
       this.running.delete(sessionId);

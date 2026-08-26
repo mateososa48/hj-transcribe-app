@@ -17,11 +17,13 @@ export function useRecordingState(): RecordingState {
   return state;
 }
 
+const IDLE_PIPELINE: PipelineState = { phase: 'idle', error: null, phaseStartedAt: 0 };
+
 /** Live phase of the stop→transcript→notes pipeline for one session. */
 export function usePipelineState(sessionId: string | null): PipelineState {
   return useSyncExternalStore(
     (cb) => pipeline.subscribe(cb),
-    () => (sessionId ? pipeline.get(sessionId) : { phase: 'idle' as const, error: null }),
+    () => (sessionId ? pipeline.get(sessionId) : IDLE_PIPELINE),
   );
 }
 
