@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, CalendarPlus, Mic } from 'lucide-react';
+import { ArrowRight, Mic, Stethoscope } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -119,13 +119,14 @@ export function StartScreen() {
           type="button"
           onClick={() => startRecording('gespraech')}
           className={cn(
-            'btn-gloss group flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-7 text-left',
+            'btn-gloss group flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-7 text-left',
             'transition-colors hover:border-foreground/25 hover:bg-muted/50',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
           )}
         >
-          <span className="grid size-12 place-items-center rounded-lg bg-muted">
-            <CalendarPlus className="size-6" aria-hidden />
+          {/* A key on a key: the icon tile is its own small piece of glass. */}
+          <span className="grid size-14 place-items-center rounded-2xl border border-border bg-gradient-to-b from-white to-neutral-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_5px_rgba(0,0,0,0.08)]">
+            <Stethoscope className="size-7" strokeWidth={1.75} aria-hidden />
           </span>
           <span className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
             Termin aufnehmen
@@ -146,13 +147,13 @@ export function StartScreen() {
           type="button"
           onClick={() => startRecording('beurteilung')}
           className={cn(
-            'btn-gloss group flex flex-col items-start gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-7 text-left text-neutral-50',
+            'btn-gloss group flex flex-col items-start gap-4 rounded-2xl border border-neutral-800 bg-neutral-950 p-7 text-left text-neutral-50',
             'transition-colors hover:border-neutral-600 hover:bg-neutral-900',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
           )}
         >
-          <span className="grid size-12 place-items-center rounded-lg bg-neutral-800/80">
-            <Mic className="size-6" aria-hidden />
+          <span className="grid size-14 place-items-center rounded-2xl border border-white/10 bg-gradient-to-b from-neutral-800 to-neutral-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_2px_6px_rgba(0,0,0,0.5)]">
+            <Mic className="size-7" strokeWidth={1.75} aria-hidden />
           </span>
           <span className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
             Diktat starten

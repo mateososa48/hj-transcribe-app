@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarPlus, ChevronDown, MessagesSquare, Mic, Settings2 } from 'lucide-react';
+import { Stethoscope, ChevronDown, MessagesSquare, Mic, Settings2 } from 'lucide-react';
 
 import { BrandWave } from '@/components/brand-wave';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,7 @@ export function AppSidebar() {
         </button>
         <div className="flex flex-col gap-2">
           <Button size="lg" className="justify-start" onClick={() => go.record('gespraech')}>
-            <CalendarPlus aria-hidden />
+            <Stethoscope aria-hidden />
             Termin aufnehmen
           </Button>
           <Button
