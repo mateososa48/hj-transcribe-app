@@ -15,8 +15,8 @@ import { db } from '@/lib/db';
  * beyond that, and it is never labelled to the user as a waveform.
  */
 
-/** Bars in the processing band. Enough to read as a signal, few enough to lay out cheaply. */
-export const SHAPE_RESOLUTION = 64;
+/** Bars in the processing band. Fine enough to read as a signal, not as a bar chart. */
+export const SHAPE_RESOLUTION = 128;
 
 /**
  * Resample raw chunk sizes to `bars` values in 0..1.
@@ -30,12 +30,25 @@ export function normaliseShape(sizes: readonly number[], bars = SHAPE_RESOLUTION
   if (usable.length === 0) return [];
 
   const out: number[] = [];
-  for (let i = 0; i < bars; i += 1) {
-    const from = Math.floor((i * usable.length) / bars);
-    const to = Math.max(from + 1, Math.floor(((i + 1) * usable.length) / bars));
-    let sum = 0;
-    for (let j = from; j < to && j < usable.length; j += 1) sum += usable[j]!;
-    out.push(sum / (to - from));
+  if (usable.length >= bars) {
+    // More chunks than bars: average each bar's span so nothing is dropped.
+    for (let i = 0; i < bars; i += 1) {
+      const from = Math.floor((i * usable.length) / bars);
+      const to = Math.max(from + 1, Math.floor(((i + 1) * usable.length) / bars));
+      let sum = 0;
+      for (let j = from; j < to && j < usable.length; j += 1) sum += usable[j]!;
+      out.push(sum / (to - from));
+    }
+  } else {
+    // Fewer chunks than bars — a short recording. Interpolate between them,
+    // otherwise each chunk becomes a flat plateau and the band looks blocky.
+    for (let i = 0; i < bars; i += 1) {
+      const at = (i * (usable.length - 1)) / Math.max(1, bars - 1);
+      const lo = Math.floor(at);
+      const hi = Math.min(usable.length - 1, lo + 1);
+      const t = at - lo;
+      out.push(usable[lo]! * (1 - t) + usable[hi]! * t);
+    }
   }
 
   const min = Math.min(...out);

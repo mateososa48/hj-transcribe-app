@@ -7,6 +7,7 @@ import {
   isOverrunning,
   type ActiveProcessingPhase,
 } from '@/features/session/processing-handoff-model';
+import { SHAPE_RESOLUTION } from '@/features/session/recording-shape';
 import type { SessionKind } from '@/lib/db';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,19 @@ import { cn } from '@/lib/utils';
  * admit it. Waiting that out in real time takes longer than anyone will sit
  * through, so the clock is a slider.
  */
+
+/**
+ * A stand-in for the outline the real screen reads off the stored audio
+ * chunks. Shaped like dictated speech — phrases with breaths between them —
+ * so the band behaves here the way it will on a real recording.
+ */
+const SAMPLE_SHAPE: number[] = Array.from({ length: SHAPE_RESOLUTION }, (_, i) => {
+  const phrase = Math.sin(i / 6.2) * 0.5 + 0.5;
+  const breath = Math.sin(i / 22) * 0.5 + 0.5;
+  const grain = Math.sin(i * 2.7) * 0.12;
+  const v = 0.18 + phrase * breath * 0.9 + grain;
+  return Math.min(1, Math.max(0.05, v));
+});
 
 const LENGTHS: Array<{ label: string; ms: number }> = [
   { label: '0:30 min', ms: 30_000 },
@@ -163,6 +177,7 @@ export function ProcessingPreview() {
             phase={phase}
             audioDurationMs={durationMs}
             startedAt={startedAt}
+            shape={SAMPLE_SHAPE}
           />
         </div>
 

@@ -76,8 +76,8 @@ export function AppSidebar() {
           onClick={go.home}
           className="flex items-center gap-2 rounded-md px-1 text-left text-base font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
-          <BrandWave className="h-9 w-11 shrink-0" />
           Arztbrief-Assistent
+          <BrandWave className="h-9 w-11 shrink-0" />
         </button>
         <div className="flex flex-col gap-2">
           <Button size="lg" className="justify-start" onClick={() => go.record('gespraech')}>

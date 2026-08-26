@@ -154,6 +154,9 @@ function useTick(everyMs: number): number {
  * estimate, and every bar decides its own state from where it sits relative
  * to that head, so the wipe follows the reading order for free.
  */
+/** Collapsed bar height as a fraction of the band (h-20 = 5rem = 90px @ 18px root). */
+const TEXT_SCALE = (2.5 / 90).toFixed(4);
+
 function RecordingBand({
   shape,
   progress,
@@ -183,29 +186,34 @@ function RecordingBand({
                 'transition-[transform,opacity,background-color] duration-500 ease-out',
                 'motion-reduce:transition-none',
                 asText && isPause ? 'opacity-0' : 'opacity-100',
-                drafting && read ? 'bg-foreground' : asText ? 'bg-muted-foreground/45' : 'bg-foreground',
+                drafting && read ? 'bg-foreground' : asText ? 'bg-muted-foreground/60' : 'bg-foreground',
               )}
               style={{
+                // Width carries the reading as much as height: as sound each
+                // bar is a thin stroke with air around it, as text it widens
+                // to fill its slot so the marks run together into words.
                 transform: asText
-                  ? // Settled into a line of writing.
-                    `scaleY(${(2.5 / 80).toFixed(4)})`
-                  : // Still sound: the outline of the recording itself.
-                    `scaleY(${Math.max(value, 0.06).toFixed(3)})`,
+                  ? `scaleX(1) scaleY(${TEXT_SCALE})`
+                  : `scaleX(0.5) scaleY(${Math.max(value, 0.06).toFixed(3)})`,
               }}
             />
           );
         })}
       </div>
 
-      {/* The reading head. Parks with the estimate rather than running to the
-          end, for the same reason the wording admits an overrun. */}
+      {/* The reading head. Full-width carrier so the percentage resolves
+          against the band, with the rule on its trailing edge; parks with the
+          estimate rather than running to the end, for the same reason the
+          wording admits an overrun. */}
       <span
         className={cn(
-          'absolute inset-y-0 left-0 w-px bg-foreground/70',
+          'pointer-events-none absolute inset-y-0 left-0 w-full',
           'transition-transform duration-1000 ease-linear motion-reduce:transition-none',
         )}
-        style={{ transform: `translateX(calc(${(progress * 100).toFixed(2)}cqw))` }}
-      />
+        style={{ transform: `translateX(${((progress - 1) * 100).toFixed(2)}%)` }}
+      >
+        <span className="absolute inset-y-0 right-0 w-px bg-foreground/70" />
+      </span>
     </div>
   );
 }

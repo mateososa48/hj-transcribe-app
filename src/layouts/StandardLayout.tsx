@@ -31,8 +31,8 @@ export function StandardLayout() {
       <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
           <SidebarTrigger />
-          <BrandWave className="h-9 w-11 shrink-0" />
           <span className="text-base font-semibold tracking-tight">Arztbrief-Assistent</span>
+          <BrandWave className="h-9 w-11 shrink-0" />
         </header>
         <main className={`mx-auto w-full flex-1 px-6 py-8 sm:px-10 xl:px-14 ${MAIN_WIDTHS[view.name]}`}>
           {view.name === 'start' ? (
