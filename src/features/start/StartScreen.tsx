@@ -124,7 +124,7 @@ export function StartScreen() {
           )}
         >
           {/* A key on a key: the icon tile is its own small piece of glass. */}
-          <span className="grid size-14 place-items-center rounded-2xl border border-white/80 bg-gradient-to-b from-white/90 to-neutral-100/70 shadow-[inset_0_1px_1px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(12,12,13,0.08),inset_0_0_10px_rgba(255,255,255,0.5),0_0_0_1px_rgba(12,12,13,0.06),0_2px_6px_rgba(12,12,13,0.1)]">
+          <span className="grid size-14 place-items-center rounded-2xl border border-white/80 bg-gradient-to-b from-white/55 to-neutral-100/30 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(12,12,13,0.08),inset_0_0_10px_rgba(255,255,255,0.5),0_0_0_1px_rgba(12,12,13,0.06),0_2px_6px_rgba(12,12,13,0.1)]">
             <Stethoscope className="size-7" strokeWidth={1.75} aria-hidden />
           </span>
           <span className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
