@@ -91,19 +91,20 @@ export function SyncedPlayback({
   }
 
   return (
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Headless element; PlayerBar drives it, the word sync reads it. */}
       <audio ref={audioRef} src={url} preload="metadata" className="hidden" />
       {/* Rows of the Aufnahme panel, not free-standing cards: the panel frame
-          does the bounding, a rule separates player from transcript. */}
+          does the bounding, a rule separates player from transcript. The
+          transcript takes whatever height the letter leaves and scrolls. */}
       <PlayerBar
         src={url}
         audioRef={audioRef}
-        className="rounded-none border-0 bg-transparent px-5 py-4 sm:px-6"
+        className="shrink-0 rounded-none border-0 bg-transparent px-5 py-4 sm:px-6"
       />
 
       {words.length > 0 ? (
-        <div className="max-h-[30rem] overflow-y-auto border-t border-border px-5 py-4 sm:px-6">
+        <div className="max-h-96 min-h-0 flex-1 overflow-y-auto border-t border-border px-5 py-4 sm:px-6 xl:max-h-none">
           <p className="max-w-[80ch] text-base leading-loose">
             {words.map((word, i) => (
               // The space is a real text node — adjacent inline buttons would
@@ -139,7 +140,7 @@ export function SyncedPlayback({
           </p>
         </div>
       ) : fallbackText.trim() ? (
-        <div className="max-h-[30rem] overflow-y-auto border-t border-border px-5 py-4 sm:px-6">
+        <div className="max-h-96 min-h-0 flex-1 overflow-y-auto border-t border-border px-5 py-4 sm:px-6 xl:max-h-none">
           <p className="max-w-[80ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
             {fallbackText}
           </p>

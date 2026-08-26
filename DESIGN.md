@@ -336,13 +336,17 @@ Both evaluations are RESOLVED and the harness is deleted (git has it all):
   check mark mid-flight.
 - The Termin page is untouched by all of this.
 
-**Round three (open): page treatment + real bullets.** The Beurteilung now
-renders as a REAL bulleted list (BeurteilungText: bulletsToHtml — the exact
-clipboard HTML — with native discs, hanging indents, 1.25em markers; click
-anywhere to edit in a textarea, blur saves). bulletsToHtml no longer drops
-prose outside items (leading/inter-run lines become <p> — previously they
-vanished from screen AND paste). Four treatments of the same two-column page
-are switchable via the pill / ?variante=: aktuell (framed panels), blatt
-(paper sheets, shadow not borders), leiste (command bar + quiet captions),
-kontrast (black header bands). One behaviour underneath: useBeurteilung +
-BeurteilungText + SyncedPlayback + RegenerateControls.
+**Diktat page: final form.** Two equal-height framed panels with aligned
+h-16 header rules — the letter left (glossy pill Kopieren in the header),
+the Aufnahme right (player row + follow-along transcript scrolling inside
+the height the letter dictates; the panel is absolutely positioned in its
+grid cell so only the letter drives the row height). The Beurteilung is one
+ALWAYS-EDITABLE contentEditable surface rendering bulletsToHtml — real
+discs, hanging indents, 1.25em markers — so editing never changes the
+formatting; input serializes back to the stored "• " line format
+(BeurteilungText.serializeEditable), paste is forced to plain text, blur
+flushes the save. bulletsToHtml turns prose outside items into <p> instead
+of dropping it. No regenerate button on the page (his call). btn-gloss v3:
+subtler finish, hover lifts the key (translateY(-1px) + wider shadow)
+instead of brightening. The play button is a quiet secondary circle. The
+variant experiment is deleted; this page IS the design.

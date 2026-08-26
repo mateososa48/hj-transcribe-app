@@ -16,19 +16,17 @@ const AUTOSAVE_MS = 800;
 export function useBeurteilung(result: Result | null) {
   const initialText = result?.sections.beurteilung ?? '';
   const [text, setText] = useState(initialText);
-  const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   /** Survives the 2-second button flip: he pastes in Word, comes back, and
    *  this is what still says the text was already transferred. */
   const [copiedOnce, setCopiedOnce] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const areaRef = useRef<HTMLTextAreaElement | null>(null);
+  const areaRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setText(initialText);
     setCopiedOnce(false);
-    setEditing(false);
   }, [initialText]);
   useEffect(
     () => () => {
@@ -52,9 +50,8 @@ export function useBeurteilung(result: Result | null) {
     [result],
   );
 
-  /** Leaving the editor: flush the pending save, return to the read view. */
-  const finishEditing = useCallback(() => {
-    setEditing(false);
+  /** Leaving the text: flush the pending save immediately. */
+  const flushSave = useCallback(() => {
     if (!result) return;
     if (timer.current) clearTimeout(timer.current);
     void saveSection(result.id, 'beurteilung', text);
@@ -76,8 +73,15 @@ export function useBeurteilung(result: Result | null) {
         await navigator.clipboard.writeText(text);
       }
     } catch {
-      setEditing(true);
-      setTimeout(() => areaRef.current?.select(), 50);
+      // Select the rendered text so one keystroke still finishes the job.
+      const el = areaRef.current;
+      if (el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
       toast.error('Kopieren war nicht möglich. Der Text ist markiert — bitte Strg+C drücken.');
       return;
     }
@@ -87,7 +91,7 @@ export function useBeurteilung(result: Result | null) {
     copiedTimer.current = setTimeout(() => setCopied(false), 2200);
   }, [result, text]);
 
-  return { text, update, editing, setEditing, finishEditing, copy, copied, copiedOnce, areaRef };
+  return { text, update, flushSave, copy, copied, copiedOnce, areaRef };
 }
 
 export type Beurteilung = ReturnType<typeof useBeurteilung>;

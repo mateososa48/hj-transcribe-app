@@ -155,9 +155,10 @@ export function PlayerBar({
 
       <Button
         size="icon-lg"
+        variant="secondary"
         onClick={toggle}
         aria-label={playing ? 'Pause' : 'Abspielen'}
-        className="size-11 shrink-0 rounded-full"
+        className="size-11 shrink-0 rounded-full border border-border"
       >
         {playing ? <Pause className="size-5" aria-hidden /> : <Play className="ml-0.5 size-5" aria-hidden />}
       </Button>

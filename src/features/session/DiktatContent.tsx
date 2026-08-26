@@ -1,39 +1,48 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, RotateCcw } from 'lucide-react';
+import { Check, ClipboardCopy, FilePlus2, RotateCcw } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { Result, Session, Transcription } from '@/lib/db';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store/app-store';
-import {
-  BlattVariant,
-  KontrastVariant,
-  LeisteVariant,
-  PanelsVariant,
-  type DiktatVariantProps,
-} from './DiktatVariants';
+import { BeurteilungText } from './BeurteilungText';
 import type { ActiveProcessingPhase } from './processing-handoff-model';
 import { ProcessingHandoff } from './ProcessingHandoff';
+import { SyncedPlayback } from './SyncedPlayback';
+import { useBeurteilung } from './useBeurteilung';
 
 /**
- * The finished Diktat page. While the pipeline runs, the page shows ONLY the
- * handoff animation; when the text arrives, the animation resolves into a
- * check mark that fades, and then the content appears. He pressed one button
- * and waited — the page should read like an answer, not like a form
- * assembling itself. Which treatment renders below is the variant experiment.
+ * The finished Diktat page: two equal-height framed panels whose header
+ * rules align — the Beurteilung left with the one action that matters
+ * (Kopieren, a glossy pill), the Aufnahme right with the player fixed and
+ * the follow-along transcript scrolling inside whatever height the letter
+ * dictates.
+ *
+ * While the pipeline runs, the page shows ONLY the handoff animation; when
+ * the text arrives, the animation resolves into a check mark that fades,
+ * and then the panels appear.
  */
 export function DiktatContent({
+  session,
+  transcription,
+  result,
   phase,
   failed,
   errorText,
-  ...variantProps
-}: DiktatVariantProps & {
+  canGenerate,
+}: {
+  session: Session;
+  transcription: Transcription | null;
+  result: Result | null;
   phase: ActiveProcessingPhase | null;
   failed: boolean;
   errorText: string;
+  canGenerate: boolean;
+  running: boolean;
+  onChanged: () => void;
 }) {
-  const variant = useAppStore((s) => s.diktatVariant);
-  const { session, result } = variantProps;
+  const b = useBeurteilung(result);
 
   /**
    * The arrival sequence. 'success' and 'closing' only ever happen when this
@@ -83,15 +92,6 @@ export function DiktatContent({
     );
   }
 
-  const Variant =
-    variant === 'blatt'
-      ? BlattVariant
-      : variant === 'leiste'
-        ? LeisteVariant
-        : variant === 'kontrast'
-          ? KontrastVariant
-          : PanelsVariant;
-
   return (
     <div
       className={cn(
@@ -109,7 +109,72 @@ export function DiktatContent({
         </div>
       ) : null}
 
-      <Variant {...variantProps} />
+      {/* items-stretch (grid default) is the symmetry: both panels share one
+          row height, driven by the letter; the transcript scrolls inside. */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:gap-8">
+        <section className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <h2 className="truncate text-lg font-semibold tracking-tight">
+                Zusammenfassende Beurteilung
+              </h2>
+              {b.copiedOnce ? (
+                <Badge variant="secondary">
+                  <Check aria-hidden />
+                  Kopiert
+                </Badge>
+              ) : null}
+            </div>
+            {result ? (
+              <Button
+                size="lg"
+                variant={b.copied ? 'secondary' : 'default'}
+                onClick={() => void b.copy()}
+                className="rounded-full"
+              >
+                {b.copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
+                {b.copied ? 'Kopiert' : 'Kopieren'}
+              </Button>
+            ) : null}
+          </header>
+
+          {result ? (
+            <BeurteilungText b={b} className="flex-1 px-5 py-4 sm:px-6" />
+          ) : (
+            <div className="flex-1 space-y-4 px-5 py-5 sm:px-6">
+              {canGenerate ? (
+                <>
+                  <p className="max-w-[56ch] text-muted-foreground">
+                    Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
+                  </p>
+                  <Button size="lg" onClick={() => void pipeline.process(session.id)}>
+                    <FilePlus2 aria-hidden />
+                    Text erstellen
+                  </Button>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Noch kein Text zu dieser Aufnahme.</p>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* The cell reports no height of its own (the panel is absolute at
+            xl), so the row — and with it this panel — is exactly as tall as
+            the letter. The transcript inside scrolls. */}
+        <div className="relative min-w-0">
+          <section className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card xl:absolute xl:inset-0">
+            <header className="flex h-16 shrink-0 items-center border-b border-border bg-muted/40 px-5 sm:px-6">
+              <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
+            </header>
+            <SyncedPlayback
+              sessionId={session.id}
+              words={transcription?.words ?? []}
+              fallbackText={transcription?.text ?? ''}
+            />
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
