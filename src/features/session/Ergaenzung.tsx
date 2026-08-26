@@ -123,7 +123,7 @@ export function ErgaenzungPopup({
               size="lg"
               disabled={recording.status !== 'recording'}
               onClick={() => void finish()}
-              className="btn-gloss rounded-full bg-destructive text-white hover:bg-destructive/90"
+              className="rounded-full"
             >
               <Check aria-hidden />
               Fertig

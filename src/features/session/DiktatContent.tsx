@@ -168,9 +168,8 @@ export function DiktatContent({
             the letter. The transcript inside scrolls. */}
         <div className="relative min-w-0">
           <section className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card xl:absolute xl:inset-0">
-            <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 sm:px-6">
+            <header className="flex h-16 shrink-0 items-center border-b border-border bg-muted/40 px-5 sm:px-6">
               <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
-              {result ? <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} /> : null}
             </header>
             <SyncedPlayback
               sessionId={session.id}
@@ -178,6 +177,11 @@ export function DiktatContent({
               fallbackText={transcription?.text ?? ''}
             />
             <ErgaenzungList sessionId={session.id} version={ergVersion} />
+            {result ? (
+              <div className="shrink-0 border-t border-border px-5 py-3 sm:px-6">
+                <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
+              </div>
+            ) : null}
           </section>
         </div>
       </div>

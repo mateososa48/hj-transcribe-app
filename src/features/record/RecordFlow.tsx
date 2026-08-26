@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import type { SessionKind } from '@/lib/db';
 import { pipeline } from '@/lib/transcription/pipeline';
-import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/app-store';
 import type { OrbState } from './RecordingOrb';
 import { RecordingWave } from './RecordingWave';
@@ -130,10 +129,7 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
         <Button
           size="lg"
           disabled={isBusy}
-          className={cn(
-            'h-14 rounded-full px-10 text-lg',
-            isRecording && 'btn-gloss bg-destructive text-white hover:bg-destructive/90',
-          )}
+          className="h-14 rounded-full px-10 text-lg"
           onClick={() => void handleToggle()}
         >
           {isBusy ? <Spinner /> : null}
