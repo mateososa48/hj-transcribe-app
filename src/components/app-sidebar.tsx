@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarPlus, ChevronDown, MessagesSquare, Mic, Settings2 } from 'lucide-react';
 
+import { BrandWave } from '@/components/brand-wave';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -73,8 +74,9 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={go.home}
-          className="rounded-md px-1 text-left text-base font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="flex items-center gap-2 rounded-md px-1 text-left text-base font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
+          <BrandWave className="h-5 w-9 shrink-0" />
           Arztbrief-Assistent
         </button>
         <div className="flex flex-col gap-2">

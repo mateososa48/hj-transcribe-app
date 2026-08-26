@@ -1,4 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar';
+import { BrandWave } from '@/components/brand-wave';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { RecordFlow } from '@/features/record/RecordFlow';
 import { SessionView } from '@/features/session/SessionView';
@@ -30,6 +31,7 @@ export function StandardLayout() {
       <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
           <SidebarTrigger />
+          <BrandWave className="h-5 w-9 shrink-0" />
           <span className="text-base font-semibold tracking-tight">Arztbrief-Assistent</span>
         </header>
         <main className={`mx-auto w-full flex-1 px-6 py-8 sm:px-10 xl:px-14 ${MAIN_WIDTHS[view.name]}`}>

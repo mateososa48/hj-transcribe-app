@@ -62,7 +62,10 @@ export function ProcessingPreview() {
   }, [playing, maxMs]);
 
   // The component counts up from a start time, so scrubbing means moving the
-  // start backwards from now.
+  // start backwards from now. That start has to be recomputed continuously:
+  // the panel runs its own one-second clock, so a start time fixed at scrub
+  // time would let the panel drift on past the value the slider is showing.
+  useHeartbeat(400);
   const startedAt = Date.now() - elapsedMs;
 
   return (
@@ -107,8 +110,9 @@ export function ProcessingPreview() {
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <span className="text-sm font-medium">Seit Beginn des Schritts</span>
               <span className="text-sm tabular-nums text-muted-foreground">
-                {(elapsedMs / 1000).toFixed(0)} s von geschätzten {(estimateMs / 1000).toFixed(0)} s
-                {overrunning ? ' — länger als geschätzt' : ''}
+                Regler {Math.floor(elapsedMs / 1000)} s · geschätzt{' '}
+                {Math.round(estimateMs / 1000)} s
+                {overrunning ? ' · länger als geschätzt' : ''}
               </span>
             </div>
             <input
@@ -171,6 +175,15 @@ export function ProcessingPreview() {
       </div>
     </div>
   );
+}
+
+/** Re-renders regularly so the scrubbed start time stays pinned to the slider. */
+function useHeartbeat(everyMs: number): void {
+  const [, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => b + 1), everyMs);
+    return () => clearInterval(id);
+  }, [everyMs]);
 }
 
 function Choice({
