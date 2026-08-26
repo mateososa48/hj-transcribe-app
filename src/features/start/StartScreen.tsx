@@ -119,13 +119,12 @@ export function StartScreen() {
           type="button"
           onClick={() => startRecording('gespraech')}
           className={cn(
-            'btn-gloss group flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-7 text-left',
-            'transition-colors hover:border-foreground/25 hover:bg-muted/50',
+            'btn-liquid group flex flex-col items-start gap-4 rounded-2xl border border-white/80 p-7 text-left',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
           )}
         >
           {/* A key on a key: the icon tile is its own small piece of glass. */}
-          <span className="grid size-14 place-items-center rounded-2xl border border-border bg-gradient-to-b from-white to-neutral-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_5px_rgba(0,0,0,0.08)]">
+          <span className="grid size-14 place-items-center rounded-2xl border border-white/80 bg-gradient-to-b from-white/90 to-neutral-100/70 shadow-[inset_0_1px_1px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(12,12,13,0.08),inset_0_0_10px_rgba(255,255,255,0.5),0_0_0_1px_rgba(12,12,13,0.06),0_2px_6px_rgba(12,12,13,0.1)]">
             <Stethoscope className="size-7" strokeWidth={1.75} aria-hidden />
           </span>
           <span className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">

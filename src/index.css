@@ -194,6 +194,55 @@ h1, h2, h3 {
  * opaque. Applied through the Button `default` variant, so every primary
  * control inherits it from one place.
  */
+/* Liquid glass for LIGHT keys: a lens, not a coat of paint. Specular rims
+   on all four edges, an inner glow that gives the body volume, a dark
+   hairline ring for definition on white, and real translucency over the
+   backdrop. Hover swells it slightly toward you; press settles it. */
+@utility btn-liquid {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.4)
+  );
+  -webkit-backdrop-filter: blur(10px) saturate(1.6);
+  backdrop-filter: blur(10px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(12, 12, 13, 0.1),
+    inset 1px 0 1px rgba(255, 255, 255, 0.6),
+    inset -1px 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 14px rgba(255, 255, 255, 0.4),
+    0 0 0 1px rgba(12, 12, 13, 0.07),
+    0 2px 5px rgba(12, 12, 13, 0.08),
+    0 12px 28px -12px rgba(12, 12, 13, 0.18);
+  transition:
+    box-shadow 200ms ease-out,
+    transform 200ms ease-out;
+
+  &:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 1),
+      inset 0 -1px 1px rgba(12, 12, 13, 0.1),
+      inset 1px 0 1px rgba(255, 255, 255, 0.6),
+      inset -1px 0 1px rgba(255, 255, 255, 0.4),
+      inset 0 0 18px rgba(255, 255, 255, 0.55),
+      0 0 0 1px rgba(12, 12, 13, 0.08),
+      0 4px 8px rgba(12, 12, 13, 0.08),
+      0 18px 36px -14px rgba(12, 12, 13, 0.22);
+  }
+
+  &:active {
+    transform: scale(0.985);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.7),
+      inset 0 1px 4px rgba(12, 12, 13, 0.12),
+      inset 0 0 10px rgba(255, 255, 255, 0.3),
+      0 0 0 1px rgba(12, 12, 13, 0.07),
+      0 1px 3px rgba(12, 12, 13, 0.1);
+  }
+}
+
 @utility btn-gloss {
   /* v3: believable, not theatrical — a faint dome and a soft lower lip. */
   background-image:

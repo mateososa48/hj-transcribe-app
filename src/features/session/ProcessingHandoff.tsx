@@ -5,6 +5,7 @@ import { formatElapsed } from '@/features/record/elapsed';
 import { usePipelineState } from '@/features/record/useRecording';
 import type { SessionKind } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { ProcessingWave } from './ProcessingWave';
 import { loadRecordingShape, SHAPE_RESOLUTION } from './recording-shape';
 import {
   estimatePhaseMs,
@@ -66,6 +67,7 @@ export function ProcessingHandoff({
   const startedAt = startedAtProp ?? (pipelineState.phaseStartedAt || mountedAt.current);
 
   const loadedShape = useRecordingShape(sessionId, shapeProp);
+  const [webglDown, setWebglDown] = useState(false);
   const now = useTick(1000);
   const elapsedMs = Math.max(0, now - startedAt);
   const estimateMs = estimatePhaseMs(phase, audioDurationMs);
@@ -91,7 +93,29 @@ export function ProcessingHandoff({
 
       <p className="mt-1.5 max-w-[60ch] text-base text-muted-foreground">{copy.description}</p>
 
-      <RecordingBand shape={loadedShape} progress={progress} phase={phase} />
+      {/* The instrument, at the size the recorder shows it. Below it a slim
+          rail, because a ribbon reads as "working" but not as "how far". */}
+      {webglDown ? (
+        <RecordingBand shape={loadedShape} progress={progress} phase={phase} />
+      ) : (
+        <ProcessingWave
+          shape={loadedShape}
+          startedAt={startedAt}
+          estimateMs={estimateMs}
+          className="mt-4 h-36"
+          onUnsupported={() => setWebglDown(true)}
+        />
+      )}
+
+      <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
+        <div
+          className={cn(
+            'h-full origin-left rounded-full bg-foreground',
+            'transition-transform duration-1000 ease-linear motion-reduce:transition-none',
+          )}
+          style={{ transform: `scaleX(${progress})` }}
+        />
+      </div>
 
       <ol className="mt-5 space-y-2.5">
         {steps.map((step) => (
