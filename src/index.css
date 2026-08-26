@@ -217,7 +217,10 @@ h1, h2, h3 {
     0 12px 28px -12px rgba(12, 12, 13, 0.18);
   transition:
     box-shadow 200ms ease-out,
-    transform 200ms ease-out;
+    transform 200ms ease-out,
+    color 200ms ease-out,
+    background-color 200ms ease-out,
+    border-color 200ms ease-out !important;
 
   &:hover {
     transform: translateY(-1px) scale(1.01);
@@ -263,8 +266,11 @@ h1, h2, h3 {
     0 1px 2px color-mix(in oklab, black 20%, transparent),
     0 3px 8px color-mix(in oklab, black 10%, transparent);
   transition:
-    box-shadow 150ms ease-out,
-    transform 150ms ease-out;
+    box-shadow 200ms ease-out,
+    transform 200ms ease-out,
+    color 200ms ease-out,
+    background-color 200ms ease-out,
+    border-color 200ms ease-out !important;
 
   /* hover: the key rises toward you — same motion as btn-liquid */
   &:hover {
