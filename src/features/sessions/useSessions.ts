@@ -35,7 +35,13 @@ export function useSessions(limit = 50): {
   const version = useAppStore((s) => s.sessionsVersion);
 
   const refresh = useCallback(async () => {
-    const rows = await db.sessions.orderBy('startedAt').reverse().limit(limit).toArray();
+    const rows = await db.sessions
+      .orderBy('startedAt')
+      .reverse()
+      // Ergänzungen (parentId set) live on their parent's page, not in lists.
+      .filter((s) => !s.parentId)
+      .limit(limit)
+      .toArray();
     const summaries = await Promise.all(
       rows.map(async (session) => {
         const result = await db.results.where('sessionId').equals(session.id).first();

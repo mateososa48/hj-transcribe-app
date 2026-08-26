@@ -21,10 +21,13 @@ export function SyncedPlayback({
   sessionId,
   words,
   fallbackText,
+  compact = false,
 }: {
   sessionId: string;
   words: TimedWord[];
   fallbackText: string;
+  /** Inside a collapsible row: fixed transcript cap instead of filling the panel. */
+  compact?: boolean;
 }) {
   const { url, missing } = useSessionAudio(sessionId);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -91,7 +94,7 @@ export function SyncedPlayback({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className={compact ? undefined : 'flex min-h-0 flex-1 flex-col'}>
       {/* Headless element; PlayerBar drives it, the word sync reads it. */}
       <audio ref={audioRef} src={url} preload="metadata" className="hidden" />
       {/* Rows of the Aufnahme panel, not free-standing cards: the panel frame
@@ -104,7 +107,13 @@ export function SyncedPlayback({
       />
 
       {words.length > 0 ? (
-        <div className="max-h-96 min-h-0 flex-1 overflow-y-auto border-t border-border px-5 py-4 sm:px-6 xl:max-h-none">
+        <div
+          className={
+            compact
+              ? 'max-h-56 overflow-y-auto border-t border-border px-5 py-4 sm:px-6'
+              : 'max-h-96 min-h-0 flex-1 overflow-y-auto border-t border-border px-5 py-4 sm:px-6 xl:max-h-none'
+          }
+        >
           <p className="max-w-[80ch] text-base leading-loose">
             {words.map((word, i) => (
               // The space is a real text node — adjacent inline buttons would
@@ -140,7 +149,13 @@ export function SyncedPlayback({
           </p>
         </div>
       ) : fallbackText.trim() ? (
-        <div className="max-h-96 min-h-0 flex-1 overflow-y-auto border-t border-border px-5 py-4 sm:px-6 xl:max-h-none">
+        <div
+          className={
+            compact
+              ? 'max-h-56 overflow-y-auto border-t border-border px-5 py-4 sm:px-6'
+              : 'max-h-96 min-h-0 flex-1 overflow-y-auto border-t border-border px-5 py-4 sm:px-6 xl:max-h-none'
+          }
+        >
           <p className="max-w-[80ch] whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
             {fallbackText}
           </p>

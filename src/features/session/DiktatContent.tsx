@@ -7,6 +7,7 @@ import type { Result, Session, Transcription } from '@/lib/db';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { cn } from '@/lib/utils';
 import { BeurteilungText } from './BeurteilungText';
+import { ErgaenzungButton, ErgaenzungList, ErgaenzungPopup } from './Ergaenzung';
 import type { ActiveProcessingPhase } from './processing-handoff-model';
 import { ProcessingHandoff } from './ProcessingHandoff';
 import { SyncedPlayback } from './SyncedPlayback';
@@ -31,6 +32,7 @@ export function DiktatContent({
   failed,
   errorText,
   canGenerate,
+  onChanged,
 }: {
   session: Session;
   transcription: Transcription | null;
@@ -43,6 +45,8 @@ export function DiktatContent({
   onChanged: () => void;
 }) {
   const b = useBeurteilung(result);
+  const [ergOpen, setErgOpen] = useState(false);
+  const [ergVersion, setErgVersion] = useState(0);
 
   /**
    * The arrival sequence. 'success' and 'closing' only ever happen when this
@@ -164,17 +168,30 @@ export function DiktatContent({
             the letter. The transcript inside scrolls. */}
         <div className="relative min-w-0">
           <section className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card xl:absolute xl:inset-0">
-            <header className="flex h-16 shrink-0 items-center border-b border-border bg-muted/40 px-5 sm:px-6">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 sm:px-6">
               <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
+              {result ? <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} /> : null}
             </header>
             <SyncedPlayback
               sessionId={session.id}
               words={transcription?.words ?? []}
               fallbackText={transcription?.text ?? ''}
             />
+            <ErgaenzungList sessionId={session.id} version={ergVersion} />
           </section>
         </div>
       </div>
+
+      {ergOpen ? (
+        <ErgaenzungPopup
+          parentId={session.id}
+          onMerged={() => {
+            setErgVersion((v) => v + 1);
+            onChanged();
+          }}
+          onClose={() => setErgOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

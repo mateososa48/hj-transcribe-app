@@ -90,6 +90,18 @@ class PipelineManager {
     }
   }
 
+  /**
+   * Transcript only, no notes — the Ergänzung path: the child recording needs
+   * its text, but the LLM step belongs to the PARENT (merge, not fresh draft).
+   */
+  async transcribeOnly(sessionId: string): Promise<Transcription> {
+    const session = await db.sessions.get(sessionId);
+    if (!session) throw new Error('Diese Aufnahme gibt es nicht mehr.');
+    const existing = await db.transcriptions.where('sessionId').equals(sessionId).first();
+    if (existing?.status === 'done') return existing;
+    return this.transcribe(sessionId, session.kind);
+  }
+
   private async transcribe(sessionId: string, kind: SessionKind): Promise<Transcription> {
     const [settings, keys, audio] = await Promise.all([
       loadSettings(),

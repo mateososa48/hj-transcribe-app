@@ -108,7 +108,7 @@ export class RecordingSession {
     for (const listener of this.listeners) listener(this.state);
   }
 
-  async start(kind: SessionKind, label?: string): Promise<void> {
+  async start(kind: SessionKind, opts?: { parentId?: string }): Promise<void> {
     if (this.state.status === 'recording' || this.state.status === 'requesting-mic') return;
 
     this.set({ ...INITIAL, status: 'requesting-mic' });
@@ -153,7 +153,7 @@ export class RecordingSession {
       startedAt: Date.now(),
       status: 'recording',
       mimeType: recorder.mimeType || 'audio/webm',
-      ...(label ? { label } : {}),
+      ...(opts?.parentId ? { parentId: opts.parentId } : {}),
     };
     await db.sessions.add(session);
 
@@ -250,7 +250,9 @@ export class RecordingSession {
  * to be marked stopped and sent through the normal pipeline.
  */
 export async function findRecoverableSessions(): Promise<Session[]> {
-  const open = await db.sessions.where('status').equals('recording').toArray();
+  const open = (await db.sessions.where('status').equals('recording').toArray())
+    // Ergänzungen belong to their parent's page, not the start screen.
+    .filter((s) => !s.parentId);
   const withAudio: Session[] = [];
   for (const session of open) {
     const chunkCount = await db.chunks

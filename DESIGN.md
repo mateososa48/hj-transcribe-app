@@ -350,3 +350,17 @@ of dropping it. No regenerate button on the page (his call). btn-gloss v3:
 subtler finish, hover lifts the key (translateY(-1px) + wider shadow)
 instead of brightening. The play button is a quiet secondary circle. The
 variant experiment is deleted; this page IS the design.
+
+**Ergänzung (Nachdiktat).** "Ergänzen" in the Aufnahme panel header opens a
+small floating recorder (clock + ribbon + red Fertig pill) that records an
+ADDITION as a child session (`Session.parentId`) — same crash-safe chunk
+machinery. On Fertig the child is transcribed (`pipeline.transcribeOnly`)
+and the LLM integrates the addition into the CURRENT text of the parent
+(`src/lib/ergaenzung.ts`; the current text, not the original transcript, so
+manual corrections survive; previousSections backs up the old text). The
+popup resolves recording → processing → check mark → slides away; the child
+recording files at the bottom of the Aufnahme panel as a collapsible
+"N. Ergänzung" row (player + follow-along, animated grid expand). Child
+sessions never appear in the sidebar or the start-screen recovery list.
+A DEV-only scaffold (`window.__ergaenzungTest`) fabricates a finished child
+so the merge path is testable without a microphone.

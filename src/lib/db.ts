@@ -46,6 +46,13 @@ export interface Session {
   status: SessionStatus;
   /** Editable title, Notion-style. Defaults to kind + time; never required. */
   label?: string;
+  /**
+   * Set on an Ergänzung — an additional dictation recorded INTO an existing
+   * Diktat. Child sessions never appear in lists; their audio and transcript
+   * hang off the parent's page. No index needed: the table is small and
+   * children are found by filtering.
+   */
+  parentId?: string;
   /** Total recorded audio, from the recorder's own clock. */
   durationMs?: number;
   /** MIME type of the stored audio chunks. */
