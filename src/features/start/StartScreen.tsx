@@ -119,7 +119,7 @@ export function StartScreen() {
           type="button"
           onClick={() => startRecording('gespraech')}
           className={cn(
-            'group flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-7 text-left',
+            'btn-gloss group flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-7 text-left',
             'transition-colors hover:border-foreground/25 hover:bg-muted/50',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
           )}

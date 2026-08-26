@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
  */
 const SAMPLE_SHAPE: number[] = Array.from({ length: SHAPE_RESOLUTION }, (_, i) => {
   const phrase = Math.sin(i / 6.2) * 0.5 + 0.5;
-  const breath = Math.sin(i / 22) * 0.5 + 0.5;
+  const breath = 0.45 + (Math.sin(i / 22) * 0.5 + 0.5) * 0.55;
   const grain = Math.sin(i * 2.7) * 0.12;
   const v = 0.18 + phrase * breath * 0.9 + grain;
   return Math.min(1, Math.max(0.05, v));
@@ -181,7 +181,7 @@ export function ProcessingPreview() {
           />
         </div>
 
-        <p className="mt-10 max-w-[68ch] text-sm text-muted-foreground">
+        <p className="mt-10 max-w-[72ch] text-sm text-muted-foreground">
           Der Balken hält bewusst vor dem Ende an und zeigt nie „fertig“, solange es nicht fertig
           ist. Läuft ein Schritt länger als geschätzt, sagt der Text das — statt bei 100 % zu
           stehen. Auf diesem Bildschirm gibt es keine Animation: was sich bewegt, ist die

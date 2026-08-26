@@ -154,6 +154,9 @@ function useTick(everyMs: number): number {
  * estimate, and every bar decides its own state from where it sits relative
  * to that head, so the wipe follows the reading order for free.
  */
+/** Below this the recording is quiet enough that the writing gets a word space. */
+const PAUSE_THRESHOLD = 0.22;
+
 /** Collapsed bar height as a fraction of the band (h-20 = 5rem = 90px @ 18px root). */
 const TEXT_SCALE = (2.5 / 90).toFixed(4);
 
@@ -176,7 +179,9 @@ function RecordingBand({
           const position = (index + 0.5) / bars.length;
           const read = position <= progress;
           // A quiet stretch reads as a pause, and a pause is a word space.
-          const isPause = value < 0.3;
+          // Kept low deliberately: at a higher threshold ordinary speech
+          // breaks up and the line stops reading as writing at all.
+          const isPause = value < PAUSE_THRESHOLD;
           const asText = drafting || read;
           return (
             <span
