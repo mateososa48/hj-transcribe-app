@@ -163,9 +163,10 @@ function useTick(everyMs: number): number {
 }
 
 /**
- * The recording, turning into text.
+ * The no-WebGL fallback for the ribbon above.
  *
- * One subject changing state, rather than a diagram of boxes passing packets:
+ * The recording, turning into text: one subject changing state, rather than a
+ * diagram of boxes passing packets —
  * ahead of the reading head the band stands as the outline of his recording,
  * behind it the same bars have settled into a line of text — and the spaces
  * in that line are where he actually paused, because the quiet stretches of

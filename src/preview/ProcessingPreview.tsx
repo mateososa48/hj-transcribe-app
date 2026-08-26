@@ -182,10 +182,11 @@ export function ProcessingPreview() {
         </div>
 
         <p className="mt-10 max-w-[72ch] text-sm text-muted-foreground">
-          Der Balken hält bewusst vor dem Ende an und zeigt nie „fertig“, solange es nicht fertig
-          ist. Läuft ein Schritt länger als geschätzt, sagt der Text das — statt bei 100 % zu
-          stehen. Auf diesem Bildschirm gibt es keine Animation: was sich bewegt, ist die
-          tatsächlich vergangene Zeit.
+          Es ist dasselbe Band wie bei der Aufnahme — derselbe Shader, dieselben vier
+          Farbkopien. Nur die Quelle ist eine andere: nicht das Mikrofon, sondern die Form
+          dieser Aufnahme, wie sie auf der Platte liegt, abgeschritten im Tempo der Arbeit.
+          Der Fortschrittsbalken hält bewusst vor dem Ende an und zeigt nie „fertig“, solange
+          es nicht fertig ist; dauert ein Schritt länger als geschätzt, sagt der Text das.
         </p>
       </div>
     </div>
