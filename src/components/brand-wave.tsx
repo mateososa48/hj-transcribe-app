@@ -25,11 +25,13 @@ export function BrandWave({ className }: { className?: string }) {
         // Periods of 24–48 seconds: the ribbon should read as alive on a
         // second look, not catch the eye on the first.
         const t = performance.now() / 1000;
+        // High baselines, slow change: the ribbon stays ARCED — a full,
+        // rounded figure, not a resting line — while barely drifting.
         return {
-          low: 0.16 + 0.09 * Math.sin(t * 0.21),
-          mid: 0.1 + 0.06 * Math.sin(t * 0.13 + 1.4),
-          high: 0.05 + 0.035 * Math.sin(t * 0.17 + 2.3),
-          level: 0.14 + 0.07 * Math.sin(t * 0.09 + 0.6),
+          low: 0.62 + 0.14 * Math.sin(t * 0.21),
+          mid: 0.3 + 0.1 * Math.sin(t * 0.13 + 1.4),
+          high: 0.12 + 0.06 * Math.sin(t * 0.17 + 2.3),
+          level: 0.44 + 0.1 * Math.sin(t * 0.09 + 0.6),
         };
       },
     });
