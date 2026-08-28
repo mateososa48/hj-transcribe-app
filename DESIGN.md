@@ -364,3 +364,25 @@ recording files at the bottom of the Aufnahme panel as a collapsible
 sessions never appear in the sidebar or the start-screen recovery list.
 A DEV-only scaffold (`window.__ergaenzungTest`) fabricates a finished child
 so the merge path is testable without a microphone.
+
+**Bericht (the third feature).** A Word-feeling document (TipTap v3 on our
+own toolbar keys — no Radix, no TipTap UI kit): page sheet on a muted
+canvas, sticky toolbar (Absatzformat, Schriftgröße, B/I/U, lists, undo/redo,
+Einfügen, Word-Datei, Kopieren). New Berichte are template-seeded with his
+five real sections (Diagnosen, Anamnese, Befunde, Zusammenfassende
+Beurteilung, Aktuelle Therapie) — partial by design. Hovering a block
+floats a "+" (DragHandle) that starts a dictation via the shared
+RecorderPopup (generalized from the Ergänzung popup; injected process
+step); prompts/abschnitt.ts recognizes spoken section announcements and
+normalizes them to the canonical names (shares HJ_STYLE with the
+Beurteilung prompt; providers gained draftAbschnitt). Insert positions are
+transaction-mapped against concurrent edits; a dictation finishing after
+the editor closed appends via documents.appendToDocument — never lost.
+ImportDialog pulls sections from existing Termine/Diktate (working copy,
+with corrections) as heading + content; Medikation keeps literal tabs
+end-to-end (editor CSS tab-size, plain-clipboard flavour, real <w:tab/>
+in the .docx export via export-docx.ts). Data: Dexie v4 `documents`
+table; child dictations use Session.parentId = documentId. The sidebar is
+now a three-node file tree (Diktate/Termine/Berichte): house grid-rows
+animation, guide line via SidebarMenuSub, per-row stagger, inert collapsed
+branches; the VISIBLE_LIMIT/"Alle anzeigen" mechanism is gone.

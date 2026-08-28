@@ -7,6 +7,12 @@ import {
   parseBeurteilung,
 } from '../../../prompts/beurteilung.ts';
 import {
+  ABSCHNITT_PROMPT_VERSION,
+  buildAbschnittSystemPrompt,
+  buildAbschnittUserPrompt,
+  parseAbschnitt,
+} from '../../../prompts/abschnitt.ts';
+import {
   GESPRAECH_PROMPT_VERSION,
   buildGespraechSystemPrompt,
   buildGespraechUserPrompt,
@@ -14,6 +20,8 @@ import {
 } from '../../../prompts/gespraech.ts';
 import {
   DraftError,
+  type AbschnittRequest,
+  type AbschnittResponse,
   type BeurteilungRequest,
   type BeurteilungResponse,
   type DraftProvider,
@@ -120,6 +128,29 @@ export function createAnthropicDraft(apiKey: string): DraftProvider {
           wellFormed,
           model: result.model,
           promptVersion: BEURTEILUNG_PROMPT_VERSION,
+          latencyMs: Date.now() - started,
+          usage: result.usage,
+        };
+      } catch (error) {
+        fail(error);
+      }
+    },
+
+    async draftAbschnitt(request: AbschnittRequest): Promise<AbschnittResponse> {
+      const started = Date.now();
+      try {
+        const result = await call(
+          buildAbschnittSystemPrompt(request.glossary),
+          buildAbschnittUserPrompt(request),
+          request.signal,
+        );
+        const { heading, text, wellFormed } = parseAbschnitt(result.raw);
+        return {
+          heading,
+          text,
+          wellFormed,
+          model: result.model,
+          promptVersion: ABSCHNITT_PROMPT_VERSION,
           latencyMs: Date.now() - started,
           usage: result.usage,
         };

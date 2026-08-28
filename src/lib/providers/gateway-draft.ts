@@ -1,4 +1,10 @@
 import {
+  ABSCHNITT_PROMPT_VERSION,
+  buildAbschnittSystemPrompt,
+  buildAbschnittUserPrompt,
+  parseAbschnitt,
+} from '../../../prompts/abschnitt.ts';
+import {
   BEURTEILUNG_PROMPT_VERSION,
   buildStableSystemPrompt,
   buildUserPrompt,
@@ -11,6 +17,8 @@ import {
   parseGespraech,
 } from '../../../prompts/gespraech.ts';
 import type {
+  AbschnittRequest,
+  AbschnittResponse,
   BeurteilungRequest,
   BeurteilungResponse,
   DraftProvider,
@@ -84,6 +92,29 @@ export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL
         wellFormed,
         model: result.model,
         promptVersion: BEURTEILUNG_PROMPT_VERSION,
+        latencyMs: Date.now() - started,
+        ...(result.usage ? { usage: result.usage } : {}),
+      };
+    },
+
+    async draftAbschnitt(request: AbschnittRequest): Promise<AbschnittResponse> {
+      const started = Date.now();
+      const result = await chatCompletion({
+        endpoint: ENDPOINT,
+        apiKey,
+        model,
+        providerId: 'gateway',
+        system: buildAbschnittSystemPrompt(request.glossary),
+        user: buildAbschnittUserPrompt(request),
+        ...(request.signal ? { signal: request.signal } : {}),
+      });
+      const { heading, text, wellFormed } = parseAbschnitt(result.raw);
+      return {
+        heading,
+        text,
+        wellFormed,
+        model: result.model,
+        promptVersion: ABSCHNITT_PROMPT_VERSION,
         latencyMs: Date.now() - started,
         ...(result.usage ? { usage: result.usage } : {}),
       };

@@ -16,6 +16,12 @@ export interface BeurteilungRequest {
   signal?: AbortSignal;
 }
 
+export interface AbschnittRequest {
+  transcript: string;
+  glossary: string[];
+  signal?: AbortSignal;
+}
+
 export interface GespraechRequest {
   /** Speaker-prefixed lines ("Arzt: …"), or plain text without diarization. */
   transcript: string;
@@ -42,6 +48,12 @@ export interface BeurteilungResponse extends DraftMeta {
   text: string;
 }
 
+/** A dictated Bericht section: optional announced heading plus the text. */
+export interface AbschnittResponse extends DraftMeta {
+  heading: string | null;
+  text: string;
+}
+
 /** The consultation feature: three sections from one pass. */
 export interface GespraechResponse extends DraftMeta {
   sections: Record<GespraechSection, string>;
@@ -52,6 +64,7 @@ export interface DraftProvider {
   readonly label: string;
   readonly euHosted: boolean;
   draftBeurteilung(request: BeurteilungRequest): Promise<BeurteilungResponse>;
+  draftAbschnitt(request: AbschnittRequest): Promise<AbschnittResponse>;
   draftGespraech(request: GespraechRequest): Promise<GespraechResponse>;
 }
 

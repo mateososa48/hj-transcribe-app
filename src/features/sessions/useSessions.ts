@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { db, type Result, type Session } from '@/lib/db';
+import { db, type DocumentRecord, type Result, type Session } from '@/lib/db';
 import { useAppStore } from '@/store/app-store';
 
 export interface SessionSummary {
@@ -74,14 +74,44 @@ export function sessionTitle(session: Session): string {
  */
 export function sessionTimeTitle(session: Session): string {
   if (session.label?.trim()) return session.label;
-  const when = new Date(session.startedAt);
+  return relativeDayTime(session.startedAt);
+}
+
+/** "Heute, 14:05 Uhr" / "Gestern, …" / "27.08., …" — shared list-row time. */
+export function relativeDayTime(ts: number): string {
+  const when = new Date(ts);
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const time = when.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-  if (session.startedAt >= midnight.getTime()) return `Heute, ${time} Uhr`;
-  if (session.startedAt >= midnight.getTime() - 86_400_000) return `Gestern, ${time} Uhr`;
+  if (ts >= midnight.getTime()) return `Heute, ${time} Uhr`;
+  if (ts >= midnight.getTime() - 86_400_000) return `Gestern, ${time} Uhr`;
   const day = when.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
   return `${day}, ${time} Uhr`;
+}
+
+/** The Berichte, newest edit first. Re-reads on the same library signal. */
+export function useDocuments(): { documents: DocumentRecord[]; loading: boolean } {
+  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const version = useAppStore((s) => s.sessionsVersion);
+
+  useEffect(() => {
+    let cancelled = false;
+    void db.documents
+      .orderBy('updatedAt')
+      .reverse()
+      .toArray()
+      .then((rows) => {
+        if (cancelled) return;
+        setDocuments(rows);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [version]);
+
+  return { documents, loading };
 }
 
 /** What came out of a recording, one line — shared by every list layout. */

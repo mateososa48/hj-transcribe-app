@@ -158,12 +158,28 @@ export interface SettingRecord {
   updatedAt: number;
 }
 
+/**
+ * A Bericht: the Word-like document he assembles from typing, dictation and
+ * imported sections. Content is the editor's own JSON — the document IS the
+ * working copy; there is no original/derived split like Result has, because
+ * here he is the author and the AI only ever inserts.
+ */
+export interface DocumentRecord {
+  id: string;
+  title: string;
+  /** TipTap JSON document. */
+  content: unknown;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export class ArztbriefDB extends Dexie {
   sessions!: EntityTable<Session, 'id'>;
   chunks!: EntityTable<AudioChunk, 'id'>;
   transcriptions!: EntityTable<Transcription, 'id'>;
   results!: EntityTable<Result, 'id'>;
   settings!: EntityTable<SettingRecord, 'key'>;
+  documents!: EntityTable<DocumentRecord, 'id'>;
 
   constructor() {
     super('arztbrief');
@@ -214,6 +230,18 @@ export class ArztbriefDB extends Dexie {
             s.kind ??= 'beurteilung';
           });
       });
+
+    // v4: Berichte — the Word-like documents. NOTE: v1 had an unrelated
+    // `documents` table that v2 deleted; reusing the name here creates a
+    // fresh table, not a resurrection of the old rows.
+    this.version(4).stores({
+      sessions: 'id, kind, startedAt, status',
+      chunks: 'id, sessionId, [sessionId+index]',
+      transcriptions: 'id, sessionId',
+      results: 'id, sessionId, kind, updatedAt',
+      settings: 'key',
+      documents: 'id, updatedAt, createdAt',
+    });
   }
 }
 

@@ -13,6 +13,7 @@ export type View =
   | { name: 'start' }
   | { name: 'record'; kind: SessionKind }
   | { name: 'session'; sessionId: string }
+  | { name: 'document'; documentId: string }
   | { name: 'settings' };
 
 interface AppState {
@@ -23,6 +24,7 @@ interface AppState {
   goHome: () => void;
   startRecording: (kind: SessionKind) => void;
   openSession: (sessionId: string) => void;
+  openDocument: (documentId: string) => void;
   openSettings: () => void;
   touchSessions: () => void;
 }
@@ -34,6 +36,7 @@ export const useAppStore = create<AppState>((set) => ({
   goHome: () => set({ view: { name: 'start' } }),
   startRecording: (kind) => set({ view: { name: 'record', kind } }),
   openSession: (sessionId) => set({ view: { name: 'session', sessionId } }),
+  openDocument: (documentId) => set({ view: { name: 'document', documentId } }),
   openSettings: () => set({ view: { name: 'settings' } }),
   touchSessions: () => set((s) => ({ sessionsVersion: s.sessionsVersion + 1 })),
 }));

@@ -1,6 +1,7 @@
 import { AppSidebar } from '@/components/app-sidebar';
 import { BrandWave } from '@/components/brand-wave';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { DocumentView } from '@/features/document/DocumentView';
 import { RecordFlow } from '@/features/record/RecordFlow';
 import { SessionView } from '@/features/session/SessionView';
 import { SettingsPage } from '@/features/settings/SettingsPage';
@@ -19,6 +20,7 @@ const MAIN_WIDTHS: Record<string, string> = {
   start: 'max-w-5xl',
   record: 'max-w-4xl',
   session: 'max-w-[100rem]',
+  document: 'max-w-[100rem]',
   settings: 'max-w-4xl',
 };
 
@@ -41,6 +43,8 @@ export function StandardLayout() {
             <RecordFlow kind={view.kind} />
           ) : view.name === 'session' ? (
             <SessionView sessionId={view.sessionId} />
+          ) : view.name === 'document' ? (
+            <DocumentView documentId={view.documentId} />
           ) : (
             <SettingsPage />
           )}

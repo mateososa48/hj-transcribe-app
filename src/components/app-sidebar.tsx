@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Stethoscope, ChevronDown, MessagesSquare, Mic, Settings2 } from 'lucide-react';
+import { ChevronRight, FilePen, FileText, MessagesSquare, Mic, Settings2, Stethoscope } from 'lucide-react';
 
 import { BrandWave } from '@/components/brand-wave';
+import { createDocument } from '@/lib/documents';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -9,17 +10,21 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
+  relativeDayTime,
   sessionSubtitle,
   sessionTimeTitle,
   sessionTitle,
+  useDocuments,
   useSessions,
   type SessionSummary,
 } from '@/features/sessions/useSessions';
@@ -28,30 +33,27 @@ import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/app-store';
 
 /**
- * The app's spine: start something new at the top, everything ever recorded
- * below it — grouped by WHAT it is (Diktate, Termine), not by when it
- * happened. Five per group; the rest sits behind an animated "Alle anzeigen".
+ * The app's spine: start something new at the top, the whole library below —
+ * a small file tree with one node per kind (Diktate, Termine, Berichte).
+ * The node IS the collapse: opening it draws the guide line and slides the
+ * rows in; there is no separate "Alle anzeigen" anymore.
  *
- * Row anatomy: the title is the time (the group heading already says what it
- * is), the subtitle says what came out of it. For a Diktat that is almost
- * always the same thing — a Zusammenfassende Beurteilung — and naming it
- * beats previewing prose that all starts with "Bezüglich der …".
+ * Row anatomy: the title is the time (the node already says what it is),
+ * the subtitle says what came out of it.
  */
-
-const VISIBLE_LIMIT = 5;
-
-const GROUPS: Array<{ kind: SessionKind; label: string; icon: typeof Mic }> = [
-  { kind: 'beurteilung', label: 'Diktate', icon: Mic },
-  { kind: 'gespraech', label: 'Termine', icon: MessagesSquare },
-];
 
 export function AppSidebar() {
   const view = useAppStore((s) => s.view);
   const startRecording = useAppStore((s) => s.startRecording);
   const openSession = useAppStore((s) => s.openSession);
+  const openDocument = useAppStore((s) => s.openDocument);
+  const touchSessions = useAppStore((s) => s.touchSessions);
   const openSettings = useAppStore((s) => s.openSettings);
   const goHome = useAppStore((s) => s.goHome);
   const { sessions, loading } = useSessions();
+  const { documents } = useDocuments();
+  const diktate = sessions.filter((s) => s.session.kind === 'beurteilung');
+  const termine = sessions.filter((s) => s.session.kind === 'gespraech');
   const { isMobile, setOpenMobile } = useSidebar();
 
   /** On mobile the sidebar is a sheet; navigating should close it. */
@@ -65,7 +67,14 @@ export function AppSidebar() {
     home: after(goHome),
     record: after((kind: SessionKind) => startRecording(kind)),
     session: after(openSession),
+    document: after(openDocument),
     settings: after(openSettings),
+    newDocument: after(() => {
+      void createDocument().then((doc) => {
+        touchSessions();
+        openDocument(doc.id);
+      });
+    }),
   };
 
   return (
@@ -93,27 +102,77 @@ export function AppSidebar() {
             <Mic aria-hidden />
             Diktat starten
           </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="justify-start"
+            onClick={go.newDocument}
+          >
+            <FilePen aria-hidden />
+            Bericht erstellen
+          </Button>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        {loading ? null : sessions.length === 0 ? (
+        {loading ? null : (
           <SidebarGroup>
             <SidebarGroupContent>
-              <p className="px-3 py-2 text-sm text-sidebar-foreground/60">Noch keine Aufnahmen.</p>
+              <SidebarMenu>
+                <TreeNode
+                  label="Diktate"
+                  icon={Mic}
+                  count={diktate.length}
+                  emptyText="Noch keine Diktate."
+                >
+                  {diktate.map((item, i) => (
+                    <SessionRow
+                      key={item.session.id}
+                      item={item}
+                      index={i}
+                      active={view.name === 'session' && view.sessionId === item.session.id}
+                      onOpen={go.session}
+                    />
+                  ))}
+                </TreeNode>
+
+                <TreeNode
+                  label="Termine"
+                  icon={MessagesSquare}
+                  count={termine.length}
+                  emptyText="Noch keine Termine."
+                >
+                  {termine.map((item, i) => (
+                    <SessionRow
+                      key={item.session.id}
+                      item={item}
+                      index={i}
+                      active={view.name === 'session' && view.sessionId === item.session.id}
+                      onOpen={go.session}
+                    />
+                  ))}
+                </TreeNode>
+
+                <TreeNode
+                  label="Berichte"
+                  icon={FileText}
+                  count={documents.length}
+                  emptyText="Noch keine Berichte."
+                >
+                  {documents.map((doc, i) => (
+                    <TreeRow
+                      key={doc.id}
+                      index={i}
+                      title={doc.title}
+                      subtitle={`Bearbeitet ${relativeDayTime(doc.updatedAt)}`}
+                      active={view.name === 'document' && view.documentId === doc.id}
+                      onOpen={() => go.document(doc.id)}
+                    />
+                  ))}
+                </TreeNode>
+              </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        ) : (
-          GROUPS.map((group) => (
-            <KindGroup
-              key={group.kind}
-              label={group.label}
-              icon={group.icon}
-              items={sessions.filter((s) => s.session.kind === group.kind)}
-              activeId={view.name === 'session' ? view.sessionId : null}
-              onOpen={go.session}
-            />
-          ))
         )}
       </SidebarContent>
 
@@ -131,124 +190,130 @@ export function AppSidebar() {
   );
 }
 
-function KindGroup({
+/**
+ * One node of the library tree. The house expand pattern (grid-rows 0fr→1fr
+ * + opacity, instant under prefers-reduced-motion) with the beui file-tree
+ * feel: rotating chevron, guide line (SidebarMenuSub's border), and a small
+ * per-row stagger on the way in.
+ */
+function TreeNode({
   label,
   icon: Icon,
-  items,
-  activeId,
-  onOpen,
+  count,
+  emptyText,
+  children,
 }: {
   label: string;
   icon: typeof Mic;
-  items: SessionSummary[];
-  activeId: string | null;
-  onOpen: (id: string) => void;
+  count: number;
+  emptyText: string;
+  children: React.ReactNode;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  if (items.length === 0) return null;
+  const [open, setOpen] = useState(true);
 
-  const visible = items.slice(0, VISIBLE_LIMIT);
-  const overflow = items.slice(VISIBLE_LIMIT);
-
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel className="justify-between pr-2">
-        {label}
-        <span className="tabular-nums text-sidebar-foreground/40">{items.length}</span>
-      </SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {visible.map((item) => (
-            <Row key={item.session.id} item={item} icon={Icon} activeId={activeId} onOpen={onOpen} />
-          ))}
-        </SidebarMenu>
-
-        {overflow.length > 0 ? (
-          <>
-            {/* Animated reveal: grid-rows 0fr -> 1fr, the modern height-auto
-                transition. Instant under prefers-reduced-motion. */}
-            <div
-              className={cn(
-                'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
-                expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-              )}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <SidebarMenu
-                  className={cn(
-                    'transition-opacity duration-300 motion-reduce:transition-none',
-                    expanded ? 'opacity-100' : 'opacity-0',
-                  )}
-                >
-                  {overflow.map((item) => (
-                    <Row
-                      key={item.session.id}
-                      item={item}
-                      icon={Icon}
-                      activeId={activeId}
-                      onOpen={onOpen}
-                      tabbable={expanded}
-                    />
-                  ))}
-                </SidebarMenu>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-              className={cn(
-                'mt-0.5 flex h-8 w-full items-center gap-2 rounded-md px-3 text-sm text-sidebar-foreground/60',
-                'transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-              )}
-            >
-              <ChevronDown
-                className={cn(
-                  'size-4 transition-transform duration-300 motion-reduce:transition-none',
-                  expanded && 'rotate-180',
-                )}
-                aria-hidden
-              />
-              {expanded ? 'Weniger anzeigen' : `Alle ${items.length} anzeigen`}
-            </button>
-          </>
-        ) : null}
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-}
-
-function Row({
-  item,
-  icon: Icon,
-  activeId,
-  onOpen,
-  tabbable = true,
-}: {
-  item: SessionSummary;
-  icon: typeof Mic;
-  activeId: string | null;
-  onOpen: (id: string) => void;
-  tabbable?: boolean;
-}) {
-  const { session } = item;
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        isActive={activeId === session.id}
-        onClick={() => onOpen(session.id)}
-        className="h-auto py-2"
-        tooltip={sessionTitle(session)}
-        tabIndex={tabbable ? undefined : -1}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="h-10 font-medium"
       >
-        <Icon aria-hidden className="text-sidebar-foreground/50" />
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">{sessionTimeTitle(session)}</span>
-          <span className="truncate text-xs text-sidebar-foreground/55">{sessionSubtitle(item)}</span>
-        </span>
+        <ChevronRight
+          className={cn(
+            'size-4 text-sidebar-foreground/50 transition-transform duration-200 motion-reduce:transition-none',
+            open && 'rotate-90',
+          )}
+          aria-hidden
+        />
+        <Icon aria-hidden className="text-sidebar-foreground/60" />
+        <span className="flex-1">{label}</span>
+        <span className="tabular-nums text-sm text-sidebar-foreground/40">{count}</span>
       </SidebarMenuButton>
+
+      <div
+        inert={!open}
+        className={cn(
+          'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <SidebarMenuSub
+            className={cn(
+              'transition-opacity duration-300 motion-reduce:transition-none',
+              open ? 'opacity-100' : 'opacity-0',
+            )}
+            data-open={open || undefined}
+          >
+            {count === 0 ? (
+              <li className="px-2 py-2 text-sm text-sidebar-foreground/50">{emptyText}</li>
+            ) : (
+              children
+            )}
+          </SidebarMenuSub>
+        </div>
+      </div>
     </SidebarMenuItem>
+  );
+}
+
+function SessionRow({
+  item,
+  index,
+  active,
+  onOpen,
+}: {
+  item: SessionSummary;
+  index: number;
+  active: boolean;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <TreeRow
+      index={index}
+      title={sessionTimeTitle(item.session)}
+      subtitle={sessionSubtitle(item)}
+      tooltip={sessionTitle(item.session)}
+      active={active}
+      onOpen={() => onOpen(item.session.id)}
+    />
+  );
+}
+
+function TreeRow({
+  index,
+  title,
+  subtitle,
+  tooltip,
+  active,
+  onOpen,
+}: {
+  index: number;
+  title: string;
+  subtitle: string;
+  tooltip?: string;
+  active: boolean;
+  onOpen: () => void;
+}) {
+  return (
+    <SidebarMenuSubItem
+      // The way in: rows fade with a slight stagger; collapse hides parents,
+      // so the way out needs no choreography.
+      className="transition-opacity duration-200 motion-reduce:transition-none"
+      style={{ transitionDelay: `${Math.min(index, 8) * 30}ms` }}
+    >
+      <SidebarMenuSubButton
+        render={<button type="button" />}
+        isActive={active}
+        onClick={onOpen}
+        title={tooltip ?? title}
+        className="h-auto w-full py-2 text-left"
+      >
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate font-medium">{title}</span>
+          <span className="truncate text-sm text-sidebar-foreground/55">{subtitle}</span>
+        </span>
+      </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
   );
 }
