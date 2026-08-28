@@ -108,6 +108,42 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
   }
 
   const file = new Document({
+    // Word's built-in heading styles are light blue — his letters are black,
+    // bold, Arial. Define the look explicitly so the export IS the letter.
+    styles: {
+      default: {
+        document: { run: { font: 'Arial', size: 22, color: '000000' } },
+      },
+      paragraphStyles: [
+        {
+          id: 'Heading1',
+          name: 'Heading 1',
+          basedOn: 'Normal',
+          next: 'Normal',
+          quickFormat: true,
+          run: { font: 'Arial', size: 28, bold: true, color: '000000' },
+          paragraph: { spacing: { before: 280, after: 120 } },
+        },
+        {
+          id: 'Heading2',
+          name: 'Heading 2',
+          basedOn: 'Normal',
+          next: 'Normal',
+          quickFormat: true,
+          run: { font: 'Arial', size: 24, bold: true, color: '000000' },
+          paragraph: { spacing: { before: 240, after: 100 } },
+        },
+        {
+          id: 'Heading3',
+          name: 'Heading 3',
+          basedOn: 'Normal',
+          next: 'Normal',
+          quickFormat: true,
+          run: { font: 'Arial', size: 22, bold: true, color: '000000' },
+          paragraph: { spacing: { before: 200, after: 80 } },
+        },
+      ],
+    },
     numbering: {
       config: [
         {

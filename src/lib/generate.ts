@@ -146,6 +146,10 @@ export async function saveSection(resultId: string, section: string, text: strin
 
 /** Deletes a recording, its audio, its transcript and its text. */
 export async function deleteSession(sessionId: string): Promise<void> {
+  // Children first (Ergänzungen dictated into this session) — orphaned audio
+  // blobs would otherwise sit invisibly in IndexedDB forever.
+  const children = await db.sessions.filter((s) => s.parentId === sessionId).toArray();
+  for (const child of children) await deleteSession(child.id);
   await Promise.all([
     db.chunks.where('sessionId').equals(sessionId).delete(),
     db.transcriptions.where('sessionId').equals(sessionId).delete(),

@@ -169,6 +169,8 @@ export interface DocumentRecord {
   title: string;
   /** TipTap JSON document. */
   content: unknown;
+  /** Snapshot taken before the last programmatic insert (dictation/import). */
+  previousContent?: unknown;
   createdAt: number;
   updatedAt: number;
 }

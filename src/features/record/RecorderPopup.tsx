@@ -23,6 +23,7 @@ export function RecorderPopup({
   parentId,
   ariaLabel,
   processingText,
+  successText,
   process,
   onDone,
   onClose,
@@ -31,6 +32,7 @@ export function RecorderPopup({
   parentId: string;
   ariaLabel: string;
   processingText: string;
+  successText: string;
   /** The injected async step: transcribe + whatever the caller does with it. */
   process: (childId: string) => Promise<void>;
   onDone: () => void;
@@ -159,7 +161,7 @@ export function RecorderPopup({
             <span className="flex size-9 items-center justify-center rounded-full bg-foreground text-background motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-300">
               <Check className="size-5" aria-hidden />
             </span>
-            <p className="text-base font-medium">Eingearbeitet</p>
+            <p className="text-base font-medium">{successText}</p>
           </div>
         ) : (
           <div key="err" className="flex items-center gap-4 motion-safe:animate-in motion-safe:fade-in">

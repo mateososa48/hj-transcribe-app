@@ -10,6 +10,7 @@ import {
   Italic,
   List,
   ListOrdered,
+  Mic,
   Redo2,
   Underline,
   Undo2,
@@ -26,7 +27,6 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { exportDocx } from './export-docx';
 
 /**
  * The instrument row above the sheet — the handful of formatting moves his
@@ -37,10 +37,12 @@ export function EditorToolbar({
   editor,
   documentTitle,
   onImport,
+  onDictate,
 }: {
   editor: Editor;
   documentTitle: string;
   onImport: () => void;
+  onDictate: () => void;
 }) {
   const state = useEditorState({
     editor,
@@ -116,7 +118,9 @@ export function EditorToolbar({
         }}
       >
         <SelectTrigger aria-label="Absatzformat" className="h-10 w-40">
-          <SelectValue />
+          <SelectValue>
+            {block === 'text' ? 'Text' : `Überschrift ${block.slice(1)}`}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="text">Text</SelectItem>
@@ -136,7 +140,13 @@ export function EditorToolbar({
         }}
       >
         <SelectTrigger aria-label="Schriftgröße" className="h-10 w-36">
-          <SelectValue />
+          <SelectValue>
+            {state.fontSize === 'normal'
+              ? 'Normal'
+              : state.fontSize === '1.25rem'
+                ? 'Groß'
+                : 'Sehr groß'}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="normal">Normal</SelectItem>
@@ -190,6 +200,10 @@ export function EditorToolbar({
       </Button>
 
       <div className="ms-auto flex items-center gap-2">
+        <Button variant="outline" onClick={onDictate}>
+          <Mic aria-hidden />
+          Diktieren
+        </Button>
         <Button variant="outline" onClick={onImport}>
           <Import aria-hidden />
           Einfügen
@@ -198,8 +212,9 @@ export function EditorToolbar({
           variant="outline"
           onClick={async () => {
             try {
+              const { exportDocx } = await import('./export-docx');
               await exportDocx(editor.getJSON(), documentTitle);
-              toast.success('Word-Datei gespeichert.');
+              toast.success('Word-Datei im Ordner „Downloads" gespeichert.');
             } catch {
               toast.error('Die Word-Datei konnte nicht erstellt werden.');
             }

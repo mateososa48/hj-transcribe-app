@@ -90,3 +90,39 @@ export function abschnittToNodes(heading: string | null, value: string): TiptapN
     ...body,
   ];
 }
+
+/**
+ * His canonical section names, and the aliases that must land on them —
+ * the vocabulary glue that keeps one letter from growing two "Diagnosen".
+ * Titles that match nothing stay themselves (a new, freely named section).
+ */
+export const CANONICAL_SECTIONS = [
+  'Diagnosen',
+  'Anamnese',
+  'Befunde',
+  'Zusammenfassende Beurteilung',
+  'Aktuelle Therapie',
+] as const;
+
+const SECTION_ALIASES: Record<string, string> = {
+  diagnosen: 'Diagnosen',
+  diagnose: 'Diagnosen',
+  anamnese: 'Anamnese',
+  vorgeschichte: 'Anamnese',
+  befunde: 'Befunde',
+  befund: 'Befunde',
+  messwerte: 'Befunde',
+  werte: 'Befunde',
+  beurteilung: 'Zusammenfassende Beurteilung',
+  'zusammenfassende beurteilung': 'Zusammenfassende Beurteilung',
+  medikation: 'Aktuelle Therapie',
+  therapie: 'Aktuelle Therapie',
+  'aktuelle therapie': 'Aktuelle Therapie',
+  'aktuelle medikation': 'Aktuelle Therapie',
+};
+
+/** "Medikation" -> "Aktuelle Therapie"; unknown titles pass through trimmed. */
+export function canonicalSectionTitle(title: string): string {
+  const key = title.trim().toLowerCase().replace(/[.:]+$/, '');
+  return SECTION_ALIASES[key] ?? title.trim();
+}

@@ -31,6 +31,7 @@ export function ErgaenzungPopup({
       parentId={parentId}
       ariaLabel="Ergänzung aufnehmen"
       processingText="Die Ergänzung wird eingearbeitet …"
+      successText="Eingearbeitet"
       process={(childId) => processErgaenzung(parentId, childId)}
       onDone={onMerged}
       onClose={onClose}
@@ -57,7 +58,19 @@ interface ErgaenzungRow {
  * The additional recordings, filed at the bottom of the Aufnahme panel as
  * collapsible rows — each opens smoothly into its own player + follow-along.
  */
-export function ErgaenzungList({ sessionId, version }: { sessionId: string; version: number }) {
+export function ErgaenzungList({
+  sessionId,
+  version,
+  label = 'Ergänzung',
+  title,
+}: {
+  sessionId: string;
+  version: number;
+  /** Row word: "Ergänzung" on the Diktat page, "Diktat" inside a Bericht. */
+  label?: string;
+  /** When set, the list renders its own heading — only if rows exist. */
+  title?: string;
+}) {
   const [rows, setRows] = useState<ErgaenzungRow[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -85,6 +98,11 @@ export function ErgaenzungList({ sessionId, version }: { sessionId: string; vers
 
   return (
     <div className="shrink-0">
+      {title ? (
+        <h2 className="border-t border-border bg-muted/40 px-5 py-3 text-lg font-semibold tracking-tight sm:px-6">
+          {title}
+        </h2>
+      ) : null}
       {rows.map(({ session, transcription }, i) => {
         const open = openId === session.id;
         const time = new Date(session.startedAt).toLocaleTimeString('de-DE', {
@@ -100,7 +118,7 @@ export function ErgaenzungList({ sessionId, version }: { sessionId: string; vers
               className="flex h-12 w-full items-center justify-between gap-3 px-5 text-left transition-colors hover:bg-muted/40 sm:px-6"
             >
               <span className="text-sm font-medium">
-                {i + 1}. Ergänzung · {time} Uhr
+                {i + 1}. {label} · {time} Uhr
                 {session.durationMs ? (
                   <span className="text-muted-foreground"> · {formatDuration(session.durationMs)}</span>
                 ) : null}

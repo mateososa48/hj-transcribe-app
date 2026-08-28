@@ -52,7 +52,7 @@ export async function createDocument(): Promise<DocumentRecord> {
 
 export async function saveDocument(
   id: string,
-  patch: Partial<Pick<DocumentRecord, 'title' | 'content'>>,
+  patch: Partial<Pick<DocumentRecord, 'title' | 'content' | 'previousContent'>>,
 ): Promise<void> {
   await db.documents
     .where('id')
@@ -60,6 +60,7 @@ export async function saveDocument(
     .modify((row) => {
       if (patch.title !== undefined) row.title = patch.title;
       if (patch.content !== undefined) row.content = patch.content;
+      if (patch.previousContent !== undefined) row.previousContent = patch.previousContent;
       row.updatedAt = Date.now();
     });
 }

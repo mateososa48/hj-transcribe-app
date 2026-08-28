@@ -379,8 +379,10 @@ h1, h2, h3 {
 .tiptap li p {
   margin: 0;
 }
-/* Empty-paragraph placeholder feel: the caret has somewhere to live. */
-.tiptap p.is-editor-empty:first-child::before {
+/* Section hints: an empty paragraph that carries a placeholder says what he
+   can do there (write, dictate with +, import) until he does it. */
+.tiptap p.is-empty[data-placeholder]:not([data-placeholder=''])::before,
+.tiptap p.is-editor-empty[data-placeholder]:not([data-placeholder=''])::before {
   content: attr(data-placeholder);
   color: var(--muted-foreground);
   float: left;

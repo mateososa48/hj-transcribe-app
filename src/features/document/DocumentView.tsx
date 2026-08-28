@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Content } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Placeholder } from '@tiptap/extensions';
 import { FontSize, TextStyle } from '@tiptap/extension-text-style';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,7 +30,10 @@ import { BlockHandle } from './BlockHandle';
 import { processAbschnittDiktat } from './dictate';
 import { EditorToolbar } from './EditorToolbar';
 import { ImportDialog } from './ImportDialog';
-import { abschnittToNodes, sectionToTiptap } from './insert';
+import { abschnittToNodes, bulletsToTiptap, sectionToTiptap } from './insert';
+import { editorRegistry } from './editor-registry';
+import { insertTitledContent } from './merge';
+import { ErgaenzungList } from '@/features/session/Ergaenzung';
 
 
 const AUTOSAVE_MS = 800;
@@ -76,10 +80,34 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   /** Open dictation popup + the live insert position (transaction-mapped). */
   const [dictating, setDictating] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [ergVersion, setErgVersion] = useState(0);
   const insertPosRef = useRef<number | null>(null);
 
   const editor = useEditor({
-    extensions: [StarterKit, TextStyle, FontSize],
+    extensions: [
+      StarterKit,
+      TextStyle,
+      FontSize,
+      // Empty sections must not look dead: the paragraph under each heading
+      // says what he can do there until he does it.
+      Placeholder.configure({
+        showOnlyCurrent: false,
+        placeholder: ({ editor, node, pos }) => {
+          if (node.type.name !== 'paragraph' || node.content.size > 0) return '';
+          // The decoration scan can hand positions from a newer doc than
+          // editor.state during a transaction — resolve defensively.
+          try {
+            if (pos > editor.state.doc.content.size) return '';
+            const before = editor.state.doc.resolve(pos).nodeBefore;
+            return before?.type.name === 'heading'
+              ? 'Schreiben, mit + diktieren oder über „Einfügen" übernehmen …'
+              : '';
+          } catch {
+            return '';
+          }
+        },
+      }),
+    ],
     content: record.content as Content,
     editorProps: {
       attributes: {
@@ -96,6 +124,13 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     },
   });
 
+  // Whoever finishes a dictation later must find THIS editor, not a stale one.
+  useEffect(() => {
+    if (!editor) return;
+    editorRegistry.set(record.id, editor);
+    return () => editorRegistry.remove(record.id, editor);
+  }, [editor, record.id]);
+
   // While a dictation is pending, keep its insert position honest against
   // his concurrent edits: map it through every transaction.
   useEffect(() => {
@@ -111,16 +146,58 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     };
   }, [editor]);
 
+  /**
+   * Snapshot before a programmatic write, then offer one-step undo on the
+   * toast — an AI insert into a half-finished letter must never be a
+   * one-way door.
+   */
+  const withUndo = (write: () => void, doneText: string) => {
+    if (!editor || editor.isDestroyed) return;
+    const snapshot = editor.getJSON();
+    void saveDocument(record.id, { previousContent: snapshot });
+    write();
+    toast.success(doneText, {
+      action: {
+        label: 'Rückgängig',
+        onClick: () => {
+          editor.commands.setContent(snapshot);
+          void saveDocument(record.id, { content: snapshot });
+        },
+      },
+      duration: 8000,
+    });
+  };
+
   /** Insert a finished dictation — or persist it even if the editor is gone. */
   const insertAbschnitt = (heading: string | null, text: string) => {
-    const nodes = abschnittToNodes(heading, text);
     if (editor && !editor.isDestroyed) {
-      const max = editor.state.doc.content.size;
-      const pos = Math.min(insertPosRef.current ?? max, max);
-      editor.commands.insertContentAt(pos, nodes as Content, { updateSelection: false });
+      withUndo(() => {
+        if (heading) {
+          // An announced section fills the letter's OWN section of that name
+          // instead of stamping a second heading.
+          insertTitledContent(editor, heading, bulletsToTiptap(text));
+        } else {
+          const max = editor.state.doc.content.size;
+          const pos = Math.min(insertPosRef.current ?? max, max);
+          editor.commands.insertContentAt(pos, abschnittToNodes(null, text) as Content, {
+            updateSelection: false,
+          });
+        }
+      }, 'Diktat eingefügt.');
     } else {
-      // The page was left mid-processing — the dictation is never lost.
-      void appendToDocument(record.id, nodes);
+      // The page was left mid-processing. If the document was reopened, a
+      // LIVE editor exists — write through it so the next autosave cannot
+      // clobber the insert; only a truly closed document appends to the
+      // store directly. The dictation is never lost either way.
+      const liveEditor = editorRegistry.get(record.id);
+      const nodes = abschnittToNodes(heading, text);
+      if (liveEditor) {
+        liveEditor.commands.insertContentAt(liveEditor.state.doc.content.size, nodes as Content, {
+          updateSelection: false,
+        });
+      } else {
+        void appendToDocument(record.id, nodes);
+      }
     }
   };
 
@@ -216,7 +293,18 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
       </div>
 
       {editor ? (
-        <EditorToolbar editor={editor} documentTitle={title} onImport={() => setImporting(true)} />
+        <EditorToolbar
+          editor={editor}
+          documentTitle={title}
+          onImport={() => setImporting(true)}
+          onDictate={() => {
+            insertPosRef.current = Math.min(
+              editor.state.selection.to,
+              editor.state.doc.content.size,
+            );
+            setDictating(true);
+          }}
+        />
       ) : null}
       {editor ? (
         <BlockHandle
@@ -235,22 +323,30 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
         </div>
       </div>
 
+      {/* The source stays beside the draft: every dictation into this
+          Bericht remains playable, with its follow-along transcript. */}
+      <div className="overflow-hidden rounded-xl border border-border bg-card empty:hidden">
+        <ErgaenzungList
+          sessionId={record.id}
+          version={ergVersion}
+          label="Diktat"
+          title="Diktate in diesem Bericht"
+        />
+      </div>
+
       <ImportDialog
         open={importing}
         onOpenChange={setImporting}
         onInsert={(sections) => {
           if (!editor || editor.isDestroyed) return;
-          const nodes = sections.flatMap((s) => [
-            {
-              type: 'heading',
-              attrs: { level: 2 },
-              content: [{ type: 'text', text: s.label }],
-            },
-            ...sectionToTiptap(s.key, s.text),
-          ]);
-          const end = editor.state.doc.content.size;
-          const at = Math.min(editor.state.selection.to, end);
-          editor.commands.insertContentAt(at, nodes as Content, { updateSelection: false });
+          withUndo(() => {
+            for (const s of sections) {
+              // Each section merges into the letter's matching section
+              // (Medikation lands under Aktuelle Therapie); only genuinely
+              // new titles create a heading.
+              insertTitledContent(editor, s.label, sectionToTiptap(s.key, s.text));
+            }
+          }, 'Eingefügt.');
         }}
       />
 
@@ -259,12 +355,14 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
           parentId={record.id}
           ariaLabel="Abschnitt diktieren"
           processingText="Der Abschnitt wird erstellt …"
+          successText="Eingefügt"
           process={async (childId) => {
             const { heading, text } = await processAbschnittDiktat(childId);
             insertAbschnitt(heading, text);
           }}
           onDone={() => {
             insertPosRef.current = null;
+            setErgVersion((v) => v + 1);
           }}
           onClose={() => setDictating(false)}
         />

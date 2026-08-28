@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { parseAbschnitt } from '../prompts/abschnitt.ts';
-import { abschnittToNodes, bulletsToTiptap, sectionToTiptap } from '../src/features/document/insert.ts';
+import {
+  abschnittToNodes,
+  bulletsToTiptap,
+  canonicalSectionTitle,
+  sectionToTiptap,
+} from '../src/features/document/insert.ts';
 
 test('bulletsToTiptap builds a list with nesting and never drops prose', () => {
   const nodes = bulletsToTiptap('Vorbemerkung.\n- Erster Punkt\n  - Detail dazu\n- Zweiter Punkt');
@@ -40,4 +45,13 @@ test('parseAbschnitt reads heading and text, tolerates damage', () => {
   const broken = parseAbschnitt('<abschnitt>\n- Unvollständig');
   assert.equal(broken.wellFormed, false);
   assert.ok(broken.text.includes('Unvollständig'));
+});
+
+test('section titles normalize to his letter vocabulary', () => {
+  assert.equal(canonicalSectionTitle('Medikation'), 'Aktuelle Therapie');
+  assert.equal(canonicalSectionTitle('beurteilung'), 'Zusammenfassende Beurteilung');
+  assert.equal(canonicalSectionTitle('Vorgeschichte'), 'Anamnese');
+  assert.equal(canonicalSectionTitle('Messwerte'), 'Befunde');
+  assert.equal(canonicalSectionTitle('Diagnosen:'), 'Diagnosen');
+  assert.equal(canonicalSectionTitle('Analyse'), 'Analyse');
 });
