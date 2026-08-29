@@ -95,7 +95,7 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={go.home}
-          className="flex items-center gap-2 rounded-md px-1 text-left text-base font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="flex items-center gap-2 rounded-md px-1 text-left text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
           Arztbrief-Assistent
           <BrandWave className="h-11 w-14 shrink-0" />
@@ -197,22 +197,6 @@ export function AppSidebar() {
  */
 const BEAM_LEAD_IN = 170;
 
-/**
- * The surface. No border property anywhere: the edge is an inset hairline, a
- * finer light line along the top for the lit face, and one soft shadow to seat
- * it — the beam site's own recipe.
- *
- * It is dark because the beam is LIGHT. A travelling glow has nothing to
- * travel against on a white key; measured on white it reached a saturation of
- * 39 out of 255 and covered a quarter of one percent of the key. Matte, not
- * glossy — the old lacquered black key is not coming back.
- */
-const KEY_SURFACE =
-  'bg-[oklch(0.19_0.006_285)] text-white shadow-[0_1px_2px_rgba(0,0,0,0.28),inset_0_0_0_1px_rgba(255,255,255,0.09),inset_0_1px_0_0_rgba(255,255,255,0.10)]';
-const KEY_SURFACE_HOVER =
-  'hover:bg-[oklch(0.235_0.006_285)] hover:shadow-[0_3px_10px_rgba(0,0,0,0.22),inset_0_0_0_1px_rgba(255,255,255,0.14),inset_0_1px_0_0_rgba(255,255,255,0.14)]';
-const KEY_SURFACE_ACTIVE =
-  'active:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10),inset_0_1px_3px_rgba(0,0,0,0.5)]';
 
 function SidebarAction({
   icon: Icon,
@@ -230,13 +214,14 @@ function SidebarAction({
   return (
     <BorderBeam
       size="md"
-      theme="dark"
+      theme="light"
       colorVariant="colorful"
       active={beaming}
-      borderRadius={12}
+      // The ring has to follow the pill, not a rectangle.
+      borderRadius={20}
       duration={1.15}
-      brightness={1.9}
-      saturation={2.0}
+      brightness={2.2}
+      saturation={2.2}
       className="block w-full"
     >
       <button
@@ -247,17 +232,12 @@ function SidebarAction({
           timers.current.push(setTimeout(() => setBeaming(false), 1100));
         }}
         className={cn(
-          'flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm font-medium tracking-[-0.01em]',
-          'transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
-          'hover:-translate-y-px active:translate-y-0',
+          'btn-glass-pill flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
+          'text-sm font-medium tracking-[-0.01em] text-foreground',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-          'motion-reduce:transition-none motion-reduce:hover:translate-y-0',
-          KEY_SURFACE,
-          KEY_SURFACE_HOVER,
-          KEY_SURFACE_ACTIVE,
         )}
       >
-        <Icon aria-hidden className="size-[18px] shrink-0 text-white/55" />
+        <Icon aria-hidden className="size-[18px] shrink-0 text-foreground/50" />
         {label}
       </button>
     </BorderBeam>
