@@ -95,10 +95,10 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={go.home}
-          className="flex items-center gap-2 rounded-md px-1 text-left text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="flex items-center gap-2 rounded-md px-1 text-left text-lg font-semibold tracking-tight whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
           Arztbrief-Assistent
-          <BrandWave className="h-11 w-14 shrink-0" />
+          <BrandWave className="h-10 w-12 shrink-0" />
         </button>
         <div className="flex flex-col gap-2">
           <SidebarAction icon={Stethoscope} label="Termin aufnehmen" onRun={() => go.record('gespraech')} />
@@ -214,14 +214,15 @@ function SidebarAction({
   return (
     <BorderBeam
       size="md"
-      theme="light"
-      colorVariant="colorful"
+      theme="dark"
+      colorVariant="ocean"
+      staticColors
       active={beaming}
       // The ring has to follow the pill, not a rectangle.
       borderRadius={20}
       duration={1.15}
-      brightness={2.2}
-      saturation={2.2}
+      brightness={2.4}
+      saturation={2.4}
       className="block w-full"
     >
       <button
@@ -237,7 +238,7 @@ function SidebarAction({
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
-        <Icon aria-hidden className="size-[18px] shrink-0 text-foreground/50" />
+        <Icon aria-hidden className="size-[18px] shrink-0 text-foreground" />
         {label}
       </button>
     </BorderBeam>
@@ -282,12 +283,12 @@ function TreeNode({
       >
         <ChevronRight
           className={cn(
-            'size-4 text-sidebar-foreground/50 transition-transform duration-200 motion-reduce:transition-none',
+            'size-4 text-sidebar-foreground transition-transform duration-200 motion-reduce:transition-none',
             open && 'rotate-90',
           )}
           aria-hidden
         />
-        <Icon aria-hidden className="text-sidebar-foreground/70" />
+        <Icon aria-hidden className="text-sidebar-foreground" />
         <span className="flex-1">{label}</span>
         <span className="tabular-nums text-sm font-normal text-sidebar-foreground/45">{count}</span>
       </SidebarMenuButton>
