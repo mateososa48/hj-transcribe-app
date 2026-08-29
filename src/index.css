@@ -1,13 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+/* The Word face. Calibri and Aptos are what Word itself uses and are present
+   on his Windows machine; Carlito is bundled as the fallback — metric-compatible
+   with Calibri, so the page keeps its Word proportions on any machine. */
+@import "@fontsource/carlito/400.css";
+@import "@fontsource/carlito/700.css";
+@import "@fontsource/carlito/400-italic.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: Aptos, Calibri, Carlito, 'Segoe UI', system-ui, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -384,22 +389,49 @@ h1, h2, h3 {
 .tiptap li p {
   margin: 0;
 }
-/* Section hints: an empty paragraph that carries a placeholder says what he
-   can do there (write, dictate with +, import) until he does it. */
-.tiptap p.is-empty[data-placeholder]:not([data-placeholder=''])::before,
-.tiptap p.is-editor-empty[data-placeholder]:not([data-placeholder=''])::before {
-  content: attr(data-placeholder);
+/* The invitation to dictate, in the empty line of a section. Quiet enough to
+   be paper furniture, big enough to be a target for a 75-year-old's mouse. */
+.tiptap .section-invite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 2rem;
+  padding: 0 0.85em;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
   color: var(--muted-foreground);
-  /* Absolute, never floated: a floated hint has no height, so on a narrow
-     page it wrapped to a second line and ran straight through the heading
-     below it. It may occupy the empty line it belongs to and nothing more. */
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  pointer-events: none;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: baseline;
+  transition:
+    background-color var(--duration-quick) var(--ease-smooth-out),
+    color var(--duration-quick) var(--ease-smooth-out),
+    border-color var(--duration-quick) var(--ease-smooth-out),
+    transform var(--duration-quick) var(--ease-smooth-out);
+}
+.tiptap .section-invite svg {
+  width: 1em;
+  height: 1em;
+}
+.tiptap .section-invite:hover {
+  background: var(--muted);
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+.tiptap .section-invite:active {
+  transform: scale(0.985);
+}
+.tiptap .section-invite:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tiptap .section-invite {
+    transition: none;
+  }
 }
 
 /* Motion tokens from the transitions.dev skill — the shared scale every

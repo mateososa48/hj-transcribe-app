@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Content } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Placeholder } from '@tiptap/extensions';
 import { FontSize, TextStyle } from '@tiptap/extension-text-style';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,16 +24,17 @@ import { deleteDocument, saveDocument } from '@/lib/documents';
 import { useAppStore } from '@/store/app-store';
 import { RecorderPopup } from '@/features/record/RecorderPopup';
 import { appendToDocument } from '@/lib/documents';
-import { BlockHandle } from './BlockHandle';
 import { processAbschnittDiktat } from './dictate';
 import { EditorToolbar } from './EditorToolbar';
+import { DictationRail } from './DictationRail';
 import { PagedSheet } from './PagedSheet';
 import { PagePushes } from './pagination';
+import { SectionInvite } from './section-invite';
+import type { DictateTarget } from './dictate-target';
 import { ImportDialog } from './ImportDialog';
 import { abschnittToNodes, bulletsToTiptap, sectionToTiptap } from './insert';
 import { editorRegistry } from './editor-registry';
 import { insertTitledContent } from './merge';
-import { ErgaenzungList } from '@/features/session/Ergaenzung';
 
 
 const AUTOSAVE_MS = 800;
@@ -79,10 +79,13 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   const [title, setTitle] = useState(record.title);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Open dictation popup + the live insert position (transaction-mapped). */
-  const [dictating, setDictating] = useState(false);
+  const [dictating, setDictating] = useState<DictateTarget | null>(null);
   const [importing, setImporting] = useState(false);
   const [ergVersion, setErgVersion] = useState(0);
   const insertPosRef = useRef<number | null>(null);
+  /** Lets the editor extension reach the current handler without re-creating. */
+  const inviteRef = useRef<(title: string) => void>(() => {});
+  inviteRef.current = (title: string) => setDictating({ kind: 'section', title });
 
   const editor = useEditor({
     extensions: [
@@ -91,24 +94,11 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
       FontSize,
       // Keeps page edges out of the middle of his sentences.
       PagePushes,
-      // Empty sections must not look dead: the paragraph under each heading
-      // says what he can do there until he does it.
-      Placeholder.configure({
-        showOnlyCurrent: false,
-        placeholder: ({ editor, node, pos }) => {
-          if (node.type.name !== 'paragraph' || node.content.size > 0) return '';
-          // The decoration scan can hand positions from a newer doc than
-          // editor.state during a transaction — resolve defensively.
-          try {
-            if (pos > editor.state.doc.content.size) return '';
-            const before = editor.state.doc.resolve(pos).nodeBefore;
-            return before?.type.name === 'heading'
-              ? 'Schreiben, mit + diktieren oder über „Einfügen" übernehmen …'
-              : '';
-          } catch {
-            return '';
-          }
-        },
+      // Every empty section carries its own invitation to dictate, in the
+      // line where the words will land.
+      SectionInvite.configure({
+        label: 'Diktieren',
+        onDictate: (title) => inviteRef.current(title),
       }),
     ],
     content: record.content as Content,
@@ -171,7 +161,11 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     });
   };
 
-  /** Insert a finished dictation — or persist it even if the editor is gone. */
+  /**
+   * Insert a finished dictation — or persist it even if the editor is gone.
+   * A section he picked by name outranks any section the model heard him
+   * announce: the destination he chose before speaking is the promise.
+   */
   const insertAbschnitt = (heading: string | null, text: string) => {
     if (editor && !editor.isDestroyed) {
       withUndo(() => {
@@ -299,39 +293,26 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
           editor={editor}
           documentTitle={title}
           onImport={() => setImporting(true)}
-          onDictate={() => {
-            insertPosRef.current = Math.min(
-              editor.state.selection.to,
-              editor.state.doc.content.size,
-            );
-            setDictating(true);
-          }}
-        />
-      ) : null}
-      {editor ? (
-        <BlockHandle
-          editor={editor}
-          onDictate={(pos) => {
-            insertPosRef.current = pos;
-            setDictating(true);
+          onDictate={(target) => {
+            if (target.kind === 'cursor') {
+              insertPosRef.current = Math.min(
+                editor.state.selection.to,
+                editor.state.doc.content.size,
+              );
+            }
+            setDictating(target);
           }}
         />
       ) : null}
 
-      {/* The page on the desk: a quiet canvas, one full sheet of A4. */}
-      <PagedSheet editor={editor}>
-        <EditorContent editor={editor} className="flex flex-1 flex-col" />
-      </PagedSheet>
-
-      {/* The source stays beside the draft: every dictation into this
-          Bericht remains playable, with its follow-along transcript. */}
-      <div className="border-t border-border bg-card empty:hidden">
-        <ErgaenzungList
-          sessionId={record.id}
-          version={ergVersion}
-          label="Diktat"
-          title="Diktate in diesem Bericht"
-        />
+      {/* The page on the desk, with its sources beside it: the recordings
+          dictated into this Bericht sit in a narrow column to the right,
+          which shifts the sheet left only once there is something to show. */}
+      <div className="flex min-h-0 flex-1">
+        <PagedSheet editor={editor}>
+          <EditorContent editor={editor} className="flex flex-1 flex-col" />
+        </PagedSheet>
+        <DictationRail documentId={record.id} version={ergVersion} />
       </div>
 
       <ImportDialog
@@ -353,18 +334,27 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
       {dictating ? (
         <RecorderPopup
           parentId={record.id}
-          ariaLabel="Abschnitt diktieren"
-          processingText="Der Abschnitt wird erstellt …"
+          ariaLabel={
+            dictating.kind === 'section'
+              ? `In „${dictating.title}" diktieren`
+              : 'An der Schreibmarke diktieren'
+          }
+          {...(dictating.kind === 'section' ? { destination: `In „${dictating.title}"` } : {})}
+          processingText={
+            dictating.kind === 'section'
+              ? `„${dictating.title}" wird geschrieben …`
+              : 'Der Abschnitt wird erstellt …'
+          }
           successText="Eingefügt"
           process={async (childId) => {
             const { heading, text } = await processAbschnittDiktat(childId);
-            insertAbschnitt(heading, text);
+            insertAbschnitt(dictating.kind === 'section' ? dictating.title : heading, text);
           }}
           onDone={() => {
             insertPosRef.current = null;
             setErgVersion((v) => v + 1);
           }}
-          onClose={() => setDictating(false)}
+          onClose={() => setDictating(null)}
         />
       ) : null}
     </div>

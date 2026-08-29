@@ -109,10 +109,10 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
 
   const file = new Document({
     // Word's built-in heading styles are light blue — his letters are black,
-    // bold, Arial. Define the look explicitly so the export IS the letter.
+    // bold, Calibri. Define the look explicitly so the export IS the letter.
     styles: {
       default: {
-        document: { run: { font: 'Arial', size: 22, color: '000000' } },
+        document: { run: { font: 'Calibri', size: 22, color: '000000' } },
       },
       paragraphStyles: [
         {
@@ -121,7 +121,7 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
           basedOn: 'Normal',
           next: 'Normal',
           quickFormat: true,
-          run: { font: 'Arial', size: 28, bold: true, color: '000000' },
+          run: { font: 'Calibri', size: 28, bold: true, color: '000000' },
           paragraph: { spacing: { before: 280, after: 120 } },
         },
         {
@@ -130,7 +130,7 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
           basedOn: 'Normal',
           next: 'Normal',
           quickFormat: true,
-          run: { font: 'Arial', size: 24, bold: true, color: '000000' },
+          run: { font: 'Calibri', size: 24, bold: true, color: '000000' },
           paragraph: { spacing: { before: 240, after: 100 } },
         },
         {
@@ -139,7 +139,7 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
           basedOn: 'Normal',
           next: 'Normal',
           quickFormat: true,
-          run: { font: 'Arial', size: 22, bold: true, color: '000000' },
+          run: { font: 'Calibri', size: 22, bold: true, color: '000000' },
           paragraph: { spacing: { before: 200, after: 80 } },
         },
       ],

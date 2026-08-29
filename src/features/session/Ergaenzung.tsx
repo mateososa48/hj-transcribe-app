@@ -62,14 +62,11 @@ export function ErgaenzungList({
   sessionId,
   version,
   label = 'Ergänzung',
-  title,
 }: {
   sessionId: string;
   version: number;
-  /** Row word: "Ergänzung" on the Diktat page, "Diktat" inside a Bericht. */
+  /** Row word: "Ergänzung" on the Diktat page. */
   label?: string;
-  /** When set, the list renders its own heading — only if rows exist. */
-  title?: string;
 }) {
   const [rows, setRows] = useState<ErgaenzungRow[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -98,11 +95,6 @@ export function ErgaenzungList({
 
   return (
     <div className="shrink-0">
-      {title ? (
-        <h2 className="border-t border-border bg-muted/40 px-5 py-3 text-lg font-semibold tracking-tight sm:px-6">
-          {title}
-        </h2>
-      ) : null}
       {rows.map(({ session, transcription }, i) => {
         const open = openId === session.id;
         const time = new Date(session.startedAt).toLocaleTimeString('de-DE', {

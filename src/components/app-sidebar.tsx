@@ -77,6 +77,17 @@ export function AppSidebar() {
     }),
   };
 
+  // Only one branch stands open. Three open lists at once is a wall of
+  // near-identical rows he has to read through to find anything; opening one
+  // closes the last. The branch holding whatever he is looking at starts open.
+  const [openNode, setOpenNode] = useState<NodeKey | null>(() =>
+    view.name === 'document' ? 'berichte' : 'diktate',
+  );
+  const nodeProps = (key: NodeKey) => ({
+    open: openNode === key,
+    onToggle: () => setOpenNode((current) => (current === key ? null : key)),
+  });
+
   return (
     <Sidebar>
       <SidebarHeader className="gap-3 p-4">
@@ -120,6 +131,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <TreeNode
+                  {...nodeProps('diktate')}
                   label="Diktate"
                   icon={Mic}
                   count={diktate.length}
@@ -137,6 +149,7 @@ export function AppSidebar() {
                 </TreeNode>
 
                 <TreeNode
+                  {...nodeProps('termine')}
                   label="Termine"
                   icon={MessagesSquare}
                   count={termine.length}
@@ -154,6 +167,7 @@ export function AppSidebar() {
                 </TreeNode>
 
                 <TreeNode
+                  {...nodeProps('berichte')}
                   label="Berichte"
                   icon={FileText}
                   count={documents.length}
@@ -196,27 +210,33 @@ export function AppSidebar() {
  * feel: rotating chevron, guide line (SidebarMenuSub's border), and a small
  * per-row stagger on the way in.
  */
+type NodeKey = 'diktate' | 'termine' | 'berichte';
+
 function TreeNode({
   label,
   icon: Icon,
   count,
   emptyText,
+  open,
+  onToggle,
   children,
 }: {
   label: string;
   icon: typeof Mic;
   count: number;
   emptyText: string;
+  open: boolean;
+  onToggle: () => void;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(true);
-
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="mt-1 first:mt-0">
       <SidebarMenuButton
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
-        className="h-10 font-medium"
+        // The branch outranks its contents: heavier, larger, full-strength
+        // ink against rows that are lighter and a size down.
+        className="h-11 text-[1.05rem] font-semibold tracking-tight"
       >
         <ChevronRight
           className={cn(
@@ -225,9 +245,9 @@ function TreeNode({
           )}
           aria-hidden
         />
-        <Icon aria-hidden className="text-sidebar-foreground/60" />
+        <Icon aria-hidden className="text-sidebar-foreground/70" />
         <span className="flex-1">{label}</span>
-        <span className="tabular-nums text-sm text-sidebar-foreground/40">{count}</span>
+        <span className="tabular-nums text-sm font-normal text-sidebar-foreground/45">{count}</span>
       </SidebarMenuButton>
 
       <div
@@ -307,11 +327,11 @@ function TreeRow({
         isActive={active}
         onClick={onOpen}
         title={tooltip ?? title}
-        className="h-auto w-full py-2 text-left"
+        className="h-auto w-full py-1.5 text-left"
       >
         <span className="flex min-w-0 flex-col">
-          <span className="truncate font-medium">{title}</span>
-          <span className="truncate text-sm text-sidebar-foreground/55">{subtitle}</span>
+          <span className="truncate text-sm font-medium">{title}</span>
+          <span className="truncate text-sm text-sidebar-foreground/50">{subtitle}</span>
         </span>
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>

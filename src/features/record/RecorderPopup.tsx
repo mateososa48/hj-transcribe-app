@@ -22,6 +22,7 @@ type Stage = 'recording' | 'processing' | 'success' | 'error' | 'closing';
 export function RecorderPopup({
   parentId,
   ariaLabel,
+  destination,
   processingText,
   successText,
   process,
@@ -31,6 +32,8 @@ export function RecorderPopup({
   /** The session/document this dictation files under (Session.parentId). */
   parentId: string;
   ariaLabel: string;
+  /** Where this dictation is headed, shown while he speaks. */
+  destination?: string;
   processingText: string;
   successText: string;
   /** The injected async step: transcribe + whatever the caller does with it. */
@@ -125,6 +128,12 @@ export function RecorderPopup({
           <div key="rec" className="flex items-center gap-4 motion-safe:animate-in motion-safe:fade-in">
             <RecordingWave level={recording.level} state={orbState} className="h-12 w-44" />
             <div className="text-2xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
+            {/* No doubt about where the words are going while he is speaking. */}
+            {destination ? (
+              <span className="max-w-[26ch] truncate rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
+                {destination}
+              </span>
+            ) : null}
             <Button
               size="lg"
               disabled={recording.status !== 'recording'}

@@ -19,6 +19,15 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -26,6 +35,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { documentSections } from './section-invite';
+import type { DictateTarget } from './dictate-target';
 
 /**
  * The instrument row above the sheet — the handful of formatting moves his
@@ -45,7 +56,7 @@ export function EditorToolbar({
   editor: Editor;
   documentTitle: string;
   onImport: () => void;
-  onDictate: () => void;
+  onDictate: (target: DictateTarget) => void;
 }) {
   const state = useEditorState({
     editor,
@@ -61,6 +72,9 @@ export function EditorToolbar({
       fontSize: (editor.getAttributes('textStyle').fontSize as string | undefined) ?? 'normal',
       canUndo: editor.can().undo(),
       canRedo: editor.can().redo(),
+      // The letter's own headings are the dictation targets, named in his
+      // vocabulary — not positions he has to aim at.
+      sections: documentSections(editor.state.doc),
     }),
   });
 
@@ -244,7 +258,33 @@ export function EditorToolbar({
         </Button>
 
         <div className="ms-auto flex shrink-0 items-center gap-1.5 ps-3">
-          {action('Diktieren', <Mic aria-hidden />, onDictate)}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" title="Diktieren" className="shrink-0 px-3">
+                  <Mic aria-hidden />
+                  <span className="hidden xl:inline">Diktieren</span>
+                </Button>
+              }
+            />
+            {/* Where the dictation goes is chosen BY NAME, before he speaks —
+                the one thing a dictation into a letter must never leave in
+                doubt. */}
+            <DropdownMenuContent align="end" className="min-w-64">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Wohin soll das Diktat?</DropdownMenuLabel>
+                {state.sections.map((title) => (
+                  <DropdownMenuItem key={title} onClick={() => onDictate({ kind: 'section', title })}>
+                    {title}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+              {state.sections.length > 0 ? <DropdownMenuSeparator /> : null}
+              <DropdownMenuItem onClick={() => onDictate({ kind: 'cursor' })}>
+                An der Schreibmarke
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {action('Einfügen', <Import aria-hidden />, onImport)}
           {action(
             'Word-Datei',
