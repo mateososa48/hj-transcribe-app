@@ -34,7 +34,7 @@ export function StandardLayout() {
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
           <SidebarTrigger />
           <span className="text-base font-semibold tracking-tight">Arztbrief-Assistent</span>
-          <BrandWave className="h-9 w-11 shrink-0" />
+          <BrandWave className="h-11 w-14 shrink-0" />
         </header>
         {/* The Bericht is the one full-bleed view: it lays out its own
             title row, toolbar stripe and page canvas edge-to-edge, the way

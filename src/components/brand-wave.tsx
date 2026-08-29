@@ -21,19 +21,13 @@ export function BrandWave({ className }: { className?: string }) {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const engine = new WaveEngine(host, {
       reducedMotion: false,
-      probe: () => {
-        // Periods of 24–48 seconds: the ribbon should read as alive on a
-        // second look, not catch the eye on the first.
-        const t = performance.now() / 1000;
-        // High baselines, slow change: the ribbon stays ARCED — a full,
-        // rounded figure, not a resting line — while barely drifting.
-        return {
-          low: 0.62 + 0.14 * Math.sin(t * 0.21),
-          mid: 0.3 + 0.1 * Math.sin(t * 0.13 + 1.4),
-          high: 0.12 + 0.06 * Math.sin(t * 0.17 + 2.3),
-          level: 0.44 + 0.1 * Math.sin(t * 0.09 + 0.6),
-        };
-      },
+      mark: true,
+      // A HELD pose, not a breathing one. The bands used to swing on slow
+      // sines, and because the drift rate is mixed from that same signal the
+      // whole figure sped up and slowed down as they moved. Holding them
+      // still leaves exactly one thing in motion — the travelling wave — at
+      // one unchanging speed.
+      probe: () => ({ low: 0.7, mid: 0.26, high: 0.1, level: 0.42 }),
     });
 
     if (!engine.ok) {

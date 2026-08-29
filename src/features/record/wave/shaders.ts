@@ -32,6 +32,8 @@ uniform float uLevel;
 uniform float uPresence;
 uniform float uWake;
 uniform float uWakeLag;
+/** 1 for the app mark: a round, evenly-lit figure with no water surface. */
+uniform float uMark;
 
 uniform vec3  uPaper;
 uniform float uDark;
@@ -49,12 +51,18 @@ vec3 spectral4(int s){
   return s == 0 ? c0 : s == 1 ? c1 : s == 2 ? c2 : c3;
 }
 
-float waveY(float x, float amp, float env, float drift, float harm){
-  float fundamental = sin(x * 1.1 + drift);
+float waveY(float x, float amp, float env, float drift, float harm, float mark){
+  // The mark shows several periods rather than half of one. Half a period is
+  // a crest that sits to one side and slides across; a few periods travel
+  // INSIDE a fixed, symmetric envelope, which is what lets a moving figure
+  // still read as a balanced one.
+  float f = mix(1.1, 2.9, mark);
+  float fundamental = sin(x * f + drift);
 
-  float partial = sin(x * 2.53 + drift * 1.6 + 1.7);
+  float partial = sin(x * f * 2.3 + drift * 1.6 + 1.7);
 
-  float tilt = 1.0 + 0.14 * sin(x * 0.42 - drift * 0.6);
+  // The travelling tilt is what makes the ribbon lean; a mark must not lean.
+  float tilt = 1.0 + 0.14 * (1.0 - mark) * sin(x * 0.42 - drift * 0.6);
 
   return amp * env * tilt * (fundamental + harm * partial);
 }
@@ -65,16 +73,18 @@ float thicknessAt(float xN, float uMid){
 }
 
 vec3 ribbon(vec2 p, float aspect, float amp, float spread, float drift,
-            float harm, float uMid, float uLevel, float soften){
+            float harm, float uMid, float uLevel, float soften, float mark){
   float xN  = p.x / max(aspect, 1.0);
   float env = cos(PI * 0.5 * min(abs(0.92 * xN), 1.0));
   env *= env;
 
-  float thick = thicknessAt(xN, uMid) * soften;
-  float soft  = (0.013 + 0.010 * uMid) * soften;
-  float inten = 0.030 * (1.0 + 0.7 * uLevel);
+  // A 40px mark cannot carry a hairline: the strokes are fatter, the falloff
+  // longer, and the intensity raised to pay for both.
+  float thick = thicknessAt(xN, uMid) * soften * mix(1.0, 2.0, mark);
+  float soft  = (0.013 + 0.010 * uMid) * soften * mix(1.0, 2.4, mark);
+  float inten = 0.030 * (1.0 + 0.7 * uLevel) * mix(1.0, 2.1, mark);
 
-  float yMain = waveY(p.x, amp, env, drift, harm);
+  float yMain = waveY(p.x, amp, env, drift, harm, mark);
 
   vec3 num = vec3(0.0), den = vec3(0.0);
   for (int s = 0; s < 4; s++){
@@ -82,17 +92,17 @@ vec3 ribbon(vec2 p, float aspect, float amp, float spread, float drift,
     den += hue;
 
     float ab = mix(-spread, spread, float(s) / 3.0);
-    float yL = waveY(p.x, amp + 0.03 * uMid, env, drift + ab, harm);
+    float yL = waveY(p.x, amp + 0.03 * uMid, env, drift + ab, harm, mark);
 
     float d    = abs(p.y - yL);
 
     float line = inten / (sqrt(d * d + soft * soft) + thick);
-    line *= exp(-d * d);
+    line *= exp(-d * d * mix(1.0, 0.4, mark));
 
     float lo = min(yMain, yL), hi = max(yMain, yL);
     float dB = max(0.0, max(p.y - hi, lo - p.y));
 
-    float band = 2.2 * inten * exp(-dB / (0.065 * soften));
+    float band = 2.2 * inten * exp(-dB / (mix(0.065, 0.115, mark) * soften));
 
     num += hue * (line + band);
   }
@@ -128,6 +138,8 @@ void main(){
 
   float idleBreath = 0.030 + 0.016 * sin(t * 0.38) * sin(t * 0.17 + 1.0);
   float amp    = mix(idleBreath, 0.20 + 0.34 * uLow, wake) * uPresence;
+  // Taller figure inside a narrower one: roundness is the ratio of the two.
+  amp = mix(amp, amp * 1.22, uMark);
 
   float lag    = clamp(uWakeLag, 0.0, 1.0);
   float spread = mix(0.55, 2.2 + 1.6 * uHigh + 0.6 * uMid, lag) * uPresence;
@@ -135,23 +147,34 @@ void main(){
 
   float xN    = p.x / max(aspect, 1.0);
   float drift = t * mix(0.30, 0.72, wake);
-  float ends  = exp(-pow(xN * 1.55, 2.0));
+  // Tighter horizontal falloff on the mark: the ribbon's tails run off the
+  // sides of a wide panel, but a mark must close inside its own box, which is
+  // also what makes it read round rather than long.
+  float ends  = exp(-pow(xN * mix(1.55, 2.15, uMark), 2.0));
 
-  vec3 col = ribbon(p, aspect, amp, spread, drift, harm, uMid, uLevel, 1.0);
+  vec3 col = ribbon(p, aspect, amp, spread, drift, harm, uMid, uLevel, 1.0, uMark);
 
-  const float SURFACE = 0.50;
-  vec2 rp = vec2(p.x, 2.0 * SURFACE - p.y);
-  vec3 refl = ribbon(rp, aspect, amp * 0.86, spread, drift, harm, uMid, uLevel, 2.1);
+  // The water surface belongs to the recording ribbon. On the mark it read as
+  // a stray gleam across the top, and it is the one thing breaking the
+  // figure's symmetry.
+  if (uMark < 0.5) {
+    const float SURFACE = 0.50;
+    vec2 rp = vec2(p.x, 2.0 * SURFACE - p.y);
+    vec3 refl = ribbon(rp, aspect, amp * 0.86, spread, drift, harm, uMid, uLevel, 2.1, 0.0);
 
-  float underSurface = smoothstep(0.0, 0.16, p.y - SURFACE);
-  float depth = clamp((p.y - SURFACE) / 0.95, 0.0, 1.0);
-  col += refl * 0.24 * underSurface * (1.0 - depth) * (1.0 - depth);
+    float underSurface = smoothstep(0.0, 0.16, p.y - SURFACE);
+    float depth = clamp((p.y - SURFACE) / 0.95, 0.0, 1.0);
+    col += refl * 0.24 * underSurface * (1.0 - depth) * (1.0 - depth);
+  }
 
-  col = pow(max(col, 0.0), vec3(1.45));
+  col = pow(max(col, 0.0), vec3(mix(1.45, 1.15, uMark)));
 
   float above = smoothstep(1.0, 0.34, -yScreen);
   float below = smoothstep(1.06, 0.52, yScreen);
   float edge  = yScreen < 0.0 ? above : below;
+  // Top and bottom fade identically on the mark — the asymmetric pair above
+  // is what made it sit higher on one side.
+  edge = mix(edge, smoothstep(1.08, 0.30, abs(yScreen)), uMark);
   col *= edge * ends * uPresence;
 
   vec3 outc;

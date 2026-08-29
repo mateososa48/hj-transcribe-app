@@ -57,6 +57,11 @@ export interface WaveEngineOptions {
    * indicator that cannot move cannot tell you the microphone is working.
    */
   reducedMotion: boolean;
+  /**
+   * Render as the app mark: rounder, fatter, evenly lit, and without the
+   * water surface. The instrument keeps its own look.
+   */
+  mark?: boolean;
 }
 
 export class WaveEngine {
@@ -84,12 +89,14 @@ export class WaveEngine {
 
   private readonly probe: BandProbe;
   private readonly dark: boolean;
+  private readonly mark: boolean;
 
   constructor(host: HTMLElement, options: WaveEngineOptions) {
     this.host = host;
     this.reducedMotion = options.reducedMotion;
     this.probe = options.probe;
     this.dark = options.dark ?? false;
+    this.mark = options.mark ?? false;
     this.signal.setProbe(options.probe);
 
     this.canvas = document.createElement('canvas');
@@ -121,6 +128,7 @@ export class WaveEngine {
       'uWakeLag',
       'uPaper',
       'uDark',
+      'uMark',
     ]) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
@@ -258,6 +266,7 @@ export class WaveEngine {
     gl.uniform1f(this.u.uPresence!, this.presence);
     gl.uniform1f(this.u.uWake!, this.wake);
     gl.uniform1f(this.u.uWakeLag!, this.wakeLag);
+    gl.uniform1f(this.u.uMark!, this.mark ? 1 : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
