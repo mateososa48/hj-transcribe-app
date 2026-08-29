@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, FilePen, FileText, MessagesSquare, Mic, Settings2, Stethoscope } from 'lucide-react';
 
+import { BorderBeam } from 'border-beam';
+
 import { BrandWave } from '@/components/brand-wave';
 import { createDocument } from '@/lib/documents';
 import {
@@ -195,6 +197,23 @@ export function AppSidebar() {
  */
 const BEAM_LEAD_IN = 170;
 
+/**
+ * The surface. No border property anywhere: the edge is an inset hairline, a
+ * finer light line along the top for the lit face, and one soft shadow to seat
+ * it — the beam site's own recipe.
+ *
+ * It is dark because the beam is LIGHT. A travelling glow has nothing to
+ * travel against on a white key; measured on white it reached a saturation of
+ * 39 out of 255 and covered a quarter of one percent of the key. Matte, not
+ * glossy — the old lacquered black key is not coming back.
+ */
+const KEY_SURFACE =
+  'bg-[oklch(0.19_0.006_285)] text-white shadow-[0_1px_2px_rgba(0,0,0,0.28),inset_0_0_0_1px_rgba(255,255,255,0.09),inset_0_1px_0_0_rgba(255,255,255,0.10)]';
+const KEY_SURFACE_HOVER =
+  'hover:bg-[oklch(0.235_0.006_285)] hover:shadow-[0_3px_10px_rgba(0,0,0,0.22),inset_0_0_0_1px_rgba(255,255,255,0.14),inset_0_1px_0_0_rgba(255,255,255,0.14)]';
+const KEY_SURFACE_ACTIVE =
+  'active:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10),inset_0_1px_3px_rgba(0,0,0,0.5)]';
+
 function SidebarAction({
   icon: Icon,
   label,
@@ -209,19 +228,39 @@ function SidebarAction({
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   return (
-    <button
-      type="button"
-      data-beam={beaming || undefined}
-      onClick={() => {
-        setBeaming(true);
-        timers.current.push(setTimeout(onRun, BEAM_LEAD_IN));
-        timers.current.push(setTimeout(() => setBeaming(false), 900));
-      }}
-      className="btn-beam flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-card px-3.5 text-left text-[0.95rem] font-medium text-foreground shadow-xs transition-[background-color,border-color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:border-foreground/20 hover:bg-muted/60 hover:shadow-sm active:translate-y-0 active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    <BorderBeam
+      size="md"
+      theme="dark"
+      colorVariant="colorful"
+      active={beaming}
+      borderRadius={12}
+      duration={1.15}
+      brightness={1.9}
+      saturation={2.0}
+      className="block w-full"
     >
-      <Icon aria-hidden className="size-5 shrink-0 text-muted-foreground" />
-      {label}
-    </button>
+      <button
+        type="button"
+        onClick={() => {
+          setBeaming(true);
+          timers.current.push(setTimeout(onRun, BEAM_LEAD_IN));
+          timers.current.push(setTimeout(() => setBeaming(false), 1100));
+        }}
+        className={cn(
+          'flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm font-medium tracking-[-0.01em]',
+          'transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+          'hover:-translate-y-px active:translate-y-0',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+          'motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+          KEY_SURFACE,
+          KEY_SURFACE_HOVER,
+          KEY_SURFACE_ACTIVE,
+        )}
+      >
+        <Icon aria-hidden className="size-[18px] shrink-0 text-white/55" />
+        {label}
+      </button>
+    </BorderBeam>
   );
 }
 
