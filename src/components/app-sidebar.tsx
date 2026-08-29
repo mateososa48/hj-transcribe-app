@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, FilePen, FileText, MessagesSquare, Mic, Settings2, Stethoscope } from 'lucide-react';
 
 import { BrandWave } from '@/components/brand-wave';
 import { createDocument } from '@/lib/documents';
-import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -100,28 +99,9 @@ export function AppSidebar() {
           <BrandWave className="h-11 w-14 shrink-0" />
         </button>
         <div className="flex flex-col gap-2">
-          <Button size="lg" className="justify-start" onClick={() => go.record('gespraech')}>
-            <Stethoscope aria-hidden />
-            Termin aufnehmen
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="justify-start"
-            onClick={() => go.record('beurteilung')}
-          >
-            <Mic aria-hidden />
-            Diktat starten
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="justify-start"
-            onClick={go.newDocument}
-          >
-            <FilePen aria-hidden />
-            Bericht erstellen
-          </Button>
+          <SidebarAction icon={Stethoscope} label="Termin aufnehmen" onRun={() => go.record('gespraech')} />
+          <SidebarAction icon={Mic} label="Diktat starten" onRun={() => go.record('beurteilung')} />
+          <SidebarAction icon={FilePen} label="Bericht erstellen" onRun={go.newDocument} />
         </div>
       </SidebarHeader>
 
@@ -201,6 +181,47 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+/**
+ * The three ways in. One design for all three — they are peers, and dressing
+ * one as the important one only makes the other two look like afterthoughts.
+ *
+ * Plain surfaces, no gloss: a hairline edge, a quiet lift under the cursor,
+ * and on press one turn of the ribbon's own light around the border. The
+ * action waits out the first arc of that beam, so the press is acknowledged
+ * on the key he actually pressed before the screen changes under him.
+ */
+const BEAM_LEAD_IN = 170;
+
+function SidebarAction({
+  icon: Icon,
+  label,
+  onRun,
+}: {
+  icon: typeof Mic;
+  label: string;
+  onRun: () => void;
+}) {
+  const [beaming, setBeaming] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  return (
+    <button
+      type="button"
+      data-beam={beaming || undefined}
+      onClick={() => {
+        setBeaming(true);
+        timers.current.push(setTimeout(onRun, BEAM_LEAD_IN));
+        timers.current.push(setTimeout(() => setBeaming(false), 900));
+      }}
+      className="btn-beam flex h-12 w-full items-center gap-3 rounded-xl border border-border bg-card px-3.5 text-left text-[0.95rem] font-medium text-foreground shadow-xs transition-[background-color,border-color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:border-foreground/20 hover:bg-muted/60 hover:shadow-sm active:translate-y-0 active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
+      <Icon aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+      {label}
+    </button>
   );
 }
 

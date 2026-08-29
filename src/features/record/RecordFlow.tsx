@@ -84,8 +84,12 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
     }
   }
 
+  // Arriving here is a mode change — the room goes quiet and the instrument
+  // comes up. It must not blink into place: the page settles in, and the
+  // instrument panel follows a beat later, which is what makes pressing
+  // „Diktat starten" feel like one continuous movement rather than a jump.
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]">
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="lg" onClick={goHome} disabled={isRecording}>
           <ArrowLeft aria-hidden />
@@ -103,7 +107,7 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
         </p>
       </div>
 
-      <div className="flex flex-col items-center gap-6 rounded-xl border border-border bg-card px-6 py-10">
+      <div className="flex flex-col items-center gap-6 rounded-xl border border-border bg-card px-6 py-10 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-[0.98] motion-safe:duration-700 motion-safe:delay-100 motion-safe:fill-mode-backwards motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]">
         <div className="text-6xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
         <RecordingWave level={recording.level} state={orbState} className="h-36" />
 
