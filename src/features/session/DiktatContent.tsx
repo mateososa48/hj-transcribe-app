@@ -10,6 +10,7 @@ import { BeurteilungText } from './BeurteilungText';
 import { ErgaenzungButton, ErgaenzungList, ErgaenzungPopup } from './Ergaenzung';
 import type { ActiveProcessingPhase } from './processing-handoff-model';
 import { ProcessingHandoff } from './ProcessingHandoff';
+import { RegenerateControls } from './RegenerateControls';
 import { SyncedPlayback } from './SyncedPlayback';
 import { useBeurteilung } from './useBeurteilung';
 
@@ -32,6 +33,7 @@ export function DiktatContent({
   failed,
   errorText,
   canGenerate,
+  running,
   onChanged,
 }: {
   session: Session;
@@ -150,8 +152,18 @@ export function DiktatContent({
           {result ? (
             <>
               <BeurteilungText b={b} className="flex-1 px-5 py-4 sm:px-6" />
-              <footer className="shrink-0 border-t border-border px-5 py-3 sm:px-6">
+              {/* Ergänzen adds to the letter; the two on the right replace it
+                  and put it back. A Diktat had neither until now, so a bad
+                  text could not be re-run and the kept previous version — the
+                  whole point of storing one — was unreachable from here. */}
+              <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border px-5 py-3 sm:px-6">
                 <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
+                <RegenerateControls
+                  session={session}
+                  result={result}
+                  running={running}
+                  onChanged={onChanged}
+                />
               </footer>
             </>
           ) : (

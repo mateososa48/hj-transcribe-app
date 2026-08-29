@@ -5,14 +5,13 @@ import { formatElapsed } from '@/features/record/elapsed';
 import { usePipelineState } from '@/features/record/useRecording';
 import type { SessionKind } from '@/lib/db';
 import { cn } from '@/lib/utils';
-import { ProcessingWave } from './ProcessingWave';
-import { loadRecordingShape, SHAPE_RESOLUTION } from './recording-shape';
+import { TranscriptionBand } from './TranscriptionBand';
+import { loadRecordingShape } from './recording-shape';
 import {
   estimatePhaseMs,
   getProcessingHandoffCopy,
   getProcessingSteps,
   isOverrunning,
-  phaseProgress,
   type ActiveProcessingPhase,
   type ProcessingStep,
 } from './processing-handoff-model';
@@ -67,11 +66,9 @@ export function ProcessingHandoff({
   const startedAt = startedAtProp ?? (pipelineState.phaseStartedAt || mountedAt.current);
 
   const loadedShape = useRecordingShape(sessionId, shapeProp);
-  const [webglDown, setWebglDown] = useState(false);
   const now = useTick(1000);
   const elapsedMs = Math.max(0, now - startedAt);
   const estimateMs = estimatePhaseMs(phase, audioDurationMs);
-  const progress = phaseProgress(elapsedMs, estimateMs);
   const overrunning = isOverrunning(elapsedMs, estimateMs);
 
   return (
@@ -93,29 +90,13 @@ export function ProcessingHandoff({
 
       <p className="mt-1.5 max-w-[60ch] text-base text-muted-foreground">{copy.description}</p>
 
-      {/* The instrument, at the size the recorder shows it. Below it a slim
-          rail, because a ribbon reads as "working" but not as "how far". */}
-      {webglDown ? (
-        <RecordingBand shape={loadedShape} progress={progress} phase={phase} />
-      ) : (
-        <ProcessingWave
-          shape={loadedShape}
-          startedAt={startedAt}
-          estimateMs={estimateMs}
-          className="mt-4 h-36"
-          onUnsupported={() => setWebglDown(true)}
-        />
-      )}
-
-      <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
-        <div
-          className={cn(
-            'h-full origin-left rounded-full bg-foreground',
-            'transition-transform duration-1000 ease-linear motion-reduce:transition-none',
-          )}
-          style={{ transform: `scaleX(${progress})` }}
-        />
-      </div>
+      <TranscriptionBand
+        shape={loadedShape}
+        startedAt={startedAt}
+        estimateMs={estimateMs}
+        drafting={phase === 'notes'}
+        className="mt-6 h-24"
+      />
 
       <ol className="mt-5 space-y-2.5">
         {steps.map((step) => (
@@ -160,92 +141,6 @@ function useTick(everyMs: number): number {
     return () => clearInterval(id);
   }, [everyMs]);
   return now;
-}
-
-/**
- * The no-WebGL fallback for the ribbon above.
- *
- * The recording, turning into text: one subject changing state, rather than a
- * diagram of boxes passing packets —
- * ahead of the reading head the band stands as the outline of his recording,
- * behind it the same bars have settled into a line of text — and the spaces
- * in that line are where he actually paused, because the quiet stretches of
- * the outline fall below the ink threshold and leave a gap.
- *
- * In the drafting phase the material is already text, so the head sweeps a
- * second time and the writing darkens from grey to ink as it is composed.
- *
- * There is not one keyframe here. The head's position is elapsed-against-
- * estimate, and every bar decides its own state from where it sits relative
- * to that head, so the wipe follows the reading order for free.
- */
-/** Below this the recording is quiet enough that the writing gets a word space. */
-const PAUSE_THRESHOLD = 0.22;
-
-/** Collapsed bar height as a fraction of the band (h-20 = 5rem = 90px @ 18px root). */
-const TEXT_SCALE = (2.5 / 90).toFixed(4);
-
-function RecordingBand({
-  shape,
-  progress,
-  phase,
-}: {
-  shape: number[];
-  progress: number;
-  phase: ActiveProcessingPhase;
-}) {
-  const bars = shape.length > 0 ? shape : Array.from({ length: SHAPE_RESOLUTION }, () => 0.45);
-  const drafting = phase === 'notes';
-
-  return (
-    <div className="relative mt-6 h-20 w-full" aria-hidden>
-      <div className="flex h-full w-full items-center gap-px">
-        {bars.map((value, index) => {
-          const position = (index + 0.5) / bars.length;
-          const read = position <= progress;
-          // A quiet stretch reads as a pause, and a pause is a word space.
-          // Kept low deliberately: at a higher threshold ordinary speech
-          // breaks up and the line stops reading as writing at all.
-          const isPause = value < PAUSE_THRESHOLD;
-          const asText = drafting || read;
-          return (
-            <span
-              key={index}
-              className={cn(
-                'h-full flex-1 origin-center rounded-full',
-                'transition-[transform,opacity,background-color] duration-500 ease-out',
-                'motion-reduce:transition-none',
-                asText && isPause ? 'opacity-0' : 'opacity-100',
-                drafting && read ? 'bg-foreground' : asText ? 'bg-muted-foreground/60' : 'bg-foreground',
-              )}
-              style={{
-                // Width carries the reading as much as height: as sound each
-                // bar is a thin stroke with air around it, as text it widens
-                // to fill its slot so the marks run together into words.
-                transform: asText
-                  ? `scaleX(1) scaleY(${TEXT_SCALE})`
-                  : `scaleX(0.5) scaleY(${Math.max(value, 0.06).toFixed(3)})`,
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* The reading head. Full-width carrier so the percentage resolves
-          against the band, with the rule on its trailing edge; parks with the
-          estimate rather than running to the end, for the same reason the
-          wording admits an overrun. */}
-      <span
-        className={cn(
-          'pointer-events-none absolute inset-y-0 left-0 w-full',
-          'transition-transform duration-1000 ease-linear motion-reduce:transition-none',
-        )}
-        style={{ transform: `translateX(${((progress - 1) * 100).toFixed(2)}%)` }}
-      >
-        <span className="absolute inset-y-0 right-0 w-px bg-foreground/70" />
-      </span>
-    </div>
-  );
 }
 
 /** The recording's own outline, loaded once per session. */

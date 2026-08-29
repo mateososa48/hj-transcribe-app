@@ -27,10 +27,12 @@ import { cn } from '@/lib/utils';
  * so the band behaves here the way it will on a real recording.
  */
 const SAMPLE_SHAPE: number[] = Array.from({ length: SHAPE_RESOLUTION }, (_, i) => {
+  // Two real breaths, where a dictating voice stops to think.
+  if ((i > 34 && i < 42) || (i > 86 && i < 92)) return 0.05;
   const phrase = Math.sin(i / 6.2) * 0.5 + 0.5;
   const breath = 0.45 + (Math.sin(i / 22) * 0.5 + 0.5) * 0.55;
-  const grain = Math.sin(i * 2.7) * 0.12;
-  const v = 0.18 + phrase * breath * 0.9 + grain;
+  const grain = Math.sin(i / 3.3) * 0.08;
+  const v = 0.28 + phrase * breath * 0.72 + grain;
   return Math.min(1, Math.max(0.05, v));
 });
 
@@ -182,11 +184,11 @@ export function ProcessingPreview() {
         </div>
 
         <p className="mt-10 max-w-[72ch] text-sm text-muted-foreground">
-          Es ist dasselbe Band wie bei der Aufnahme — derselbe Shader, dieselben vier
-          Farbkopien. Nur die Quelle ist eine andere: nicht das Mikrofon, sondern die Form
-          dieser Aufnahme, wie sie auf der Platte liegt, abgeschritten im Tempo der Arbeit.
-          Der Fortschrittsbalken hält bewusst vor dem Ende an und zeigt nie „fertig“, solange
-          es nicht fertig ist; dauert ein Schritt länger als geschätzt, sagt der Text das.
+          Das Band ist diese Aufnahme: seine Form stammt aus den gespeicherten Ton-Abschnitten,
+          und wo er beim Sprechen eine Pause gemacht hat, bleibt zwischen den Wörtern eine Lücke.
+          Der Lesekopf wandert im Tempo der Verarbeitung darüber; was er passiert hat, ist zu
+          Schrift geworden. Er hält bewusst vor dem Ende an und zeigt nie „fertig“, solange es
+          nicht fertig ist — dauert ein Schritt länger als geschätzt, sagt der Text das.
         </p>
       </div>
     </div>

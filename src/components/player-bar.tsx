@@ -143,11 +143,14 @@ export function PlayerBar({
   const progress = duration > 0 ? Math.min(current / duration, 1) : 0;
 
   return (
-    // On narrow screens the timeline takes its own full row — squeezed between
-    // the time labels it degrades to an unscrubbable sliver.
+    // The timeline takes its own full row unless the bar is genuinely wide,
+    // and "wide" has to mean THIS BAR, not the window: the player sits in a
+    // side panel roughly 340px across, so a viewport breakpoint said "plenty
+    // of room" and squeezed the scrubber down to 29 pixels between the fixed
+    // controls. A container query measures the space that actually exists.
     <div
       className={cn(
-        'flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-4 py-3.5',
+        '@container flex flex-wrap items-center gap-x-2 gap-y-2 rounded-xl border border-border bg-card px-4 py-3.5 @xl:gap-x-4',
         className,
       )}
     >
@@ -191,7 +194,7 @@ export function PlayerBar({
         aria-valuemax={Math.round(duration)}
         aria-valuenow={Math.round(current)}
         aria-valuetext={`${clock(current)} von ${clock(duration)}`}
-        className="group relative order-last flex h-8 min-w-0 flex-1 basis-full cursor-pointer items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:order-none sm:basis-auto"
+        className="group relative order-last flex h-8 min-w-0 flex-1 basis-full cursor-pointer items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring @xl:order-none @xl:basis-auto"
         onPointerDown={(e) => {
           // Seek first, capture second: capture can throw (NotFoundError on
           // some inputs) and must never eat the click itself.
