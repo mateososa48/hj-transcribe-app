@@ -1,9 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/* The Word face. Calibri and Aptos are what Word itself uses and are present
-   on his Windows machine; Carlito is bundled as the fallback — metric-compatible
-   with Calibri, so the page keeps its Word proportions on any machine. */
+@import "@fontsource-variable/geist";
+/* The Word face — for the SHEET only, not the app. Aptos and Calibri are what
+   Word itself uses and are present on his Windows machine; Carlito is bundled
+   as the fallback, metric-compatible with Calibri, so a Bericht keeps Word's
+   proportions on any machine. */
 @import "@fontsource/carlito/400.css";
 @import "@fontsource/carlito/700.css";
 @import "@fontsource/carlito/400-italic.css";
@@ -12,7 +14,8 @@
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: Aptos, Calibri, Carlito, 'Segoe UI', system-ui, sans-serif;
+    --font-sans: 'Geist Variable', sans-serif;
+    --font-document: Aptos, Calibri, Carlito, 'Segoe UI', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -336,6 +339,7 @@ h1, h2, h3 {
    own scale. Tabs render on Word-like tab stops (Medikation columns), and
    literal whitespace survives — what he sees is what exports. */
 .tiptap {
+  font-family: var(--font-document);
   outline: none;
   white-space: pre-wrap;
   tab-size: 18;
@@ -392,6 +396,8 @@ h1, h2, h3 {
 /* The invitation to dictate, in the empty line of a section. Quiet enough to
    be paper furniture, big enough to be a target for a 75-year-old's mouse. */
 .tiptap .section-invite {
+  /* A control, not part of the letter: it keeps the app's own face. */
+  font-family: var(--font-sans);
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
