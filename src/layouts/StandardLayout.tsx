@@ -36,7 +36,16 @@ export function StandardLayout() {
           <span className="text-base font-semibold tracking-tight">Arztbrief-Assistent</span>
           <BrandWave className="h-9 w-11 shrink-0" />
         </header>
-        <main className={`mx-auto w-full flex-1 px-6 py-8 sm:px-10 xl:px-14 ${MAIN_WIDTHS[view.name]}`}>
+        {/* The Bericht is the one full-bleed view: it lays out its own
+            title row, toolbar stripe and page canvas edge-to-edge, the way
+            Word owns its window. Every other view sits in the framed column. */}
+        <main
+          className={
+            view.name === 'document'
+              ? 'flex w-full flex-1 flex-col'
+              : `mx-auto w-full flex-1 px-6 py-8 sm:px-10 xl:px-14 ${MAIN_WIDTHS[view.name]}`
+          }
+        >
           {view.name === 'start' ? (
             <StartScreen />
           ) : view.name === 'record' ? (

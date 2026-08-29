@@ -17,7 +17,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
@@ -29,6 +28,8 @@ import { appendToDocument } from '@/lib/documents';
 import { BlockHandle } from './BlockHandle';
 import { processAbschnittDiktat } from './dictate';
 import { EditorToolbar } from './EditorToolbar';
+import { PagedSheet } from './PagedSheet';
+import { PagePushes } from './pagination';
 import { ImportDialog } from './ImportDialog';
 import { abschnittToNodes, bulletsToTiptap, sectionToTiptap } from './insert';
 import { editorRegistry } from './editor-registry';
@@ -88,6 +89,8 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
       StarterKit,
       TextStyle,
       FontSize,
+      // Keeps page edges out of the middle of his sentences.
+      PagePushes,
       // Empty sections must not look dead: the paragraph under each heading
       // says what he can do there until he does it.
       Placeholder.configure({
@@ -111,7 +114,7 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     content: record.content as Content,
     editorProps: {
       attributes: {
-        class: 'tiptap min-h-[62vh] text-base',
+        class: 'tiptap flex-1 text-base',
         'aria-label': 'Bericht',
       },
     },
@@ -241,11 +244,22 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   }
 
   return (
-    <div className="space-y-6 pb-16">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <Badge variant="outline">Bericht</Badge>
-          <AlertDialog>
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* The title sits at the very top of the working area, the way a
+          document names itself — no label above it, nothing between it and
+          the instrument row. */}
+      <div className="flex items-center gap-3 px-4 pt-6 pb-3 sm:px-6">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={() => void saveTitle()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
+          aria-label="Titel des Berichts"
+          className="h-11 flex-1 rounded-lg border-transparent bg-transparent px-2 text-2xl font-semibold tracking-tight shadow-none transition-[background-color,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-border/60 hover:bg-muted/40 focus-visible:border-border focus-visible:bg-background md:text-2xl"
+        />
+        <AlertDialog>
             <AlertDialogTrigger
               render={
                 <Button variant="ghost" className="text-muted-foreground">
@@ -276,20 +290,8 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
                   Endgültig löschen
                 </AlertDialogAction>
               </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={() => void saveTitle()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-          aria-label="Titel des Berichts"
-          className="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
-        />
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {editor ? (
@@ -316,16 +318,14 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
         />
       ) : null}
 
-      {/* The page on the desk: a quiet canvas, one sheet. */}
-      <div className="rounded-xl bg-muted/40 px-4 py-8 sm:px-8 sm:py-10">
-        <div className="mx-auto max-w-[52rem] rounded-lg border border-border bg-card px-8 py-10 sm:px-16 sm:py-14">
-          <EditorContent editor={editor} />
-        </div>
-      </div>
+      {/* The page on the desk: a quiet canvas, one full sheet of A4. */}
+      <PagedSheet editor={editor}>
+        <EditorContent editor={editor} className="flex flex-1 flex-col" />
+      </PagedSheet>
 
       {/* The source stays beside the draft: every dictation into this
           Bericht remains playable, with its follow-along transcript. */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card empty:hidden">
+      <div className="border-t border-border bg-card empty:hidden">
         <ErgaenzungList
           sessionId={record.id}
           version={ergVersion}

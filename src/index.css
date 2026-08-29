@@ -144,7 +144,11 @@
   16px and then hand-patch individual sizes.
 */
 html {
-    font-size: 18px;
+    /* 16.2px = the 18px scale at 90%. Mateo reviewed the app at 90% browser
+       zoom and asked for that to be the default proportion; everything is
+       rem-based, so this one number moves the whole interface with it and
+       still sits above the 16px browsers ship. */
+    font-size: 16.2px;
 }
 
 body {
@@ -335,6 +339,7 @@ h1, h2, h3 {
 .tiptap p {
   margin: 0.45em 0;
   min-height: 1.2em;
+  position: relative;
 }
 .tiptap h1,
 .tiptap h2,
@@ -385,7 +390,39 @@ h1, h2, h3 {
 .tiptap p.is-editor-empty[data-placeholder]:not([data-placeholder=''])::before {
   content: attr(data-placeholder);
   color: var(--muted-foreground);
-  float: left;
-  height: 0;
+  /* Absolute, never floated: a floated hint has no height, so on a narrow
+     page it wrapped to a second line and ran straight through the heading
+     below it. It may occupy the empty line it belongs to and nothing more. */
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
   pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Motion tokens from the transitions.dev skill — the shared scale every
+   popup and micro-interaction reads from. */
+:root {
+  --duration-quick: 150ms;
+  --duration-fast: 250ms;
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --scale-dropdown-pre: 0.97;
+  --scale-dropdown-closing: 0.99;
+}
+
+/* Dropdown keys turn as they open — the small tell that a menu grew from this
+   control rather than appearing over it. Written here rather than as utility
+   classes: the stacked arbitrary variant this needs is not generated. */
+[data-slot='select-trigger'] svg:last-of-type {
+  transition: transform var(--duration-fast) var(--ease-smooth-out);
+}
+[data-slot='select-trigger'][data-popup-open] svg:last-of-type {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='select-trigger'] svg:last-of-type {
+    transition: none;
+  }
 }
