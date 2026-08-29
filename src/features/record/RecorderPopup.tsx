@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, RotateCcw, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { RecordingWave } from '@/features/record/RecordingWave';
 import type { OrbState } from '@/features/record/RecordingOrb';
 import { recordingSession, useElapsed, useRecordingState } from '@/features/record/useRecording';
@@ -11,22 +10,22 @@ import { cn } from '@/lib/utils';
 
 /**
  * The floating dictation window — the running clock and the ribbon of light —
- * that records INTO something without leaving the page. What happens with the
- * finished audio is injected: the Diktat page merges it into the standing
- * Beurteilung, the Bericht editor turns it into a section. The window itself
- * only knows record → process → check mark → slide away.
+ * that records INTO something without leaving the page.
+ *
+ * It records and nothing else. Pressing Fertig hands the finished recording to
+ * the caller and the window leaves at once, which is what frees the microphone
+ * for the next section while the last one is still being written up (see
+ * ./dictation-jobs.tsx). Everything after the audio — transcription, drafting,
+ * where the text lands — happens out there, per dictation.
  */
 
-type Stage = 'recording' | 'processing' | 'success' | 'error' | 'closing';
+type Stage = 'recording' | 'error' | 'closing';
 
 export function RecorderPopup({
   parentId,
   ariaLabel,
   destination,
-  processingText,
-  successText,
-  process,
-  onDone,
+  onCaptured,
   onClose,
 }: {
   /** The session/document this dictation files under (Session.parentId). */
@@ -34,15 +33,14 @@ export function RecorderPopup({
   ariaLabel: string;
   /** Where this dictation is headed, shown while he speaks. */
   destination?: string;
-  processingText: string;
-  successText: string;
-  /** The injected async step: transcribe + whatever the caller does with it. */
-  process: (childId: string) => Promise<void>;
-  onDone: () => void;
+  /** The finished child recording. Called once, before the window leaves. */
+  onCaptured: (childId: string) => void;
   onClose: () => void;
 }) {
   const recording = useRecordingState();
   const [stage, setStage] = useState<Stage>('recording');
+  /** The singleton keeps the LAST recording's frozen clock; ignore it until ours runs. */
+  const [started, setStarted] = useState(false);
   const [errorText, setErrorText] = useState('');
   const childRef = useRef<string | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -51,12 +49,23 @@ export function RecorderPopup({
   // The same singleton recorder as everywhere: chunks flush to disk every
   // five seconds under the child session, crash-safe from the first moment.
   useEffect(() => {
-    void recordingSession.start('beurteilung', { parentId });
+    let cancelled = false;
+    void recordingSession.start('beurteilung', { parentId }).then((ok) => {
+      if (cancelled) return;
+      if (ok) setStarted(true);
+      else {
+        setErrorText('Es läuft bereits eine Aufnahme.');
+        setStage('error');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [parentId]);
 
   const elapsed = useElapsed(
-    recording.startedAt,
-    recording.status === 'recording',
+    started ? recording.startedAt : null,
+    started && recording.status === 'recording',
     recording.endedAt,
   );
   const orbState: OrbState =
@@ -68,29 +77,6 @@ export function RecorderPopup({
     timers.current.push(setTimeout(onClose, 220));
   }, [onClose]);
 
-  const run = useCallback(
-    async (childId: string) => {
-      setStage('processing');
-      try {
-        await process(childId);
-        setStage('success');
-        timers.current.push(
-          setTimeout(() => {
-            onDone();
-            setStage('closing');
-            timers.current.push(setTimeout(onClose, 220));
-          }, 1000),
-        );
-      } catch (error) {
-        setErrorText(
-          error instanceof Error ? error.message : 'Das Diktat konnte nicht verarbeitet werden.',
-        );
-        setStage('error');
-      }
-    },
-    [process, onDone, onClose],
-  );
-
   async function finish() {
     const childId = await recordingSession.stop();
     if (!childId) {
@@ -99,7 +85,9 @@ export function RecorderPopup({
       return;
     }
     childRef.current = childId;
-    await run(childId);
+    // Handed over first, so the work is already under way as the window goes.
+    onCaptured(childId);
+    close();
   }
 
   async function discard() {
@@ -118,40 +106,44 @@ export function RecorderPopup({
         role="dialog"
         aria-label={ariaLabel}
         className={cn(
-          'pointer-events-auto flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-2xl',
+          'pointer-events-auto flex flex-col rounded-2xl border border-border bg-card px-5 py-3.5 shadow-2xl',
           stage === 'closing'
             ? 'motion-safe:animate-out motion-safe:fade-out motion-safe:slide-out-to-bottom-4 motion-safe:duration-200 motion-safe:fill-mode-forwards'
             : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-300',
         )}
       >
         {stage === 'recording' && !micFailed ? (
-          <div key="rec" className="flex items-center gap-4 motion-safe:animate-in motion-safe:fade-in">
-            <RecordingWave level={recording.level} state={orbState} className="h-12 w-44" />
-            <div className="text-2xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
-            {/* No doubt about where the words are going while he is speaking. */}
+          <div key="rec" className="flex flex-col motion-safe:animate-in motion-safe:fade-in">
+            <div className="flex items-center gap-4">
+              <RecordingWave level={recording.level} state={orbState} className="h-12 w-44" />
+              <div className="text-2xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
+              <Button
+                size="lg"
+                disabled={!started || recording.status !== 'recording'}
+                onClick={() => void finish()}
+                className="rounded-full"
+              >
+                <Check aria-hidden />
+                Fertig
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Verwerfen"
+                className="text-muted-foreground"
+                onClick={() => void discard()}
+              >
+                <X aria-hidden />
+              </Button>
+            </div>
+            {/* Where the words are going, as a caption under the key that
+                sends them — a line he can read, not a slab that doubles the
+                width of the window he is speaking into. */}
             {destination ? (
-              <span className="max-w-[26ch] truncate rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
+              <p className="mt-1 max-w-[26rem] self-end truncate pe-12 text-xs text-muted-foreground">
                 {destination}
-              </span>
+              </p>
             ) : null}
-            <Button
-              size="lg"
-              disabled={recording.status !== 'recording'}
-              onClick={() => void finish()}
-              className="rounded-full"
-            >
-              <Check aria-hidden />
-              Fertig
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Verwerfen"
-              className="text-muted-foreground"
-              onClick={() => void discard()}
-            >
-              <X aria-hidden />
-            </Button>
           </div>
         ) : micFailed ? (
           <div key="mic" className="flex items-center gap-4 motion-safe:animate-in motion-safe:fade-in">
@@ -160,30 +152,11 @@ export function RecorderPopup({
               Schließen
             </Button>
           </div>
-        ) : stage === 'processing' ? (
-          <div key="proc" className="flex items-center gap-3 motion-safe:animate-in motion-safe:fade-in">
-            <Spinner className="size-5" />
-            <p className="text-base text-muted-foreground">{processingText}</p>
-          </div>
-        ) : stage === 'success' || stage === 'closing' ? (
-          <div key="ok" className="flex items-center gap-3 motion-safe:animate-in motion-safe:fade-in">
-            <span className="flex size-9 items-center justify-center rounded-full bg-foreground text-background motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-300">
-              <Check className="size-5" aria-hidden />
-            </span>
-            <p className="text-base font-medium">{successText}</p>
-          </div>
         ) : (
           <div key="err" className="flex items-center gap-4 motion-safe:animate-in motion-safe:fade-in">
             <p className="max-w-[36ch] text-sm text-destructive">{errorText}</p>
-            <Button
-              variant="outline"
-              onClick={() => childRef.current && void run(childRef.current)}
-            >
-              <RotateCcw aria-hidden />
-              Erneut versuchen
-            </Button>
-            <Button variant="ghost" className="text-muted-foreground" onClick={() => void discard()}>
-              Verwerfen
+            <Button variant="outline" onClick={close}>
+              Schließen
             </Button>
           </div>
         )}

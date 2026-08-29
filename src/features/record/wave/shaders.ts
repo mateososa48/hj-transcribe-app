@@ -163,14 +163,25 @@ void main(){
     vec3 refl = ribbon(rp, aspect, amp * 0.86, spread, drift, harm, uMid, uLevel, 2.1, 0.0);
 
     float underSurface = smoothstep(0.0, 0.16, p.y - SURFACE);
-    float depth = clamp((p.y - SURFACE) / 0.95, 0.0, 1.0);
-    col += refl * 0.24 * underSurface * (1.0 - depth) * (1.0 - depth);
+
+    // The sheen has to die out like light, not stop at a depth.
+    //
+    // It used to be clamped to zero a fixed distance in — and since the
+    // mirrored ribbon is still bright there, that clamp sliced its own glow
+    // off flat and drew a horizontal edge across the top of the panel, a line
+    // between the ribbon and the white above it. A gaussian tail keeps the
+    // same weight where the sheen actually reads and then simply stops being
+    // there, with no boundary to see.
+    float depth = max(0.0, p.y - SURFACE);
+    col += refl * 0.188 * underSurface * exp(-depth * depth * 5.0);
   }
 
   col = pow(max(col, 0.0), vec3(mix(1.45, 1.15, uMark)));
 
   float above = smoothstep(1.0, 0.34, -yScreen);
-  float below = smoothstep(1.06, 0.52, yScreen);
+  // Reaches zero AT the top edge, not past it: ending at 1.06 left about 3%
+  // of the glow alive in the last row, which the panel edge then cut square.
+  float below = smoothstep(1.0, 0.52, yScreen);
   float edge  = yScreen < 0.0 ? above : below;
   // Top and bottom fade identically on the mark — the asymmetric pair above
   // is what made it sit higher on one side.

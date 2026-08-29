@@ -12,31 +12,42 @@ import { SyncedPlayback } from './SyncedPlayback';
 /**
  * Nachdiktat in place: a small floating window — the running clock and the
  * ribbon of light — records an addition without leaving the page. Finishing
- * hands the audio to the same pipeline, the model works the addition into
- * the standing text, and the window resolves into a check mark before it
- * slides away. The recording itself files under the Diktat as an Ergänzung.
+ * hands the audio over and the window leaves at once; the model works the
+ * addition into the standing text as a job beside the page, so a second
+ * Ergänzung can be spoken while the first is still being worked in. The
+ * recording itself files under the Diktat as an Ergänzung.
  */
 
 export function ErgaenzungPopup({
   parentId,
-  onMerged,
+  onCaptured,
   onClose,
 }: {
   parentId: string;
-  onMerged: () => void;
+  onCaptured: (childId: string) => void;
   onClose: () => void;
 }) {
   return (
     <RecorderPopup
       parentId={parentId}
       ariaLabel="Ergänzung aufnehmen"
-      processingText="Die Ergänzung wird eingearbeitet …"
-      successText="Eingearbeitet"
-      process={(childId) => processErgaenzung(parentId, childId)}
-      onDone={onMerged}
+      destination="Zur Beurteilung"
+      onCaptured={onCaptured}
       onClose={onClose}
     />
   );
+}
+
+/** The work an Ergänzung does once its window is gone. */
+export function ergaenzungJob(parentId: string, childId: string, onMerged: () => void) {
+  return {
+    processingText: 'Die Ergänzung wird eingearbeitet …',
+    successText: 'Eingearbeitet',
+    run: async () => {
+      await processErgaenzung(parentId, childId);
+      onMerged();
+    },
+  };
 }
 
 /** The Ergänzen key for the Aufnahme header. */

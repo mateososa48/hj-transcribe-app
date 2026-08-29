@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import type { Result, Session, Transcription } from '@/lib/db';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { cn } from '@/lib/utils';
+import { DictationJobList, useDictationJobs } from '@/features/record/dictation-jobs';
 import { BeurteilungText } from './BeurteilungText';
-import { ErgaenzungButton, ErgaenzungList, ErgaenzungPopup } from './Ergaenzung';
+import { ergaenzungJob, ErgaenzungButton, ErgaenzungList, ErgaenzungPopup } from './Ergaenzung';
 import type { ActiveProcessingPhase } from './processing-handoff-model';
 import { ProcessingHandoff } from './ProcessingHandoff';
 import { RegenerateControls } from './RegenerateControls';
@@ -49,6 +50,8 @@ export function DiktatContent({
   const b = useBeurteilung(result);
   const [ergOpen, setErgOpen] = useState(false);
   const [ergVersion, setErgVersion] = useState(0);
+  /** Ergänzungen still being worked into the letter. */
+  const jobs = useDictationJobs();
 
   /**
    * The arrival sequence. 'success' and 'closing' only ever happen when this
@@ -203,13 +206,26 @@ export function DiktatContent({
         </div>
       </div>
 
+      {/* Ergänzungen still being worked in, beside the page rather than on
+          top of the recorder — the microphone is free again immediately. */}
+      <DictationJobList
+        jobs={jobs.jobs}
+        onRetry={jobs.retry}
+        onDiscard={jobs.discard}
+        className="fixed top-20 right-4 z-40"
+      />
+
       {ergOpen ? (
         <ErgaenzungPopup
           parentId={session.id}
-          onMerged={() => {
-            setErgVersion((v) => v + 1);
-            onChanged();
-          }}
+          onCaptured={(childId) =>
+            jobs.enqueue(
+              ergaenzungJob(session.id, childId, () => {
+                setErgVersion((v) => v + 1);
+                onChanged();
+              }),
+            )
+          }
           onClose={() => setErgOpen(false)}
         />
       ) : null}

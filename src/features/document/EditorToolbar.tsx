@@ -50,11 +50,14 @@ import type { DictateTarget } from './dictate-target';
 export function EditorToolbar({
   editor,
   documentTitle,
+  recording,
   onImport,
   onDictate,
 }: {
   editor: Editor;
   documentTitle: string;
+  /** A recording window is open — there is only one microphone. */
+  recording: boolean;
   onImport: () => void;
   onDictate: (target: DictateTarget) => void;
 }) {
@@ -261,7 +264,12 @@ export function EditorToolbar({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="outline" title="Diktieren" className="shrink-0 px-3">
+                <Button
+                  variant="outline"
+                  title="Diktieren"
+                  disabled={recording}
+                  className="shrink-0 px-3"
+                >
                   <Mic aria-hidden />
                   <span className="hidden xl:inline">Diktieren</span>
                 </Button>

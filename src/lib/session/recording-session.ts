@@ -57,6 +57,25 @@ export class RecordingSession {
   private unsubscribeLevel: (() => void) | null = null;
 
   /**
+   * The stop that is still tearing the microphone down, if any.
+   *
+   * Dictating a second section the moment the first one is finished used to
+   * land here: `start` would take a NEW stream and recorder while the old
+   * `stop` was still awaiting, and that teardown then nulled the new fields
+   * and stopped the new stream's tracks. The second dictation recorded
+   * nothing. `start` now waits this out.
+   */
+  private stopping: Promise<string | null> | null = null;
+
+  /**
+   * The start that is still opening the microphone, if any. A second `start`
+   * on top of it is the SAME start asking again — StrictMode's double-invoked
+   * effect, or an impatient second press — and gets that one's answer rather
+   * than a refusal.
+   */
+  private starting: Promise<boolean> | null = null;
+
+  /**
    * Per-frame microphone data, deliberately outside React state.
    *
    * The ribbon wants all three frequency bands at 60 fps. Pushing that through
@@ -108,8 +127,24 @@ export class RecordingSession {
     for (const listener of this.listeners) listener(this.state);
   }
 
-  async start(kind: SessionKind, opts?: { parentId?: string }): Promise<void> {
-    if (this.state.status === 'recording' || this.state.status === 'requesting-mic') return;
+  /** False when the microphone is already committed, or could not be opened. */
+  async start(kind: SessionKind, opts?: { parentId?: string }): Promise<boolean> {
+    if (this.starting) return this.starting;
+    // runStart runs synchronously to its first await, so a second synchronous
+    // call always finds this set.
+    const run = this.runStart(kind, opts);
+    this.starting = run;
+    try {
+      return await run;
+    } finally {
+      if (this.starting === run) this.starting = null;
+    }
+  }
+
+  private async runStart(kind: SessionKind, opts?: { parentId?: string }): Promise<boolean> {
+    // Let a just-finished dictation finish letting go of the microphone.
+    if (this.stopping) await this.stopping;
+    if (this.state.status === 'recording' || this.state.status === 'requesting-mic') return false;
 
     this.set({ ...INITIAL, status: 'requesting-mic' });
 
@@ -130,7 +165,7 @@ export class RecordingSession {
             ? 'Der Zugriff auf das Mikrofon wurde abgelehnt. Bitte erlauben Sie den Zugriff und versuchen Sie es erneut.'
             : 'Es wurde kein Mikrofon gefunden. Bitte prüfen Sie den Anschluss.',
       });
-      return;
+      return false;
     }
 
     this.monitor = new MicLevelMonitor(stream);
@@ -181,6 +216,7 @@ export class RecordingSession {
       endedAt: null,
       error: null,
     });
+    return true;
   }
 
   private async persistChunk(blob: Blob, index: number): Promise<void> {
@@ -197,9 +233,24 @@ export class RecordingSession {
     }
   }
 
-  /** Resolves with every chunk on disk and the session marked stopped. */
+  /**
+   * Resolves with every chunk on disk and the session marked stopped. Held in
+   * `this.stopping` for its whole duration so the next `start` waits for the
+   * microphone to actually be free.
+   */
   async stop(): Promise<string | null> {
     if (this.state.status !== 'recording') return this.state.sessionId;
+    // runStop sets 'stopping' synchronously, before its first await.
+    const run = this.runStop();
+    this.stopping = run;
+    try {
+      return await run;
+    } finally {
+      if (this.stopping === run) this.stopping = null;
+    }
+  }
+
+  private async runStop(): Promise<string | null> {
     const { sessionId, startedAt } = this.state;
     this.set({ status: 'stopping' });
 

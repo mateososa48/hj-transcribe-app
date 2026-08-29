@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { EditorContent, useEditor, type Content } from '@tiptap/react';
+import { EditorContent, useEditor, type Content, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { FontSize, TextStyle } from '@tiptap/extension-text-style';
 import { Trash2 } from 'lucide-react';
@@ -19,10 +19,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { db, type DocumentRecord } from '@/lib/db';
+import { db, newId, type DocumentRecord } from '@/lib/db';
 import { deleteDocument, saveDocument } from '@/lib/documents';
 import { useAppStore } from '@/store/app-store';
 import { RecorderPopup } from '@/features/record/RecorderPopup';
+import { DictationJobList, useDictationJobs } from '@/features/record/dictation-jobs';
 import { appendToDocument } from '@/lib/documents';
 import { processAbschnittDiktat } from './dictate';
 import { EditorToolbar } from './EditorToolbar';
@@ -78,14 +79,22 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   const touchSessions = useAppStore((s) => s.touchSessions);
   const [title, setTitle] = useState(record.title);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Open dictation popup + the live insert position (transaction-mapped). */
+  /** The one open recording window — one microphone, one recording at a time. */
   const [dictating, setDictating] = useState<DictateTarget | null>(null);
   const [importing, setImporting] = useState(false);
   const [ergVersion, setErgVersion] = useState(0);
-  const insertPosRef = useRef<number | null>(null);
+  /** Dictations still being written up. Any number, each with its own target. */
+  const jobs = useDictationJobs();
+  /**
+   * Where each pending "an der Schreibmarke" dictation is to land, keyed per
+   * job — several can be in flight at once, and every one of them is kept
+   * honest against his concurrent typing by mapping it through transactions.
+   */
+  const insertPositions = useRef(new Map<string, number>());
+  /** The caret at the moment the window opened, before he has spoken. */
+  const pendingPosRef = useRef<number | null>(null);
   /** Lets the editor extension reach the current handler without re-creating. */
   const inviteRef = useRef<(title: string) => void>(() => {});
-  inviteRef.current = (title: string) => setDictating({ kind: 'section', title });
 
   const editor = useEditor({
     extensions: [
@@ -129,8 +138,11 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   useEffect(() => {
     if (!editor) return;
     const onTransaction = ({ transaction }: { transaction: { mapping: { map: (p: number) => number } } }) => {
-      if (insertPosRef.current !== null) {
-        insertPosRef.current = transaction.mapping.map(insertPosRef.current);
+      if (pendingPosRef.current !== null) {
+        pendingPosRef.current = transaction.mapping.map(pendingPosRef.current);
+      }
+      for (const [key, pos] of insertPositions.current) {
+        insertPositions.current.set(key, transaction.mapping.map(pos));
       }
     };
     editor.on('transaction', onTransaction);
@@ -140,23 +152,26 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   }, [editor]);
 
   /**
-   * Snapshot before a programmatic write, then offer one-step undo on the
-   * toast — an AI insert into a half-finished letter must never be a
-   * one-way door.
+   * Snapshot before a programmatic write and hand back the way out — an AI
+   * insert into a half-finished letter must never be a one-way door.
    */
-  const withUndo = (write: () => void, doneText: string) => {
-    if (!editor || editor.isDestroyed) return;
-    const snapshot = editor.getJSON();
+  const snapshotAndWrite = (target: Editor, write: () => void): (() => void) => {
+    const snapshot = target.getJSON();
     void saveDocument(record.id, { previousContent: snapshot });
     write();
+    return () => {
+      if (target.isDestroyed) return;
+      target.commands.setContent(snapshot);
+      void saveDocument(record.id, { content: snapshot });
+    };
+  };
+
+  /** The same, with the undo offered on a toast. */
+  const withUndo = (write: () => void, doneText: string) => {
+    if (!editor || editor.isDestroyed) return;
+    const undo = snapshotAndWrite(editor, write);
     toast.success(doneText, {
-      action: {
-        label: 'Rückgängig',
-        onClick: () => {
-          editor.commands.setContent(snapshot);
-          void saveDocument(record.id, { content: snapshot });
-        },
-      },
+      action: { label: 'Rückgängig', onClick: undo },
       duration: 8000,
     });
   };
@@ -164,50 +179,103 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   /**
    * Insert a finished dictation — or persist it even if the editor is gone.
    * A section he picked by name outranks any section the model heard him
-   * announce: the destination he chose before speaking is the promise.
+   * announce: the destination he chose before speaking is the promise, and it
+   * travels WITH the dictation, so a second one started meanwhile cannot
+   * redirect it.
+   *
+   * Returns the undo, for the job's own card.
    */
-  const insertAbschnitt = (heading: string | null, text: string) => {
-    if (editor && !editor.isDestroyed) {
-      withUndo(() => {
-        if (heading) {
-          // An announced section fills the letter's OWN section of that name
-          // instead of stamping a second heading.
-          insertTitledContent(editor, heading, bulletsToTiptap(text));
-        } else {
-          const max = editor.state.doc.content.size;
-          const pos = Math.min(insertPosRef.current ?? max, max);
-          editor.commands.insertContentAt(pos, abschnittToNodes(null, text) as Content, {
-            updateSelection: false,
-          });
-        }
-      }, 'Diktat eingefügt.');
-    } else {
-      // The page was left mid-processing. If the document was reopened, a
-      // LIVE editor exists — write through it so the next autosave cannot
-      // clobber the insert; only a truly closed document appends to the
-      // store directly. The dictation is never lost either way.
-      const liveEditor = editorRegistry.get(record.id);
-      const nodes = abschnittToNodes(heading, text);
-      if (liveEditor) {
-        liveEditor.commands.insertContentAt(liveEditor.state.doc.content.size, nodes as Content, {
+  const insertAbschnitt = (
+    target: DictateTarget,
+    heading: string | null,
+    text: string,
+    posKey: string,
+  ): (() => void) | undefined => {
+    const title = target.kind === 'section' ? target.title : heading;
+    // The page may have been left mid-processing. If the document was
+    // reopened, a LIVE editor exists — write through it so the next autosave
+    // cannot clobber the insert; only a truly closed document appends to the
+    // store directly. The dictation is never lost either way.
+    const live = editor && !editor.isDestroyed ? editor : editorRegistry.get(record.id);
+    const pos = insertPositions.current.get(posKey);
+    insertPositions.current.delete(posKey);
+
+    if (!live) {
+      void appendToDocument(record.id, abschnittToNodes(title, text));
+      return undefined;
+    }
+    return snapshotAndWrite(live, () => {
+      if (title) {
+        // A named section fills the letter's OWN section of that name instead
+        // of stamping a second heading.
+        insertTitledContent(live, title, bulletsToTiptap(text));
+      } else {
+        const max = live.state.doc.content.size;
+        live.commands.insertContentAt(Math.min(pos ?? max, max), abschnittToNodes(null, text) as Content, {
           updateSelection: false,
         });
-      } else {
-        void appendToDocument(record.id, nodes);
       }
-    }
+    });
   };
+
+  /**
+   * Finished recording -> its own job. Everything it needs is captured here,
+   * so it no longer matters what he does next — including starting the next
+   * dictation while this one is still being written.
+   */
+  const enqueueDictation = (target: DictateTarget, childId: string) => {
+    const posKey = newId();
+    if (target.kind === 'cursor' && pendingPosRef.current !== null) {
+      insertPositions.current.set(posKey, pendingPosRef.current);
+    }
+    pendingPosRef.current = null;
+    const where = target.kind === 'section' ? `„${target.title}"` : null;
+    jobs.enqueue({
+      processingText: where ? `${where} wird geschrieben …` : 'Der Abschnitt wird erstellt …',
+      successText: where ? `In ${where} eingefügt` : 'Diktat eingefügt',
+      run: async () => {
+        const { heading, text } = await processAbschnittDiktat(childId);
+        const undo = insertAbschnitt(target, heading, text, posKey);
+        setErgVersion((v) => v + 1);
+        return undo;
+      },
+    });
+  };
+
+  /** One recording at a time; processing is what runs in parallel. */
+  const openDictation = (target: DictateTarget) => {
+    if (dictating) {
+      toast.info('Bitte beenden Sie zuerst das laufende Diktat.');
+      return;
+    }
+    pendingPosRef.current =
+      target.kind === 'cursor' && editor
+        ? Math.min(editor.state.selection.to, editor.state.doc.content.size)
+        : null;
+    setDictating(target);
+  };
+
+  // The invitations live inside the editor extension; this is how they reach
+  // the current handler without the extension being re-created.
+  inviteRef.current = (title: string) => openDictation({ kind: 'section', title });
 
   // DEV scaffold: exercise insertion and the full dictation path without a
   // microphone (see the verification battery).
   useEffect(() => {
     if (!import.meta.env.DEV) return;
+    const SCAFFOLD_KEY = '__scaffold__';
     const scaffold = {
       documentId: record.id,
-      insertParsed: (heading: string | null, text: string) => insertAbschnitt(heading, text),
+      insertParsed: (heading: string | null, text: string) =>
+        insertAbschnitt({ kind: 'cursor' }, heading, text, SCAFFOLD_KEY),
+      /** As if he had picked the section by name before speaking. */
+      insertInto: (title: string, text: string) =>
+        insertAbschnitt({ kind: 'section', title }, null, text, SCAFFOLD_KEY),
+      enqueueDictation,
       processAbschnittDiktat,
       setInsertPos: (pos: number | null) => {
-        insertPosRef.current = pos;
+        if (pos === null) insertPositions.current.delete(SCAFFOLD_KEY);
+        else insertPositions.current.set(SCAFFOLD_KEY, pos);
       },
     };
     (window as unknown as Record<string, unknown>).__berichtTest = scaffold;
@@ -293,15 +361,8 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
           editor={editor}
           documentTitle={title}
           onImport={() => setImporting(true)}
-          onDictate={(target) => {
-            if (target.kind === 'cursor') {
-              insertPosRef.current = Math.min(
-                editor.state.selection.to,
-                editor.state.doc.content.size,
-              );
-            }
-            setDictating(target);
-          }}
+          recording={dictating !== null}
+          onDictate={openDictation}
         />
       ) : null}
 
@@ -331,6 +392,18 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
         }}
       />
 
+      {/* The dictations still being written up, clear of both the page and the
+          recording window — so the next one can start while they work. */}
+      <DictationJobList
+        jobs={jobs.jobs}
+        onRetry={jobs.retry}
+        onDiscard={jobs.discard}
+        /* Clear of the toolbar stripe in both its states — under the title row
+           when the page sits at the top, under the stripe alone once it has
+           scrolled up — and left of the rail of sources. */
+        className="fixed top-36 right-4 z-40 lg:right-[19rem]"
+      />
+
       {dictating ? (
         <RecorderPopup
           parentId={record.id}
@@ -339,22 +412,16 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
               ? `In „${dictating.title}" diktieren`
               : 'An der Schreibmarke diktieren'
           }
-          {...(dictating.kind === 'section' ? { destination: `In „${dictating.title}"` } : {})}
-          processingText={
+          destination={
             dictating.kind === 'section'
-              ? `„${dictating.title}" wird geschrieben …`
-              : 'Der Abschnitt wird erstellt …'
+              ? `In „${dictating.title}"`
+              : 'An der Schreibmarke'
           }
-          successText="Eingefügt"
-          process={async (childId) => {
-            const { heading, text } = await processAbschnittDiktat(childId);
-            insertAbschnitt(dictating.kind === 'section' ? dictating.title : heading, text);
+          onCaptured={(childId) => enqueueDictation(dictating, childId)}
+          onClose={() => {
+            pendingPosRef.current = null;
+            setDictating(null);
           }}
-          onDone={() => {
-            insertPosRef.current = null;
-            setErgVersion((v) => v + 1);
-          }}
-          onClose={() => setDictating(null)}
         />
       ) : null}
     </div>
