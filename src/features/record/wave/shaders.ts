@@ -78,11 +78,11 @@ vec3 ribbon(vec2 p, float aspect, float amp, float spread, float drift,
   float env = cos(PI * 0.5 * min(abs(0.92 * xN), 1.0));
   env *= env;
 
-  // A 40px mark cannot carry a hairline: the strokes are fatter, the falloff
-  // longer, and the intensity raised to pay for both.
-  float thick = thicknessAt(xN, uMid) * soften * mix(1.0, 2.0, mark);
-  float soft  = (0.013 + 0.010 * uMid) * soften * mix(1.0, 2.4, mark);
-  float inten = 0.030 * (1.0 + 0.7 * uLevel) * mix(1.0, 2.1, mark);
+  // A 40px mark cannot carry a hairline, but it must still read as drawn
+  // lines: fatter and softer than the instrument, well short of a haze.
+  float thick = thicknessAt(xN, uMid) * soften * mix(1.0, 1.45, mark);
+  float soft  = (0.013 + 0.010 * uMid) * soften * mix(1.0, 1.35, mark);
+  float inten = 0.030 * (1.0 + 0.7 * uLevel) * mix(1.0, 1.5, mark);
 
   float yMain = waveY(p.x, amp, env, drift, harm, mark);
 
@@ -97,12 +97,12 @@ vec3 ribbon(vec2 p, float aspect, float amp, float spread, float drift,
     float d    = abs(p.y - yL);
 
     float line = inten / (sqrt(d * d + soft * soft) + thick);
-    line *= exp(-d * d * mix(1.0, 0.4, mark));
+    line *= exp(-d * d * mix(1.0, 0.8, mark));
 
     float lo = min(yMain, yL), hi = max(yMain, yL);
     float dB = max(0.0, max(p.y - hi, lo - p.y));
 
-    float band = 2.2 * inten * exp(-dB / (mix(0.065, 0.115, mark) * soften));
+    float band = 2.2 * inten * exp(-dB / (mix(0.065, 0.080, mark) * soften));
 
     num += hue * (line + band);
   }
