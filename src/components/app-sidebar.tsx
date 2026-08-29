@@ -234,9 +234,11 @@ function TreeNode({
       <SidebarMenuButton
         onClick={onToggle}
         aria-expanded={open}
-        // The branch outranks its contents: heavier, larger, full-strength
-        // ink against rows that are lighter and a size down.
-        className="h-11 text-[1.05rem] font-semibold tracking-tight"
+        // The branch outranks its contents by WEIGHT first — a hair larger,
+        // heavier, full-strength ink — against rows that are lighter and a
+        // size down. Any bigger and it stops being a label and starts
+        // shouting.
+        className="h-10 text-[0.95rem] font-semibold tracking-tight"
       >
         <ChevronRight
           className={cn(
