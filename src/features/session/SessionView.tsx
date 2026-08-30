@@ -34,6 +34,7 @@ import { pipeline } from '@/lib/transcription/pipeline';
 import { speakerOrder } from '@/lib/speakers';
 import { usePipelineState, useRecordingState } from '@/features/record/useRecording';
 import { formatDuration, sessionTitle } from '@/features/sessions/useSessions';
+import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/app-store';
 import { DiktatContent } from './DiktatContent';
 import { ProcessingHandoff } from './ProcessingHandoff';
@@ -160,12 +161,20 @@ export function SessionView({ sessionId }: { sessionId: string }) {
   }
 
   return (
-    <div className="space-y-8 pb-16">
+    /* A Diktat is one section of prose he reads top to bottom, so it gets one
+       reading measure rather than the full working area. A Termin still wants
+       the width: its transcript is a two-column conversation. */
+    <div className={cn('space-y-8 pb-16', !isTermin && 'mx-auto w-full max-w-[48rem]')}>
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <Badge variant={isTermin ? 'secondary' : 'outline'}>
-            {SESSION_KIND_LABELS[session.kind]}
-          </Badge>
+          {/* The kind is worth saying where two of them mix. On a Diktat the
+              title already begins with the word and the sidebar filed it under
+              Diktate, so the badge is chrome repeating what is already said. */}
+          {isTermin ? (
+            <Badge variant="secondary">{SESSION_KIND_LABELS[session.kind]}</Badge>
+          ) : (
+            <span />
+          )}
           <AlertDialog>
             <AlertDialogTrigger
               render={

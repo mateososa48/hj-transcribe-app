@@ -1,31 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ClipboardCopy, FilePlus2, RotateCcw } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import { BouncyAccordion } from '@/components/motion/bouncy-accordion';
+import { RecordingBody } from '@/components/recording-body';
 import { Button } from '@/components/ui/button';
-import type { Result, Session, Transcription } from '@/lib/db';
+import { db, type Result, type Session, type Transcription } from '@/lib/db';
 import { pipeline } from '@/lib/transcription/pipeline';
 import { cn } from '@/lib/utils';
 import { DictationJobList, useDictationJobs } from '@/features/record/dictation-jobs';
+import { formatDuration } from '@/features/sessions/useSessions';
 import { BeurteilungText } from './BeurteilungText';
-import { ergaenzungJob, ErgaenzungButton, ErgaenzungList, ErgaenzungPopup } from './Ergaenzung';
+import { ergaenzungJob, ErgaenzungButton, ErgaenzungPopup } from './Ergaenzung';
 import type { ActiveProcessingPhase } from './processing-handoff-model';
 import { ProcessingHandoff } from './ProcessingHandoff';
 import { RegenerateControls } from './RegenerateControls';
-import { SyncedPlayback } from './SyncedPlayback';
 import { useBeurteilung } from './useBeurteilung';
 
 /**
- * The finished Diktat page: two equal-height framed panels whose header
- * rules align — the Beurteilung left with the one action that matters
- * (Kopieren, a glossy pill), the Aufnahme right with the player fixed and
- * the follow-along transcript scrolling inside whatever height the letter
- * dictates.
+ * The finished Diktat: one column, read top to bottom in the order the work
+ * happens.
  *
- * While the pipeline runs, the page shows ONLY the handoff animation; when
- * the text arrives, the animation resolves into a check mark that fades,
- * and then the panels appear.
+ * It used to be two framed panels of equal height — the letter left, the
+ * recording right — and the trouble was never only that the recording was too
+ * wide. The two panels held THE SAME CONTENT TWICE: a wall of German prose
+ * beside a near-identical wall of German prose. He read the left one and the
+ * right one added noise, when its actual job is settling one question
+ * occasionally — "did I really say 140 over 90?"
+ *
+ * So the text stops being a card with furniture above and below it and becomes
+ * the page: one measure, one heading, nothing boxing it in. The recording
+ * moves underneath it, quiet and labelled, where checking belongs. Demoted by
+ * position and weight — never hidden, because a source he cannot see is a
+ * source he stops checking.
+ *
+ * No paper here, unlike a Bericht. That is a whole letter and looks like one;
+ * this is one section on its way into his Word template, and dressing a
+ * snippet as a page would promise something it is not.
  */
+interface ErgaenzungRow {
+  session: Session;
+  transcription: Transcription | null;
+}
+
 export function DiktatContent({
   session,
   transcription,
@@ -52,6 +68,29 @@ export function DiktatContent({
   const [ergVersion, setErgVersion] = useState(0);
   /** Ergänzungen still being worked into the letter. */
   const jobs = useDictationJobs();
+  /** Which recording stands open. One at a time; all shut to begin with. */
+  const [openRecording, setOpenRecording] = useState<string | null>(null);
+  const [ergaenzungen, setErgaenzungen] = useState<ErgaenzungRow[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const children = (await db.sessions.filter((s) => s.parentId === session.id).toArray())
+        .filter((s) => s.status === 'stopped')
+        .sort((a, b) => a.startedAt - b.startedAt);
+      const rows = await Promise.all(
+        children.map(async (child) => ({
+          session: child,
+          transcription:
+            (await db.transcriptions.where('sessionId').equals(child.id).first()) ?? null,
+        })),
+      );
+      if (!cancelled) setErgaenzungen(rows);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session.id, ergVersion]);
 
   /**
    * The arrival sequence. 'success' and 'closing' only ever happen when this
@@ -81,12 +120,14 @@ export function DiktatContent({
   }, [phase, result, failed]);
 
   if (phase) {
-    return <ProcessingHandoff
+    return (
+      <ProcessingHandoff
         kind="beurteilung"
         phase={phase}
         sessionId={session.id}
         audioDurationMs={session.durationMs}
-      />;
+      />
+    );
   }
 
   if (arrival === 'success' || arrival === 'closing') {
@@ -106,15 +147,24 @@ export function DiktatContent({
     );
   }
 
+  /** The recordings behind this text: the dictation itself, then its additions. */
+  const recordings = [
+    { key: session.id, label: 'Aufnahme', row: { session, transcription } },
+    ...ergaenzungen.map((row, i) => ({
+      key: row.session.id,
+      label: `${i + 1}. Ergänzung`,
+      row,
+    })),
+  ];
+
   return (
     <div
       className={cn(
-        'space-y-8',
         arrival === 'entered' && 'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500',
       )}
     >
       {failed ? (
-        <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
+        <div className="mb-8 space-y-3 rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
           <p className="font-medium text-destructive">{errorText}</p>
           <Button size="lg" variant="outline" onClick={() => void pipeline.process(session.id)}>
             <RotateCcw aria-hidden />
@@ -123,88 +173,115 @@ export function DiktatContent({
         </div>
       ) : null}
 
-      {/* items-stretch (grid default) is the symmetry: both panels share one
-          row height, driven by the letter; the transcript scrolls inside. */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:gap-8">
-        <section className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
-          <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 sm:px-6">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <h2 className="truncate text-lg font-semibold tracking-tight">
-                Zusammenfassende Beurteilung
-              </h2>
-              {b.copiedOnce ? (
-                <Badge variant="secondary">
-                  <Check aria-hidden />
-                  Kopiert
-                </Badge>
-              ) : null}
-            </div>
-            {result ? (
-              <Button
-                size="lg"
-                variant={b.copied ? 'secondary' : 'default'}
-                onClick={() => void b.copy()}
-                className="rounded-full"
-              >
-                {b.copied ? <Check aria-hidden /> : <ClipboardCopy aria-hidden />}
-                {b.copied ? 'Kopiert' : 'Kopieren'}
-              </Button>
+      {result ? (
+        <>
+          {/* The two things he does with a finished text, and nothing else.
+              Sticky, because Kopieren is wanted at the END of reading and a
+              key that has scrolled off the top is a key he has to go back
+              for. Neu erstellen is not here on purpose — see below. */}
+          <div className="sticky top-0 z-20 -mx-2 mb-8 flex items-center justify-end gap-3 border-b border-border bg-background/85 px-2 py-3 backdrop-blur-md">
+            {b.copiedOnce && !b.copied ? (
+              <span className="text-sm text-muted-foreground">Bereits kopiert</span>
             ) : null}
-          </header>
+            <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
+            <Button
+              size="lg"
+              variant={b.copied ? 'secondary' : 'default'}
+              onClick={() => void b.copy()}
+              className="rounded-full px-5"
+            >
+              <span className="grid size-4 place-items-center">
+                {b.copied ? (
+                  <Check
+                    className="motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-200"
+                    aria-hidden
+                  />
+                ) : (
+                  <ClipboardCopy aria-hidden />
+                )}
+              </span>
+              {b.copied ? 'Kopiert' : 'Kopieren'}
+            </Button>
+          </div>
 
-          {result ? (
+          {/* The work. No card, no header rule, no footer — the page IS this. */}
+          <section aria-labelledby="beurteilung-heading">
+            <h2 id="beurteilung-heading" className="mb-3 text-lg font-semibold tracking-tight">
+              Zusammenfassende Beurteilung
+            </h2>
+            <BeurteilungText b={b} className="-mx-3 rounded-lg px-3 py-1" />
+          </section>
+
+          {/* Rare, considered, and only ever wanted AFTER reading — so it sits
+              where reading ends rather than competing in the stripe. */}
+          <RegenerateControls
+            session={session}
+            result={result}
+            running={running}
+            onChanged={onChanged}
+            className="mt-6 border-t border-border pt-4"
+          />
+
+          {/* The evidence, underneath the thing it produced. */}
+          <section aria-labelledby="aufnahme-heading" className="mt-12">
+            <h2
+              id="aufnahme-heading"
+              className="mb-3 text-sm font-semibold tracking-tight text-muted-foreground"
+            >
+              {recordings.length > 1 ? 'Aufnahmen' : 'Aufnahme'}
+            </h2>
+            <BouncyAccordion
+              separated
+              radius={14}
+              value={openRecording}
+              onValueChange={setOpenRecording}
+              classNames={{
+                item: 'border border-border shadow-sm',
+                trigger: 'min-h-12 gap-2 px-4',
+                title: 'text-sm font-normal',
+                chevron: 'size-5',
+                description: 'text-sm text-foreground',
+              }}
+              items={recordings.map(({ key, label, row }) => ({
+                id: key,
+                title: (
+                  <span className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-medium">{label}</span>
+                    {row.session.durationMs ? (
+                      <span className="text-xs tabular-nums text-muted-foreground">
+                        · {formatDuration(row.session.durationMs)}
+                      </span>
+                    ) : null}
+                  </span>
+                ),
+                description: (
+                  <RecordingBody
+                    session={row.session}
+                    transcription={row.transcription}
+                    active={openRecording === key}
+                  />
+                ),
+              }))}
+            />
+          </section>
+        </>
+      ) : (
+        <div className="space-y-4">
+          {canGenerate ? (
             <>
-              <BeurteilungText b={b} className="flex-1 px-5 py-4 sm:px-6" />
-              {/* Ergänzen adds to the letter; the two on the right replace it
-                  and put it back. A Diktat had neither until now, so a bad
-                  text could not be re-run and the kept previous version — the
-                  whole point of storing one — was unreachable from here. */}
-              <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-border px-5 py-3 sm:px-6">
-                <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
-                <RegenerateControls
-                  session={session}
-                  result={result}
-                  running={running}
-                  onChanged={onChanged}
-                />
-              </footer>
+              <p className="max-w-[56ch] text-muted-foreground">
+                Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
+              </p>
+              <Button size="lg" onClick={() => void pipeline.process(session.id)}>
+                <FilePlus2 aria-hidden />
+                Text erstellen
+              </Button>
             </>
           ) : (
-            <div className="flex-1 space-y-4 px-5 py-5 sm:px-6">
-              {canGenerate ? (
-                <>
-                  <p className="max-w-[56ch] text-muted-foreground">
-                    Die Aufnahme ist erkannt, der Text wurde noch nicht erstellt.
-                  </p>
-                  <Button size="lg" onClick={() => void pipeline.process(session.id)}>
-                    <FilePlus2 aria-hidden />
-                    Text erstellen
-                  </Button>
-                </>
-              ) : (
-                <p className="text-muted-foreground">Noch kein Text zu dieser Aufnahme.</p>
-              )}
-            </div>
+            <p className="text-muted-foreground">Noch kein Text zu dieser Aufnahme.</p>
           )}
-        </section>
-
-        {/* The cell reports no height of its own (the panel is absolute at
-            xl), so the row — and with it this panel — is exactly as tall as
-            the letter. The transcript inside scrolls. */}
-        <div className="relative min-w-0">
-          <section className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card xl:absolute xl:inset-0">
-            <header className="flex h-16 shrink-0 items-center border-b border-border bg-muted/40 px-5 sm:px-6">
-              <h2 className="text-lg font-semibold tracking-tight">Aufnahme</h2>
-            </header>
-            <SyncedPlayback
-              sessionId={session.id}
-              words={transcription?.words ?? []}
-              fallbackText={transcription?.text ?? ''}
-            />
-            <ErgaenzungList sessionId={session.id} version={ergVersion} />
-          </section>
         </div>
-      </div>
+      )}
 
       {/* Ergänzungen still being worked in, in the bottom-right corner rather
           than on top of the recorder — the microphone is free immediately. */}
