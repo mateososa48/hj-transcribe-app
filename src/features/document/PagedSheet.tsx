@@ -129,7 +129,7 @@ export function PagedSheet({
     : [];
 
   return (
-    <div className="flex-1 bg-muted/50 px-4 py-10 sm:px-8 sm:py-12">
+    <div className="flex-1 px-4 py-10 sm:px-8 sm:py-12">
       <div
         ref={sheetRef}
         style={pageHeight ? { minHeight: `${pages * pageHeight}px` } : undefined}

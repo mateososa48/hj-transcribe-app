@@ -94,9 +94,9 @@ export function DictationRail({
     // resting on the desk beside the letter rather than on a panel of their own.
     <aside
       aria-label="Diktate in diesem Bericht"
-      className="hidden w-72 shrink-0 bg-muted/50 lg:block"
+      className="hidden w-72 shrink-0 lg:block"
     >
-      <div className="sticky top-14 max-h-[calc(100svh-3.5rem)] overflow-y-auto px-3 py-4">
+      <div className="sticky top-14 max-h-[calc(100svh-3.5rem)] overflow-y-auto py-10 pe-8 ps-0">
         <BouncyAccordion
           separated
           radius={14}

@@ -389,11 +389,18 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
       {/* The page on the desk, with its sources beside it: the recordings
           dictated into this Bericht sit in a narrow column to the right,
           which shifts the sheet left only once there is something to show. */}
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 bg-muted/50">
+        {/* Page and widgets are one group, centred together on the desk, and
+            capped so the sheet exactly fills its share. That keeps the gap
+            between the page and the cards equal to the gap on the cards' far
+            side at every window width — centring the sheet alone piled the
+            leftover space on the rail's side, where it grew with the window. */}
+        <div className="mx-auto flex w-full max-w-[74rem]">
         <PagedSheet editor={editor}>
           <EditorContent editor={editor} className="flex flex-1 flex-col" />
         </PagedSheet>
         <DictationRail documentId={record.id} version={ergVersion} />
+        </div>
       </div>
 
       <ImportDialog
