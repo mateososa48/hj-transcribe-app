@@ -515,3 +515,53 @@ h1, h2, h3 {
     }
   }
 }
+
+/**
+ * A short scrolling region that admits it scrolls.
+ *
+ * The transcript inside a dictation widget can be taller than the room it gets,
+ * and a clipped block of text with no edge to it reads as a block of text that
+ * simply ends. So: a permanently visible slim scrollbar — not the overlay kind
+ * that appears once you are already scrolling and have therefore already found
+ * out — and the text fading under whichever edge it continues past.
+ *
+ * The fades are driven by data attributes rather than being always-on, because
+ * an always-on bottom fade dims the last line of a transcript that ALREADY
+ * ends there, promising more where there is none. See ScrollBox.
+ */
+@utility scroll-hint {
+  --fade-start: 0px;
+  --fade-end: 0px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+
+  &[data-fade-top] {
+    --fade-start: 1.25rem;
+  }
+  &[data-fade-bottom] {
+    --fade-end: 1.5rem;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--color-border);
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: var(--color-muted-foreground);
+  }
+}
