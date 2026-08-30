@@ -1,3 +1,5 @@
+import type React from 'react';
+
 import { AppSidebar } from '@/components/app-sidebar';
 import { BrandWave } from '@/components/brand-wave';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -28,7 +30,11 @@ export function StandardLayout() {
   const view = useAppStore((s) => s.view);
 
   return (
-    <SidebarProvider>
+    // 296px, up from the shadcn default of 16rem (259px). The library rows
+    // indent 73px to sit under their branch label, which left them ~170px of
+    // text — every first line clipped after a couple of words. This gives them
+    // 207px without touching the alignment.
+    <SidebarProvider style={{ '--sidebar-width': '296px' } as React.CSSProperties}>
       <AppSidebar />
       <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">

@@ -365,7 +365,7 @@ function TreeNode({
               // The branch label starts at 73px (past chevron and icon); its
               // rows started at 49, so the contents hung LEFT of the thing
               // containing them and the hierarchy read backwards.
-              'ms-[2.35rem] transition-opacity duration-300 motion-reduce:transition-none',
+              'ms-[2.35rem] me-0 pe-0 transition-opacity duration-300 motion-reduce:transition-none',
               open ? 'opacity-100' : 'opacity-0',
             )}
             data-open={open || undefined}
@@ -434,7 +434,7 @@ function TreeRow({
         title={tooltip ?? title}
         className="h-auto w-full py-1.5 text-left"
       >
-        <span className="flex min-w-0 flex-col">
+        <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-medium">{title}</span>
           <span className="truncate text-sm text-sidebar-foreground/50">{subtitle}</span>
         </span>
