@@ -392,16 +392,14 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
         }}
       />
 
-      {/* The dictations still being written up, clear of both the page and the
-          recording window — so the next one can start while they work. */}
+      {/* The dictations still being written up, in the bottom-right corner —
+          so the next one can start while they work. They ride up out of the
+          way while a recording window is open on the same edge. */}
       <DictationJobList
         jobs={jobs.jobs}
+        raised={dictating !== null}
         onRetry={jobs.retry}
         onDiscard={jobs.discard}
-        /* Clear of the toolbar stripe in both its states — under the title row
-           when the page sits at the top, under the stripe alone once it has
-           scrolled up — and left of the rail of sources. */
-        className="fixed top-36 right-4 z-40 lg:right-[19rem]"
       />
 
       {dictating ? (

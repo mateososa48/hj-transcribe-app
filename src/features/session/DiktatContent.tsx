@@ -206,13 +206,13 @@ export function DiktatContent({
         </div>
       </div>
 
-      {/* Ergänzungen still being worked in, beside the page rather than on
-          top of the recorder — the microphone is free again immediately. */}
+      {/* Ergänzungen still being worked in, in the bottom-right corner rather
+          than on top of the recorder — the microphone is free immediately. */}
       <DictationJobList
         jobs={jobs.jobs}
+        raised={ergOpen}
         onRetry={jobs.retry}
         onDiscard={jobs.discard}
-        className="fixed top-20 right-4 z-40"
       />
 
       {ergOpen ? (

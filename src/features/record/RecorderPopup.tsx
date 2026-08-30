@@ -52,8 +52,15 @@ export function RecorderPopup({
     let cancelled = false;
     void recordingSession.start('beurteilung', { parentId }).then((ok) => {
       if (cancelled) return;
-      if (ok) setStarted(true);
-      else {
+      if (ok) {
+        setStarted(true);
+        return;
+      }
+      // Refused for one of two reasons, and they need different words. If the
+      // microphone could not be opened at all the session carries the real
+      // message — leave the stage alone and let micFailed say it. Only a
+      // microphone genuinely committed elsewhere is "already recording".
+      if (recordingSession.getState().status !== 'error') {
         setErrorText('Es läuft bereits eine Aufnahme.');
         setStage('error');
       }

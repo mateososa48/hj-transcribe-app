@@ -10,7 +10,10 @@ export default function App() {
   return (
     <>
       <StandardLayout />
-      <Toaster position="bottom-right" />
+      {/* Top right, opposite the dictation cards: those own the bottom-right
+          corner now, and two stacks growing into the same corner would sooner
+          or later cover each other. */}
+      <Toaster position="top-right" />
     </>
   );
 }

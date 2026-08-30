@@ -121,27 +121,40 @@ export function useDictationJobs(): DictationJobs {
 }
 
 /**
- * The jobs as a stack of small cards, out of the way of the page and of the
- * recording window. Deliberately quiet: one line of text and, when there is
- * something to do about it, one key.
+ * The jobs as a stack of small cards in the bottom-right corner — the corner
+ * for work that is under way and needs no attention. Newest nearest the
+ * corner, older ones riding up above it, never overlapping.
+ *
+ * It owns its own position rather than taking one from each caller, because
+ * the one thing it must never do is land on top of something else: the
+ * recording window sits centred along the same bottom edge, so while one is
+ * open the stack rides above its band, and toasts were moved to the opposite
+ * corner (see App.tsx).
  */
 export function DictationJobList({
   jobs,
+  raised,
   onRetry,
   onDiscard,
-  className,
 }: {
   jobs: DictationJob[];
+  /** A recording window is open on the bottom edge — clear its band. */
+  raised?: boolean;
   onRetry: (id: string) => void;
   onDiscard: (id: string) => void;
-  className?: string;
 }) {
   if (jobs.length === 0) return null;
 
   return (
     <div
       aria-live="polite"
-      className={cn('pointer-events-none flex flex-col items-end gap-2', className)}
+      className={cn(
+        'pointer-events-none fixed right-4 bottom-6 z-40 flex flex-col items-end gap-2',
+        'transition-transform duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+        // The window sits 24px up and runs to about 100px tall at its tallest;
+        // 128px clears that band with room to spare at every stage it shows.
+        raised && '-translate-y-32',
+      )}
     >
       {jobs.map((job) => (
         <Chip key={job.id} job={job} onRetry={onRetry} onDiscard={onDiscard} />
@@ -163,7 +176,7 @@ function Chip({
     <div
       className={cn(
         'pointer-events-auto flex max-w-[30rem] items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-2.5 shadow-lg',
-        'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300',
+        'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300',
       )}
     >
       {children}
