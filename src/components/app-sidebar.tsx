@@ -124,7 +124,11 @@ export function AppSidebar() {
             the sidebar they read as three unrelated keys that happen to be
             stacked; inside one surface under one heading they read as the
             answer to a single question. */}
-        <div className="rounded-[1.375rem] bg-muted p-2.5">
+        {/* ── TRAY SHADE ── the one number to turn: the L in oklch(L 0 0).
+            1 is white, 0 is black. bg-muted was 0.97 and read as barely
+            there; 0.945 is one step down. Try 0.955 for lighter, 0.93 for
+            heavier — the file hot-reloads, so it changes as you type. */}
+        <div className="rounded-[1.375rem] bg-[oklch(0.945_0_0)] p-2.5">
           {/* "Neu starten" is German for restarting a machine, and verbs are
               not capitalised — this heads three things he CREATES. A label,
               so it sits back from the keys it names. */}
