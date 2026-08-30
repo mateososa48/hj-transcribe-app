@@ -112,7 +112,7 @@ export function AppSidebar() {
             <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
               Arzt-Assistent
             </span>
-            <BrandWave className="h-12 w-16 shrink-0" />
+            <BrandWave className="h-14 w-20 shrink-0" />
           </span>
           {/* Spelled the way he spells it — Jürgen — and abbreviated as it is
               on his letterhead. At 14px, because 12 sat below everything else
