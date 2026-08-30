@@ -109,19 +109,19 @@ export function AppSidebar() {
             {/* Semibold and tracking-tight, the weight every other heading in
                 the app carries. One size up from before is all the extra
                 presence the name needs; bold made it a different typeface. */}
-            <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
+            <span className="text-[1.375rem] font-semibold tracking-tight whitespace-nowrap">
               Arzt-Assistent
             </span>
             {/* 1.27:1 is the box the ribbon renders ROUND in — at 1.43 it
                 flattened to 1.22 wide. And its figure only fills ~70% of the
                 box, so the box has to overhang the gutter for the ribbon
                 itself to land on it. */}
-            <BrandWave className="-me-3 h-14 w-18 shrink-0" />
+            <BrandWave className="-my-2.5 -me-1 h-14 w-18 shrink-0" />
           </span>
           {/* Spelled the way he spells it — Jürgen — and abbreviated as it is
               on his letterhead. At 14px, because 12 sat below everything else
               in an app built at 18px root for a 75-year-old's eyes. */}
-          <span className="mt-0.5 block truncate text-sm text-sidebar-foreground/60">
+          <span className="-mt-0.5 block truncate text-[0.95rem] text-sidebar-foreground/60">
             Prof. Hans-Jürgen Rupprecht
           </span>
         </button>
