@@ -214,7 +214,7 @@ function SidebarAction({
   return (
     <BorderBeam
       size="md"
-      theme="light"
+      theme="dark"
       colorVariant="ocean"
       staticColors
       active={beaming}
@@ -233,19 +233,20 @@ function SidebarAction({
           timers.current.push(setTimeout(() => setBeaming(false), 1100));
         }}
         className={cn(
-          // Mateo's Figma sidebar, measured off the export: a flat white pill
-          // with a single 1px grey edge and nothing else — no glass, no
-          // gradient, no shadow; his face holds exactly two values across its
-          // whole width. The edge is #c2c2c2, which is this ink at 25% over
-          // white (255 − 0.25 × 245 = 194).
+          // The pill from Mateo's second frame, sampled down its interior:
+          // #313131 at the top edge, through #1a1a1a, settling at #171717 and
+          // closing on #151515 — top-lit, no border, no ring. Those are his
+          // stops, not an approximation of them.
           'flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
-          'bg-background text-sm font-medium tracking-[-0.01em] text-foreground',
-          'border border-foreground/25 hover:border-foreground/45 hover:bg-muted/40',
-          'transition-colors duration-200 ease-out motion-reduce:transition-none',
+          'text-sm font-medium tracking-[-0.01em] text-white',
+          'bg-[linear-gradient(180deg,#313131_0%,#1e1e1e_22%,#171717_42%,#161616_80%,#151515_100%)]',
+          'hover:bg-[linear-gradient(180deg,#3d3d3d_0%,#262626_22%,#1e1e1e_42%,#1c1c1c_80%,#1a1a1a_100%)]',
+          'transition-[background-image,transform] duration-200 ease-out motion-reduce:transition-none',
+          'active:scale-[0.985]',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
-        <Icon aria-hidden className="size-[18px] shrink-0 text-foreground" />
+        <Icon aria-hidden className="size-[18px] shrink-0 text-white" />
         {label}
       </button>
     </BorderBeam>
