@@ -1,3 +1,4 @@
+import { isTemplateBody } from '@/features/document/insert.ts';
 import { db, newId, type DocumentRecord } from '@/lib/db.ts';
 import { deleteSession } from '@/lib/generate.ts';
 
@@ -34,14 +35,23 @@ function templateContent(): unknown {
   };
 }
 
-export async function createDocument(): Promise<DocumentRecord> {
-  const now = Date.now();
-  const when = new Date(now);
+/**
+ * The name a Bericht is born with. Derived from its creation time rather than
+ * stored, so asking "has he named this himself?" later is just asking whether
+ * the title still matches the one it would have been given.
+ */
+export function defaultDocumentTitle(createdAt: number): string {
+  const when = new Date(createdAt);
   const day = when.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
   const time = when.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  return `Bericht ${day}, ${time} Uhr`;
+}
+
+export async function createDocument(): Promise<DocumentRecord> {
+  const now = Date.now();
   const record: DocumentRecord = {
     id: newId(),
-    title: `Bericht ${day}, ${time} Uhr`,
+    title: defaultDocumentTitle(now),
     content: templateContent(),
     createdAt: now,
     updatedAt: now,
@@ -87,4 +97,29 @@ export async function appendToDocument(id: string, nodes: unknown[]): Promise<vo
         row.updatedAt = Date.now();
       }
     });
+}
+
+/**
+ * Drop a Bericht that was created and then never used.
+ *
+ * Pressing "Bericht erstellen" and thinking better of it used to leave a blank
+ * letter behind every time, so the list filled with identical empty documents
+ * he then had to delete by hand. Leaving one now clears it away — but only
+ * when it is untouched in every sense: still called what it was named at
+ * birth, still nothing but the bare template, and nothing recorded into it.
+ * Any of those failing means there is something of his in here, and it stays.
+ *
+ * Returns whether it was removed, so the caller can refresh its lists.
+ */
+export async function discardIfUntouched(id: string): Promise<boolean> {
+  const row = await db.documents.get(id);
+  if (!row) return false;
+  if (row.title !== defaultDocumentTitle(row.createdAt)) return false;
+  if (!isTemplateBody(row.content)) return false;
+  // A recording filed under it counts as use even when its text never landed.
+  const recordings = await db.sessions.filter((s) => s.parentId === id).count();
+  if (recordings > 0) return false;
+
+  await db.documents.delete(id);
+  return true;
 }

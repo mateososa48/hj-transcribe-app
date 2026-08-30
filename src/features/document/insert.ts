@@ -126,3 +126,35 @@ export function canonicalSectionTitle(title: string): string {
   const key = title.trim().toLowerCase().replace(/[.:]+$/, '');
   return SECTION_ALIASES[key] ?? title.trim();
 }
+
+/** All the text a node carries, however deeply it is nested. */
+function textOf(node: TiptapNode): string {
+  if (node.text) return node.text;
+  return (node.content ?? []).map(textOf).join('');
+}
+
+/**
+ * True when a Bericht's body is still exactly the template it was created
+ * with: his five section headings, and nothing written anywhere between them.
+ *
+ * Structural rather than a comparison against a rebuilt template, because the
+ * editor normalises what it loads — attributes appear that were never written
+ * — and a JSON equality check would call an untouched letter modified.
+ */
+export function isTemplateBody(doc: unknown): boolean {
+  const root = doc as { type?: string; content?: TiptapNode[] } | null;
+  if (!root || root.type !== 'doc') return false;
+
+  let matched = 0;
+  for (const block of root.content ?? []) {
+    if (block.type === 'paragraph') {
+      // Empty lines are untouched, however many of them he made.
+      if (textOf(block).trim()) return false;
+      continue;
+    }
+    if (block.type !== 'heading') return false;
+    if (textOf(block).trim() !== CANONICAL_SECTIONS[matched]) return false;
+    matched++;
+  }
+  return matched === CANONICAL_SECTIONS.length;
+}

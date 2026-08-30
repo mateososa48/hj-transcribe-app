@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { db, newId, type DocumentRecord } from '@/lib/db';
-import { deleteDocument, saveDocument } from '@/lib/documents';
+import { deleteDocument, discardIfUntouched, saveDocument } from '@/lib/documents';
 import { useAppStore } from '@/store/app-store';
 import { RecorderPopup } from '@/features/record/RecorderPopup';
 import { DictationJobList, useDictationJobs } from '@/features/record/dictation-jobs';
@@ -83,6 +83,9 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   const goHome = useAppStore((s) => s.goHome);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const [title, setTitle] = useState(record.title);
+  /** The unmount flush runs from a stale closure; this is always current. */
+  const titleRef = useRef(title);
+  titleRef.current = title;
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** The one open recording window — one microphone, one recording at a time. */
   const [dictating, setDictating] = useState<DictateTarget | null>(null);
@@ -306,15 +309,31 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     };
   });
 
-  // Flush the working copy when the page is left mid-debounce.
+  // Flush the working copy when the page is left mid-debounce — then, if
+  // leaving revealed a Bericht he never actually used, take it away again.
+  // The flush has to land FIRST: the check reads the stored row, and a title
+  // typed without ever blurring the field is only written here.
   useEffect(
     () => () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      if (editor && !editor.isDestroyed) {
-        void saveDocument(record.id, { content: editor.getJSON() });
-      }
+      if (!editor || editor.isDestroyed) return;
+      const flushed = saveDocument(record.id, {
+        title: titleRef.current.trim() || record.title,
+        content: editor.getJSON(),
+      });
+      void flushed.then(() => {
+        // React can tear an effect down and put it straight back — StrictMode
+        // does exactly that, and treating every teardown as "he left" deleted
+        // the letter out from under him a moment after he created it. The
+        // registry is the truth: a live editor for this document means it is
+        // still open, and only a genuinely closed one may be discarded.
+        if (editorRegistry.get(record.id)) return;
+        return discardIfUntouched(record.id).then((removed) => {
+          if (removed) touchSessions();
+        });
+      });
     },
-    [editor, record.id],
+    [editor, record.id, record.title, touchSessions],
   );
 
   async function saveTitle() {

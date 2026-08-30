@@ -6,6 +6,8 @@ import {
   abschnittToNodes,
   bulletsToTiptap,
   canonicalSectionTitle,
+  CANONICAL_SECTIONS,
+  isTemplateBody,
   sectionToTiptap,
 } from '../src/features/document/insert.ts';
 
@@ -54,4 +56,69 @@ test('section titles normalize to his letter vocabulary', () => {
   assert.equal(canonicalSectionTitle('Messwerte'), 'Befunde');
   assert.equal(canonicalSectionTitle('Diagnosen:'), 'Diagnosen');
   assert.equal(canonicalSectionTitle('Analyse'), 'Analyse');
+});
+
+/**
+ * The test behind auto-discarding an unused Bericht. Getting this wrong in the
+ * lenient direction leaves blank letters piling up; getting it wrong in the
+ * strict direction deletes something he wrote, which is the unforgivable half.
+ */
+const templateDoc = () => ({
+  type: 'doc',
+  content: [
+    { type: 'paragraph' },
+    ...CANONICAL_SECTIONS.flatMap((title) => [
+      { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: title }] },
+      { type: 'paragraph' },
+    ]),
+  ],
+});
+
+test('isTemplateBody recognises a Bericht nobody has written in', () => {
+  assert.equal(isTemplateBody(templateDoc()), true);
+});
+
+test('isTemplateBody survives the attributes the editor adds on load', () => {
+  const doc = templateDoc();
+  // What TipTap hands back after a round trip: attrs that were never written.
+  for (const block of doc.content) {
+    (block as Record<string, unknown>).attrs = {
+      ...((block as { attrs?: object }).attrs ?? {}),
+      textAlign: null,
+    };
+  }
+  assert.equal(isTemplateBody(doc), true);
+});
+
+test('isTemplateBody counts extra empty lines as still untouched', () => {
+  const doc = templateDoc();
+  doc.content.push({ type: 'paragraph' }, { type: 'paragraph' });
+  assert.equal(isTemplateBody(doc), true);
+});
+
+test('isTemplateBody refuses anything he actually put there', () => {
+  const typed = templateDoc();
+  typed.content[2] = { type: 'paragraph', content: [{ type: 'text', text: 'Z.n. Stent' }] } as never;
+  assert.equal(isTemplateBody(typed), false, 'text typed under a heading');
+
+  const listed = templateDoc();
+  listed.content.push({ type: 'bulletList', content: [] } as never);
+  assert.equal(isTemplateBody(listed), false, 'a list inserted at the end');
+
+  const renamedHeading = templateDoc();
+  renamedHeading.content[1] = {
+    type: 'heading',
+    attrs: { level: 2 },
+    content: [{ type: 'text', text: 'Verlauf' }],
+  } as never;
+  assert.equal(isTemplateBody(renamedHeading), false, 'a heading he renamed');
+
+  const short = templateDoc();
+  short.content = short.content.slice(0, 3);
+  assert.equal(isTemplateBody(short), false, 'sections he deleted');
+});
+
+test('isTemplateBody rejects anything that is not a document', () => {
+  assert.equal(isTemplateBody(null), false);
+  assert.equal(isTemplateBody({ type: 'paragraph' }), false);
 });
