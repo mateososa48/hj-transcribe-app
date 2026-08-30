@@ -3,6 +3,7 @@ import { ChevronRight, FilePen, FileText, MessagesSquare, Mic, Settings2, Stetho
 
 import { BorderBeam } from 'border-beam';
 
+import { BrandWave } from '@/components/brand-wave';
 import { createDocument } from '@/lib/documents';
 import {
   Sidebar,
@@ -97,16 +98,25 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={go.home}
-          className="-mx-1 rounded-md px-1 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="-mx-1 block rounded-md px-1 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
-          {/* Semibold and tracking-tight, the weight every other heading in the
-              app carries. One size up from before is all the extra presence
-              the name needs; bold made it a different typeface to the eye. */}
-          <span className="block text-xl font-semibold tracking-tight whitespace-nowrap">
-            Arzt-Assistent
+          {/* The ribbon rides the NAME line, not the whole block: beside both
+              lines it stole 49px from the widest one and cut his own name to
+              "Rupprech…". The name line has room to spare; his does not. */}
+          <span className="flex items-center gap-2">
+            {/* Semibold and tracking-tight, the weight every other heading in
+                the app carries. One size up from before is all the extra
+                presence the name needs; bold made it a different typeface. */}
+            <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
+              Arzt-Assistent
+            </span>
+            <BrandWave className="h-9 w-11 shrink-0" />
           </span>
-          <span className="mt-1 block truncate text-xs text-sidebar-foreground/55">
-            Professor Hans-Juergen Rupprecht
+          {/* Spelled the way he spells it — Jürgen — and abbreviated as it is
+              on his letterhead. At 14px, because 12 sat below everything else
+              in an app built at 18px root for a 75-year-old's eyes. */}
+          <span className="mt-0.5 block truncate text-sm text-sidebar-foreground/60">
+            Prof. Hans-Jürgen Rupprecht
           </span>
         </button>
 
@@ -115,8 +125,11 @@ export function AppSidebar() {
             stacked; inside one surface under one heading they read as the
             answer to a single question. */}
         <div className="rounded-[1.375rem] bg-muted p-2.5">
-          <p className="px-2 pt-1 pb-2.5 text-xs font-medium text-sidebar-foreground">
-            Neu Starten
+          {/* "Neu starten" is German for restarting a machine, and verbs are
+              not capitalised — this heads three things he CREATES. A label,
+              so it sits back from the keys it names. */}
+          <p className="px-2 pt-1 pb-2.5 text-[0.83rem] leading-4 font-medium text-sidebar-foreground/60">
+            Neu anlegen
           </p>
           <div className="flex flex-col gap-2">
             <SidebarAction icon={Stethoscope} label="Termin aufnehmen" onRun={() => go.record('gespraech')} />
@@ -128,7 +141,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         {loading ? null : (
-          <SidebarGroup>
+          <SidebarGroup className="px-4">
             <SidebarGroupContent>
               <SidebarMenu>
                 <TreeNode
@@ -191,10 +204,16 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="px-4 pb-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton isActive={view.name === 'settings'} onClick={go.settings}>
+            <SidebarMenuButton
+              isActive={view.name === 'settings'}
+              onClick={go.settings}
+              // Every other row in the sidebar carries at least medium; at 400
+              // this one read as a caption rather than a destination.
+              className="font-medium"
+            >
               <Settings2 aria-hidden />
               Einstellungen
             </SidebarMenuButton>
