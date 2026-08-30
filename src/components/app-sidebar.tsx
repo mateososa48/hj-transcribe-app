@@ -233,17 +233,15 @@ function SidebarAction({
           timers.current.push(setTimeout(() => setBeaming(false), 1100));
         }}
         className={cn(
-          // Liquid glass, in pill form: the translucent white face, the
-          // specular top edge and the hairline ring from btn-liquid.
-          'btn-liquid flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
-          'text-sm font-medium tracking-[-0.01em] text-foreground',
-          // A drawn edge on top of the glass: the utility's own ring is a
-          // 0.07 whisper, which reads as no edge at all on a light sidebar.
-          // The glass face has to stop AT that edge — a background painted to
-          // the border box washes the border out from underneath, which is
-          // why it vanished under the brighter inner glow on hover.
-          'border-[1.5px] border-foreground/25 hover:border-foreground/40',
-          '[background-clip:padding-box]!',
+          // Mateo's Figma sidebar, measured off the export: a flat white pill
+          // with a single 1px grey edge and nothing else — no glass, no
+          // gradient, no shadow; his face holds exactly two values across its
+          // whole width. The edge is #c2c2c2, which is this ink at 25% over
+          // white (255 − 0.25 × 245 = 194).
+          'flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
+          'bg-background text-sm font-medium tracking-[-0.01em] text-foreground',
+          'border border-foreground/25 hover:border-foreground/45 hover:bg-muted/40',
+          'transition-colors duration-200 ease-out motion-reduce:transition-none',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
