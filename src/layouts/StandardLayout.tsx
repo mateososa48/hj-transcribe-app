@@ -33,7 +33,7 @@ export function StandardLayout() {
       <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
           <SidebarTrigger />
-          <span className="text-base font-semibold tracking-tight">Arztbrief-Assistent</span>
+          <span className="text-base font-semibold tracking-tight">Arzt-Assistent</span>
           <BrandWave className="h-11 w-14 shrink-0" />
         </header>
         {/* The Bericht is the one full-bleed view: it lays out its own

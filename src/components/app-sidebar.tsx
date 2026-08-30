@@ -3,7 +3,6 @@ import { ChevronRight, FilePen, FileText, MessagesSquare, Mic, Settings2, Stetho
 
 import { BorderBeam } from 'border-beam';
 
-import { BrandWave } from '@/components/brand-wave';
 import { createDocument } from '@/lib/documents';
 import {
   Sidebar,
@@ -91,19 +90,39 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="gap-3 p-4">
+      <SidebarHeader className="gap-5 p-4">
+        {/* The name, and under it whose desk this is. There is one user and he
+            is the only person who will ever read this line; seeing his own
+            name is what makes it his instrument rather than software. */}
         <button
           type="button"
           onClick={go.home}
-          className="flex items-center gap-2 rounded-md px-1 text-left text-lg font-semibold tracking-tight whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="-mx-1 rounded-md px-1 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
-          Arztbrief-Assistent
-          <BrandWave className="h-10 w-12 shrink-0" />
+          {/* Semibold and tracking-tight, the weight every other heading in the
+              app carries. One size up from before is all the extra presence
+              the name needs; bold made it a different typeface to the eye. */}
+          <span className="block text-xl font-semibold tracking-tight whitespace-nowrap">
+            Arzt-Assistent
+          </span>
+          <span className="mt-1 block truncate text-xs text-sidebar-foreground/55">
+            Professor Hans-Juergen Rupprecht
+          </span>
         </button>
-        <div className="flex flex-col gap-2">
-          <SidebarAction icon={Stethoscope} label="Termin aufnehmen" onRun={() => go.record('gespraech')} />
-          <SidebarAction icon={Mic} label="Diktat starten" onRun={() => go.record('beurteilung')} />
-          <SidebarAction icon={FilePen} label="Bericht erstellen" onRun={go.newDocument} />
+
+        {/* The three ways in, gathered on their own tray and named. Loose on
+            the sidebar they read as three unrelated keys that happen to be
+            stacked; inside one surface under one heading they read as the
+            answer to a single question. */}
+        <div className="rounded-[1.375rem] bg-muted p-2.5">
+          <p className="px-2 pt-1 pb-2.5 text-xs font-medium text-sidebar-foreground">
+            Neu Starten
+          </p>
+          <div className="flex flex-col gap-2">
+            <SidebarAction icon={Stethoscope} label="Termin aufnehmen" onRun={() => go.record('gespraech')} />
+            <SidebarAction icon={Mic} label="Diktat starten" onRun={() => go.record('beurteilung')} />
+            <SidebarAction icon={FilePen} label="Bericht erstellen" onRun={go.newDocument} />
+          </div>
         </div>
       </SidebarHeader>
 
