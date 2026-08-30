@@ -203,10 +203,12 @@ void main(){
   float g = hash21(gl_FragCoord.xy * 0.75 + fract(uTime) * 91.7);
 
   vec3 sl = outc * (1.0 - 2.0 * (g - 0.5) * outc) + (2.0 * (g - 0.5)) * sqrt(max(outc, 0.0));
-  outc = mix(outc, clamp(sl, 0.0, 1.0), 0.055);
+  // Film grain belongs to the instrument. On the mark it speckles the paper,
+  // and a speckled patch on a flat white sidebar reads as a different white.
+  outc = mix(outc, clamp(sl, 0.0, 1.0), 0.055 * (1.0 - uMark));
 
   float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
-  outc += (n - 0.5) / 255.0;
+  outc += (n - 0.5) / 255.0 * (1.0 - uMark);
 
   outColor = vec4(outc, 1.0);
 }`;
