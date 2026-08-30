@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BouncyAccordion } from '@/components/motion/bouncy-accordion';
 import { MiniPlayer } from '@/components/mini-player';
 import { ScrollBox } from '@/components/scroll-box';
+import { formatDuration } from '@/features/sessions/useSessions';
 import { useSessionAudio } from '@/features/session/use-session-audio';
 import { db, type Session, type Transcription } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -60,8 +61,18 @@ export function DictationRail({
     return {
       id: session.id,
       title: (
-        <span className="flex min-w-0 flex-col items-start gap-1">
-          <span className="text-sm font-medium">Diktat</span>
+        <span className="flex w-full min-w-0 flex-col items-start gap-1">
+          {/* The length rides opposite the word rather than beside the tag —
+              it is answerable at a glance without opening the card, and the
+              row below keeps its full width for the section's real name. */}
+          <span className="flex w-full items-baseline justify-between gap-2">
+            <span className="text-sm font-medium">Diktat</span>
+            {session.durationMs ? (
+              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                {formatDuration(session.durationMs)}
+              </span>
+            ) : null}
+          </span>
           <span className="min-w-0 max-w-full truncate rounded-md bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
             {session.targetSection ?? 'Ohne Abschnitt'}
           </span>
