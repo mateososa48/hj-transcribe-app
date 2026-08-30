@@ -33,7 +33,12 @@ import { PagePushes } from './pagination';
 import { SectionInvite } from './section-invite';
 import type { DictateTarget } from './dictate-target';
 import { ImportDialog } from './ImportDialog';
-import { abschnittToNodes, bulletsToTiptap, sectionToTiptap } from './insert';
+import {
+  abschnittToNodes,
+  bulletsToTiptap,
+  canonicalSectionTitle,
+  sectionToTiptap,
+} from './insert';
 import { editorRegistry } from './editor-registry';
 import { insertTitledContent } from './merge';
 
@@ -230,12 +235,27 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     }
     pendingPosRef.current = null;
     const where = target.kind === 'section' ? `„${target.title}"` : null;
+    // Record where it is headed straight away, so the widget beside the letter
+    // can name the section while the dictation is still being written up.
+    if (target.kind === 'section') {
+      void db.sessions.update(childId, { targetSection: target.title });
+    }
     jobs.enqueue({
       processingText: where ? `${where} wird geschrieben …` : 'Der Abschnitt wird erstellt …',
       successText: where ? `In ${where} eingefügt` : 'Diktat eingefügt',
       run: async () => {
         const { heading, text } = await processAbschnittDiktat(childId);
         const undo = insertAbschnitt(target, heading, text, posKey);
+        // Where it actually landed: the section he picked, or — for one aimed
+        // at the caret — whichever section the model heard him announce.
+        await db.sessions.update(childId, {
+          targetSection:
+            target.kind === 'section'
+              ? target.title
+              : heading
+                ? canonicalSectionTitle(heading)
+                : 'An der Schreibmarke',
+        });
         setErgVersion((v) => v + 1);
         return undo;
       },

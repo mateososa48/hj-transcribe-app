@@ -3,10 +3,16 @@
 // CLI because its registry entry also ships lib/ease.ts and lib/utils.ts, which
 // would have overwritten ours.
 //
-// One local addition: `separated`. Upstream, closed neighbours square off their
-// touching corners so a run of them reads as one connected panel. Here the
-// dictations have to read as separate widgets standing beside the letter, so
-// this makes every row its own card at a constant gap.
+// Local changes, all three because this sits in a clinical document tool
+// rather than a showcase:
+//   - `separated`: upstream, closed neighbours square off their touching
+//     corners so a run of them reads as one connected panel. Here they have to
+//     read as separate widgets beside the letter.
+//   - `radius`: upstream's 28 is a pill on a 51px card.
+//   - the springs below are gone. The bounce is the whole point of the
+//     component upstream and exactly wrong here — this is a letter a doctor
+//     signs, and PRODUCT.md names playful motion as an anti-reference. Every
+//     transition now runs on the app's one clock instead.
 
 import {
   motion,
@@ -58,38 +64,16 @@ export interface BouncyAccordionProps {
   classNames?: BouncyAccordionClassNames;
 }
 
-// Local springs keep the accordion's connected groups moving together while
-// avoiding scale projection on text-heavy row contents.
-// Gap spring: must not overshoot y — positive y overshoot drifts items below
-// their mt-3 resting point and briefly overlaps the next item.
-const ROW_TRANSITION: Transition = {
-  type: "spring",
-  duration: 0.55,
-  bounce: 0.38,
-};
+// The app's clock: the curve and duration every other transition in this
+// codebase already uses, so a card opening reads as the same hand that moves
+// the keys and the sidebar. Nothing here overshoots.
+const APP_EASE = [0.22, 1, 0.36, 1] as const;
 
-const CONTENT_OPEN_TRANSITION: Transition = {
-  type: "spring",
-  duration: 0.58,
-  bounce: 0.32,
-};
-
-const CONTENT_CLOSE_TRANSITION: Transition = {
-  type: "spring",
-  duration: 0.46,
-  bounce: 0.26,
-};
-
-const DESCRIPTION_TRANSITION: Transition = {
-  duration: 0.18,
-  ease: EASE_OUT,
-};
-
-const CHEVRON_TRANSITION: Transition = {
-  type: "spring",
-  duration: 0.42,
-  bounce: 0.28,
-};
+const ROW_TRANSITION: Transition = { duration: 0.25, ease: APP_EASE };
+const CONTENT_OPEN_TRANSITION: Transition = { duration: 0.25, ease: APP_EASE };
+const CONTENT_CLOSE_TRANSITION: Transition = { duration: 0.2, ease: APP_EASE };
+const DESCRIPTION_TRANSITION: Transition = { duration: 0.15, ease: EASE_OUT };
+const CHEVRON_TRANSITION: Transition = { duration: 0.25, ease: APP_EASE };
 
 
 function useControllableAccordionValue({

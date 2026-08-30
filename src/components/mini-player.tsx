@@ -117,8 +117,9 @@ export function MiniPlayer({
 
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
-      {/* 32px of ink, 40px of target: the key stays slim without dropping
-          under the size everything he uses routinely has to meet. */}
+      {/* The glyph itself is the control — no disc behind it, nothing that
+          moves when pressed. It is still 40px of target around 16px of ink,
+          which is the size everything he uses routinely has to meet. */}
       <button
         type="button"
         onClick={() => {
@@ -128,12 +129,12 @@ export function MiniPlayer({
           else audio.pause();
         }}
         aria-label={playing ? 'Pause' : 'Abspielen'}
-        className="relative grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-transform duration-[150ms] ease-[cubic-bezier(0.22,1,0.36,1)] after:absolute after:-inset-1 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.92] motion-reduce:transition-none"
+        className="relative grid size-5 shrink-0 place-items-center text-foreground after:absolute after:-inset-2.5 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
       >
         {playing ? (
-          <Pause className="size-3.5 fill-current" aria-hidden />
+          <Pause className="size-4 fill-current" aria-hidden />
         ) : (
-          <Play className="ml-px size-3.5 fill-current" aria-hidden />
+          <Play className="size-4 fill-current" aria-hidden />
         )}
       </button>
 

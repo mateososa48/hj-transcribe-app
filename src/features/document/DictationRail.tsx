@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { BouncyAccordion } from '@/components/motion/bouncy-accordion';
 import { MiniPlayer } from '@/components/mini-player';
 import { ScrollBox } from '@/components/scroll-box';
-import { formatDuration } from '@/features/sessions/useSessions';
 import { useSessionAudio } from '@/features/session/use-session-audio';
 import { db, type Session, type Transcription } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -57,19 +56,14 @@ export function DictationRail({
 
   if (rows.length === 0) return null;
 
-  const items = rows.map(({ session, transcription }, i) => {
-    const time = new Date(session.startedAt).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const items = rows.map(({ session, transcription }) => {
     return {
       id: session.id,
       title: (
-        <span className="flex min-w-0 items-baseline gap-1.5">
-          <span className="shrink-0 text-sm font-medium">{i + 1}. Diktat</span>
-          <span className="truncate text-xs text-muted-foreground">
-            {time} Uhr
-            {session.durationMs ? ` · ${formatDuration(session.durationMs)}` : ''}
+        <span className="flex min-w-0 flex-col items-start gap-1">
+          <span className="text-sm font-medium">Diktat</span>
+          <span className="min-w-0 max-w-full truncate rounded-md bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+            {session.targetSection ?? 'Ohne Abschnitt'}
           </span>
         </span>
       ),
@@ -84,7 +78,12 @@ export function DictationRail({
   });
 
   return (
-    <aside aria-label="Diktate in diesem Bericht" className="hidden w-72 shrink-0 lg:block">
+    // Same ground as the canvas the page sits on, so the widgets read as
+    // resting on the desk beside the letter rather than on a panel of their own.
+    <aside
+      aria-label="Diktate in diesem Bericht"
+      className="hidden w-72 shrink-0 bg-muted/50 lg:block"
+    >
       <div className="sticky top-14 max-h-[calc(100svh-3.5rem)] overflow-y-auto px-3 py-4">
         <BouncyAccordion
           separated
@@ -94,7 +93,7 @@ export function DictationRail({
           onValueChange={setOpenId}
           classNames={{
             item: 'border border-border shadow-sm',
-            trigger: 'min-h-12 gap-2 px-4',
+            trigger: 'min-h-12 gap-2 px-4 py-2.5',
             title: 'text-sm font-normal',
             chevron: 'size-5',
             description: 'text-sm text-foreground',

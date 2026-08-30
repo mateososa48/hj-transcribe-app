@@ -53,6 +53,15 @@ export interface Session {
    * children are found by filtering.
    */
   parentId?: string;
+  /**
+   * For a dictation INTO a Bericht: the section of the letter it went to, by
+   * his own name for it ("Befunde"). The destination is decided in the editor
+   * — chosen before he speaks, or announced while he speaks — and nothing else
+   * remembers it afterwards, so the widget beside the letter could not say
+   * what a recording was for without this. Optional: rows written before this
+   * existed, and Ergänzungen, have none.
+   */
+  targetSection?: string;
   /** Total recorded audio, from the recorder's own clock. */
   durationMs?: number;
   /** MIME type of the stored audio chunks. */
