@@ -112,7 +112,11 @@ export function AppSidebar() {
             <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
               Arzt-Assistent
             </span>
-            <BrandWave className="h-14 w-20 shrink-0" />
+            {/* 1.27:1 is the box the ribbon renders ROUND in — at 1.43 it
+                flattened to 1.22 wide. And its figure only fills ~70% of the
+                box, so the box has to overhang the gutter for the ribbon
+                itself to land on it. */}
+            <BrandWave className="-me-3 h-14 w-18 shrink-0" />
           </span>
           {/* Spelled the way he spells it — Jürgen — and abbreviated as it is
               on his letterhead. At 14px, because 12 sat below everything else
