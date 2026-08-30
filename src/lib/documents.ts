@@ -47,6 +47,40 @@ export function defaultDocumentTitle(createdAt: number): string {
   return `Bericht ${day}, ${time} Uhr`;
 }
 
+/**
+ * The first line a Bericht actually says — its own writing, not its heading
+ * scaffold. Twelve rows reading "Bericht 29.08., 01:03 Uhr" over "Bearbeitet
+ * Gestern, 22:54 Uhr" are twelve rows that differ only in a timestamp; the
+ * letter's first sentence is what tells them apart.
+ *
+ * Headings are skipped: every untouched Bericht starts with "Diagnosen", so
+ * leading with headings would rename them all to the same word.
+ */
+const AUTO_TITLE = /^Bericht \d{2}\.\d{2}\., \d{2}:\d{2} Uhr$/;
+
+export function documentRowTitle(doc: DocumentRecord, limit = 70): string {
+  // A title he typed himself always wins; the generated one never does.
+  if (doc.title?.trim() && !AUTO_TITLE.test(doc.title.trim())) return doc.title.trim();
+
+  const seen: string[] = [];
+  const walk = (node: unknown): void => {
+    if (seen.length > 0 || !node || typeof node !== 'object') return;
+    const n = node as { type?: string; text?: string; content?: unknown[] };
+    if (n.type === 'heading') return;
+    if (typeof n.text === 'string' && n.text.trim()) {
+      seen.push(n.text.trim());
+      return;
+    }
+    for (const child of n.content ?? []) walk(child);
+  };
+  const root = doc.content as { content?: unknown[] } | null;
+  for (const child of root?.content ?? []) walk(child);
+
+  const line = seen[0];
+  if (!line) return 'Noch leer';
+  return line.length > limit ? `${line.slice(0, limit)}…` : line;
+}
+
 export async function createDocument(): Promise<DocumentRecord> {
   const now = Date.now();
   const record: DocumentRecord = {

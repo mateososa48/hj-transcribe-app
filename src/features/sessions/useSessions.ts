@@ -89,6 +89,39 @@ export function relativeDayTime(ts: number): string {
   return `${day}, ${time} Uhr`;
 }
 
+/**
+ * One compact stamp for every row: "Heute · 14:05", "Gestern · 22:54",
+ * "25.08. · 16:31". No "Uhr", no "Bearbeitet" — a 24-hour clock has already
+ * said the first, and in a 177px column the second cost more room than it
+ * carried. Both were being truncated away anyway.
+ */
+export function compactDayTime(ts: number): string {
+  const when = new Date(ts);
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const time = when.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  if (ts >= midnight.getTime()) return `Heute · ${time}`;
+  if (ts >= midnight.getTime() - 86_400_000) return `Gestern · ${time}`;
+  const day = when.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  return `${day} · ${time}`;
+}
+
+/**
+ * What a row is CALLED.
+ *
+ * Seven rows reading "Zusammenfassende Beurteilung" under seven timestamps
+ * are seven rows he cannot tell apart, and the one he opens by mistake is a
+ * patient's letter. So the row leads with the recording's own first line, and
+ * names its state only when there is no line yet.
+ */
+export function sessionRowTitle({ session, preview, hasResult }: SessionSummary): string {
+  if (session.label?.trim()) return session.label;
+  if (session.status === 'recording') return 'Aufnahme läuft';
+  if (preview) return preview;
+  if (!hasResult) return 'Noch kein Text';
+  return session.kind === 'beurteilung' ? 'Zusammenfassende Beurteilung' : 'Notizen';
+}
+
 /** The Berichte, newest edit first. Re-reads on the same library signal. */
 export function useDocuments(): { documents: DocumentRecord[]; loading: boolean } {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);

@@ -4,7 +4,7 @@ import { ChevronRight, FilePen, FileText, MessagesSquare, Mic, Settings2, Stetho
 import { BorderBeam } from 'border-beam';
 
 import { BrandWave } from '@/components/brand-wave';
-import { createDocument } from '@/lib/documents';
+import { createDocument, documentRowTitle } from '@/lib/documents';
 import {
   Sidebar,
   SidebarContent,
@@ -21,9 +21,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  relativeDayTime,
-  sessionSubtitle,
-  sessionTimeTitle,
+  compactDayTime,
+  sessionRowTitle,
   sessionTitle,
   useDocuments,
   useSessions,
@@ -199,8 +198,9 @@ export function AppSidebar() {
                     <TreeRow
                       key={doc.id}
                       index={i}
-                      title={doc.title}
-                      subtitle={`Bearbeitet ${relativeDayTime(doc.updatedAt)}`}
+                      title={documentRowTitle(doc)}
+                      subtitle={compactDayTime(doc.updatedAt)}
+                      tooltip={doc.title}
                       active={view.name === 'document' && view.documentId === doc.id}
                       onOpen={() => go.document(doc.id)}
                     />
@@ -218,9 +218,9 @@ export function AppSidebar() {
             <SidebarMenuButton
               isActive={view.name === 'settings'}
               onClick={go.settings}
-              // Every other row in the sidebar carries at least medium; at 400
-              // this one read as a caption rather than a destination.
-              className="font-medium"
+              // Every other row in the sidebar carries at least medium and
+              // stands 40px tall; at 400 and 32px this one read as a caption.
+              className="h-10 font-medium"
             >
               <Settings2 aria-hidden />
               Einstellungen
@@ -344,7 +344,12 @@ function TreeNode({
         />
         <Icon aria-hidden className="text-sidebar-foreground" />
         <span className="flex-1">{label}</span>
-        <span className="tabular-nums text-sm font-normal text-sidebar-foreground/45">{count}</span>
+        {/* A fixed column: without it the count shifts left the moment a
+            branch passes nine items, and the one column that should read as a
+            ruler goes ragged. */}
+        <span className="w-6 shrink-0 text-right text-sm font-normal text-sidebar-foreground/45 tabular-nums">
+          {count}
+        </span>
       </SidebarMenuButton>
 
       <div
@@ -357,7 +362,10 @@ function TreeNode({
         <div className="min-h-0 overflow-hidden">
           <SidebarMenuSub
             className={cn(
-              'transition-opacity duration-300 motion-reduce:transition-none',
+              // The branch label starts at 73px (past chevron and icon); its
+              // rows started at 49, so the contents hung LEFT of the thing
+              // containing them and the hierarchy read backwards.
+              'ms-[2.35rem] transition-opacity duration-300 motion-reduce:transition-none',
               open ? 'opacity-100' : 'opacity-0',
             )}
             data-open={open || undefined}
@@ -388,8 +396,8 @@ function SessionRow({
   return (
     <TreeRow
       index={index}
-      title={sessionTimeTitle(item.session)}
-      subtitle={sessionSubtitle(item)}
+      title={sessionRowTitle(item)}
+      subtitle={compactDayTime(item.session.startedAt)}
       tooltip={sessionTitle(item.session)}
       active={active}
       onOpen={() => onOpen(item.session.id)}
