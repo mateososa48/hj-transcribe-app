@@ -132,7 +132,11 @@ export function AppSidebar() {
           {/* "Neu starten" is German for restarting a machine, and verbs are
               not capitalised — this heads three things he CREATES. A label,
               so it sits back from the keys it names. */}
-          <p className="px-2 pt-1 pb-2.5 text-[0.83rem] leading-4 font-medium text-sidebar-foreground/60">
+          {/* ── LABEL STRENGTH ── the /70 is the dial. On the darker tray, 60%
+              composited to #656565 for a contrast of 4.98 — over the line but
+              thin at 13px for his eyes. 70% is #4e4e4e at 7.11, still far
+              quieter than the pills beneath it (17.9). */}
+          <p className="px-2 pt-1 pb-2.5 text-[0.83rem] leading-4 font-medium text-sidebar-foreground/70">
             Neu anlegen
           </p>
           <div className="flex flex-col gap-2">
