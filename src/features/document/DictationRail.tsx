@@ -62,14 +62,15 @@ export function DictationRail({
       id: session.id,
       title: (
         <span className="flex w-full min-w-0 flex-col items-start gap-1">
-          {/* The length rides opposite the word rather than beside the tag —
-              it is answerable at a glance without opening the card, and the
-              row below keeps its full width for the section's real name. */}
-          <span className="flex w-full items-baseline justify-between gap-2">
+          {/* The length sits with the word it describes, not flung out to the
+              far edge — pinned opposite, it read as an orphan with a hole in
+              the middle of the row and made an L with the tag below. The row
+              below still keeps its full width for the section's real name. */}
+          <span className="flex items-baseline gap-1.5">
             <span className="text-sm font-medium">Diktat</span>
             {session.durationMs ? (
-              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                {formatDuration(session.durationMs)}
+              <span className="text-xs tabular-nums text-muted-foreground">
+                · {formatDuration(session.durationMs)}
               </span>
             ) : null}
           </span>

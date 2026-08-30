@@ -237,6 +237,13 @@ function SidebarAction({
           // specular top edge and the hairline ring from btn-liquid.
           'btn-liquid flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
           'text-sm font-medium tracking-[-0.01em] text-foreground',
+          // A drawn edge on top of the glass: the utility's own ring is a
+          // 0.07 whisper, which reads as no edge at all on a light sidebar.
+          // The glass face has to stop AT that edge — a background painted to
+          // the border box washes the border out from underneath, which is
+          // why it vanished under the brighter inner glow on hover.
+          'border-[1.5px] border-foreground/25 hover:border-foreground/40',
+          '[background-clip:padding-box]!',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
