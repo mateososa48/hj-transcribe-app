@@ -214,7 +214,7 @@ function SidebarAction({
   return (
     <BorderBeam
       size="md"
-      theme="dark"
+      theme="light"
       colorVariant="ocean"
       staticColors
       active={beaming}
@@ -233,14 +233,14 @@ function SidebarAction({
           timers.current.push(setTimeout(() => setBeaming(false), 1100));
         }}
         className={cn(
-          // The black glossy key, in pill form: the dome specular and lower
-          // lip from btn-gloss over the app's primary black.
-          'btn-gloss flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
-          'bg-primary text-sm font-medium tracking-[-0.01em] text-primary-foreground',
+          // Liquid glass, in pill form: the translucent white face, the
+          // specular top edge and the hairline ring from btn-liquid.
+          'btn-liquid flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
+          'text-sm font-medium tracking-[-0.01em] text-foreground',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
-        <Icon aria-hidden className="size-[18px] shrink-0 text-primary-foreground" />
+        <Icon aria-hidden className="size-[18px] shrink-0 text-foreground" />
         {label}
       </button>
     </BorderBeam>
