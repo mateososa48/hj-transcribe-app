@@ -102,14 +102,17 @@ export function AppSidebar() {
           {/* The ribbon rides the NAME line, not the whole block: beside both
               lines it stole 49px from the widest one and cut his own name to
               "Rupprech…". The name line has room to spare; his does not. */}
-          <span className="flex items-center gap-2">
+          {/* The mark rides out to the right gutter rather than trailing the
+              name, so it lands on the same edge as everything else in the
+              column. */}
+          <span className="flex items-center justify-between gap-3">
             {/* Semibold and tracking-tight, the weight every other heading in
                 the app carries. One size up from before is all the extra
                 presence the name needs; bold made it a different typeface. */}
             <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
               Arzt-Assistent
             </span>
-            <BrandWave className="h-9 w-11 shrink-0" />
+            <BrandWave className="h-12 w-16 shrink-0" />
           </span>
           {/* Spelled the way he spells it — Jürgen — and abbreviated as it is
               on his letterhead. At 14px, because 12 sat below everything else
