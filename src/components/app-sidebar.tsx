@@ -284,18 +284,15 @@ function SidebarAction({
           timers.current.push(setTimeout(() => setBeaming(false), 1100));
         }}
         className={cn(
-          // The Kopieren key from the Diktat page, exactly: btn-gloss over
-          // the app's primary, rounded full, with hover:bg-primary holding
-          // the colour still so the key LIFTS rather than lightens. The rise
-          // and the press are btn-gloss's own — writing a translate here only
-          // fought its transform.
+          // Black liquid glass: the utility owns the material, so no bg-*
+          // here — a background colour would sit on top of the lens and flatten
+          // it. The rise and the press are btn-liquid-dark's own.
           'flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
-          'btn-gloss-3d bg-primary text-sm font-medium tracking-[-0.01em] text-primary-foreground',
-          'hover:bg-primary',
+          'btn-liquid-dark text-sm font-medium tracking-[-0.01em] text-white',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
-        <Icon aria-hidden className="size-[18px] shrink-0 text-primary-foreground" />
+        <Icon aria-hidden className="size-[18px] shrink-0 text-white" />
         {label}
       </button>
     </BorderBeam>
