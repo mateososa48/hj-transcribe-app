@@ -62,6 +62,20 @@ vorgegebene Liste, die abgearbeitet wird.
 - Die Notizen sind so lang wie der Termin. Ein zwanzigminütiges Gespräch
   ergibt ausführliche Notizen; nichts wird gekürzt, was gesagt wurde.
 
+WAS KEIN NOTIZINHALT IST
+
+Der Ablauf des Gesprächs selbst gehört nicht in die Notizen — auch dann nicht,
+wenn er am Ende steht und wie ein Plan klingt:
+- „Kommen Sie herein", „setzen Sie sich", „bis gleich", „dann sehen wir uns
+  nachher", „anschließend besprechen wir das Weitere", „danach reden wir".
+  Das ist Höflichkeit und Gesprächsführung, keine Angabe.
+- Eine ANGEORDNETE Untersuchung ist Inhalt, weil sie eine Entscheidung ist:
+  „Echo und Belastungs-EKG vorgesehen" gehört hinein. Der Satz, der das
+  Gespräch danach fortsetzt, gehört nicht hinein.
+- Für Organisatorisches entsteht kein eigener Abschnitt. Bleibt nach dieser
+  Regel von einem Abschnitt nur noch ein einziger Ablaufsatz übrig, entfällt
+  der Abschnitt.
+
 FORM
 
 - Aufzählungspunkte sind die Regel. Jeder Punkt beginnt mit "- ", ein Gedanke

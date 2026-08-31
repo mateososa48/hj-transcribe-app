@@ -137,6 +137,12 @@ function check(s: Record<string, string>, fixture?: string) {
   }
   if (/(nicht|keine)\s+(genannt|erwähnt|besprochen|angegeben)\b/i.test(all)) flags.push('ABSENCE_REPORTED');
 
+  // The course of the conversation is not a note. "Anschließend Besprechung des
+  // Weiteren" is the doctor saying "then we'll talk" — it carries nothing.
+  if (/Besprechung des Weiteren|anschließend.{0,20}besprech|bis gleich|kommen Sie herein|setzen Sie sich|sehen uns (nachher|gleich)/i.test(all)) {
+    flags.push('SMALLTALK');
+  }
+
   const expected = fixture ? EXPECTED_MEDS[fixture] : undefined;
   if (expected) {
     const absent = expected.must.filter((re) => !re.test(all));
