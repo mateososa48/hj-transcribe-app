@@ -168,9 +168,11 @@ export function createAnthropicDraft(apiKey: string): DraftProvider {
           buildGespraechUserPrompt(request),
           request.signal,
         );
-        const { sections, wellFormed } = parseGespraech(result.raw);
+        const { sections, order, labels, wellFormed } = parseGespraech(result.raw);
         return {
           sections,
+          order,
+          labels,
           wellFormed,
           model: result.model,
           promptVersion: GESPRAECH_PROMPT_VERSION,

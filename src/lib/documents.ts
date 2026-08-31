@@ -1,4 +1,4 @@
-import { isTemplateBody } from '@/features/document/insert.ts';
+import { berichtTemplateDoc, isTemplateBody } from '@/features/document/insert.ts';
 import { db, newId, type DocumentRecord } from '@/lib/db.ts';
 import { deleteSession } from '@/lib/generate.ts';
 
@@ -9,30 +9,13 @@ import { deleteSession } from '@/lib/generate.ts';
  */
 
 /**
- * His letter template, as the editor's starting shape: the five sections his
- * real letters use, each an empty heading he fills by typing, dictating or
- * importing — partial by design, never a generated full report.
+ * His letter template now lives beside the check that reads it back —
+ * berichtTemplateDoc in features/document/insert.ts. Keeping the shape and
+ * "has he touched this?" in one file is what stops the two drifting: change
+ * the template alone and an untouched Bericht stops being recognised as one.
  */
-export const BERICHT_TEMPLATE_SECTIONS = [
-  'Diagnosen',
-  'Anamnese',
-  'Befunde',
-  'Zusammenfassende Beurteilung',
-  'Aktuelle Therapie',
-] as const;
-
 function templateContent(): unknown {
-  return {
-    type: 'doc',
-    content: [
-      // Kopf/Anrede space above the first section.
-      { type: 'paragraph' },
-      ...BERICHT_TEMPLATE_SECTIONS.flatMap((title) => [
-        { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: title }] },
-        { type: 'paragraph' },
-      ]),
-    ],
-  };
+  return berichtTemplateDoc();
 }
 
 /**

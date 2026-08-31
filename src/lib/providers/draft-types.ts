@@ -60,7 +60,12 @@ export interface AbschnittResponse extends DraftMeta {
 
 /** The consultation feature: three sections from one pass. */
 export interface GespraechResponse extends DraftMeta {
-  sections: Record<GespraechSection, string>;
+  /** Keyed by the model's own headings — not a fixed set any more. */
+  sections: Record<string, string>;
+  /** Reading order: object key order is not a contract. */
+  order: string[];
+  /** The heading the model chose, by key. */
+  labels: Record<string, string>;
 }
 
 export interface DraftProvider {

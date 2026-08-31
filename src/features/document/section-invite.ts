@@ -10,8 +10,14 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
  * discover it by moving the mouse to the right place, then to know what a
  * bare plus meant, and it pointed at a BLOCK, which is not how he thinks
  * about a letter. This one is always visible, says what it does, and belongs
- * unmistakably to the section it sits in. It leaves the moment that section
- * has text, so a written letter is a page of writing and nothing else.
+ * unmistakably to the section it sits in.
+ *
+ * It used to leave as soon as a section had text, on the theory that a written
+ * letter should be a page of writing and nothing else. But a section is rarely
+ * finished in one dictation — he adds to Diagnosen, then adds again — and the
+ * key vanishing after the first one meant the second had to be aimed from the
+ * toolbar menu instead. So every section keeps its invitation, sitting under
+ * whatever it already says.
  */
 export interface SectionInviteOptions {
   /** Receives the heading the invite sits under. */
@@ -41,19 +47,21 @@ export const SectionInvite = Extension.create<SectionInviteOptions>({
           decorations(state) {
             const decorations: Decoration[] = [];
             let heading: string | null = null;
+            /**
+             * Where the invitation goes: after the last thing the section
+             * actually says. Trailing blank lines do not move it, so an empty
+             * section keeps the key tucked under its heading instead of
+             * pushing it down a line the letter does not use yet.
+             */
+            let anchor = 0;
 
-            state.doc.forEach((node, offset) => {
-              if (node.type.name === 'heading') {
-                heading = node.textContent.trim() || null;
-                return;
-              }
-              const empty = node.type.name === 'paragraph' && node.content.size === 0;
-              if (empty && heading) {
-                const title = heading;
-                decorations.push(
-                  Decoration.widget(
-                    offset + 1,
-                    () => {
+            const place = () => {
+              if (!heading) return;
+              const title = heading;
+              decorations.push(
+                Decoration.widget(
+                  anchor,
+                  () => {
                       const button = document.createElement('button');
                       button.type = 'button';
                       button.className = 'section-invite';
@@ -67,14 +75,26 @@ export const SectionInvite = Extension.create<SectionInviteOptions>({
                         event.preventDefault();
                         options.onDictate(title);
                       });
-                      return button;
-                    },
-                    { side: 1 },
-                  ),
-                );
-              }
+                    return button;
+                  },
+                  { side: 1 },
+                ),
+              );
               heading = null;
+            };
+
+            state.doc.forEach((node, offset) => {
+              if (node.type.name === 'heading') {
+                place();
+                heading = node.textContent.trim() || null;
+                anchor = offset + node.nodeSize;
+                return;
+              }
+              if (!heading) return;
+              const empty = node.type.name === 'paragraph' && node.content.size === 0;
+              if (!empty) anchor = offset + node.nodeSize;
             });
+            place();
 
             return DecorationSet.create(state.doc, decorations);
           },

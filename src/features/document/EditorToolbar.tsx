@@ -312,7 +312,7 @@ export function EditorToolbar({
             variant={copied ? 'secondary' : 'default'}
             onClick={() => void copyAll()}
             title="Kopieren"
-            className="shrink-0 rounded-full px-4"
+            className="shrink-0 px-4"
           >
             {/* The confirmation swaps in place — the key never resizes under
                 the cursor mid-click. */}

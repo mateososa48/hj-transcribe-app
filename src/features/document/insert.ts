@@ -134,27 +134,101 @@ function textOf(node: TiptapNode): string {
 }
 
 /**
- * True when a Bericht's body is still exactly the template it was created
- * with: his five section headings, and nothing written anywhere between them.
+ * The Kopf every one of his letters opens with — but only as far as it is the
+ * SAME in every one: the city, the "An" label, and the salutation he has used
+ * for decades. Everything that differs per letter (the referring practice, the
+ * patient, the date) is a blank line he fills. A placeholder name we invented
+ * would be a fact in a letter he signs.
  *
- * Structural rather than a comparison against a rebuilt template, because the
- * editor normalises what it loads — attributes appear that were never written
- * — and a JSON equality check would call an untouched letter modified.
+ * `null` is a blank line.
  */
-export function isTemplateBody(doc: unknown): boolean {
-  const root = doc as { type?: string; content?: TiptapNode[] } | null;
-  if (!root || root.type !== 'doc') return false;
+export const BERICHT_KOPF: ReadonlyArray<string | null> = [
+  'Mainz,',
+  null,
+  'An',
+  null,
+  null,
+  null,
+  'Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,',
+  null,
+  'ich darf nachfolgend über die letzten Untersuchungen, Herrn/Frau … betreffend, zusammenfassend berichten.',
+  null,
+];
 
-  let matched = 0;
+/**
+ * The sections a NEW Bericht starts with — his real letters' shape, which is
+ * not the same list as CANONICAL_SECTIONS above. That one is the vocabulary a
+ * dictation may land on and keeps every name he might say; this one is only
+ * what a blank letter comes with, and an empty heading he never fills is a
+ * heading he has to delete.
+ */
+export const BERICHT_TEMPLATE_SECTIONS = [
+  'Diagnosen',
+  'Anamnese',
+  'Zusammenfassende Beurteilung',
+  'Aktuelle Therapie',
+] as const;
+
+/** A blank Bericht, as both the editor and the untouched-check see it. */
+export function berichtTemplateDoc(): { type: 'doc'; content: TiptapNode[] } {
+  const content: TiptapNode[] = BERICHT_KOPF.map((line) =>
+    line ? paragraph(line) : paragraph(),
+  );
+  for (const title of BERICHT_TEMPLATE_SECTIONS) {
+    content.push({ type: 'heading', attrs: { level: 2 }, content: [text(title)] });
+    content.push(paragraph());
+  }
+  return { type: 'doc', content };
+}
+
+interface Block {
+  type: string;
+  text: string;
+}
+
+/**
+ * A document reduced to what was actually written in it: headings with their
+ * titles, paragraphs that carry text, and nothing else. Blank lines drop out,
+ * so any number of them still reads as untouched. Null when a block appears
+ * that the template never contains — a list, a table — because he put it there.
+ */
+function writtenBlocks(doc: unknown): Block[] | null {
+  const root = doc as { type?: string; content?: TiptapNode[] } | null;
+  if (!root || root.type !== 'doc') return null;
+
+  const blocks: Block[] = [];
   for (const block of root.content ?? []) {
+    const value = textOf(block).trim();
     if (block.type === 'paragraph') {
-      // Empty lines are untouched, however many of them he made.
-      if (textOf(block).trim()) return false;
+      if (value) blocks.push({ type: 'paragraph', text: value });
       continue;
     }
-    if (block.type !== 'heading') return false;
-    if (textOf(block).trim() !== CANONICAL_SECTIONS[matched]) return false;
-    matched++;
+    if (block.type === 'heading') {
+      blocks.push({ type: 'heading', text: value });
+      continue;
+    }
+    return null;
   }
-  return matched === CANONICAL_SECTIONS.length;
+  return blocks;
+}
+
+/**
+ * True when a Bericht's body is still exactly the template it was created
+ * with: the Kopf boilerplate, his section headings, and nothing written
+ * anywhere between them.
+ *
+ * Compared against the template's own shape rather than a hardcoded list, so
+ * changing what a new Bericht comes with cannot quietly break the check that
+ * decides whether an unused one may be thrown away. Structural rather than a
+ * JSON equality test, because the editor normalises what it loads and
+ * attributes appear that were never written.
+ */
+export function isTemplateBody(doc: unknown): boolean {
+  const actual = writtenBlocks(doc);
+  if (!actual) return false;
+  const expected = writtenBlocks(berichtTemplateDoc());
+  if (!expected || actual.length !== expected.length) return false;
+  return actual.every(
+    (block, i) => block.type === expected[i]!.type && block.text === expected[i]!.text,
+  );
 }

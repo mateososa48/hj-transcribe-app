@@ -4,9 +4,10 @@ import { test } from 'node:test';
 import { parseAbschnitt } from '../prompts/abschnitt.ts';
 import {
   abschnittToNodes,
+  berichtTemplateDoc,
+  BERICHT_TEMPLATE_SECTIONS,
   bulletsToTiptap,
   canonicalSectionTitle,
-  CANONICAL_SECTIONS,
   isTemplateBody,
   sectionToTiptap,
 } from '../src/features/document/insert.ts';
@@ -63,15 +64,34 @@ test('section titles normalize to his letter vocabulary', () => {
  * lenient direction leaves blank letters piling up; getting it wrong in the
  * strict direction deletes something he wrote, which is the unforgivable half.
  */
-const templateDoc = () => ({
-  type: 'doc',
-  content: [
-    { type: 'paragraph' },
-    ...CANONICAL_SECTIONS.flatMap((title) => [
-      { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: title }] },
-      { type: 'paragraph' },
-    ]),
-  ],
+interface Block {
+  type: string;
+  attrs?: Record<string, unknown>;
+  content?: Array<{ type: string; text?: string }>;
+}
+const templateDoc = (): { type: string; content: Block[] } =>
+  JSON.parse(JSON.stringify(berichtTemplateDoc()));
+
+test('the blank Bericht is his letter, not a form of every section that exists', () => {
+  const headings = templateDoc()
+    .content.filter((b) => b.type === 'heading')
+    .map((b) => b.content?.[0]?.text) as Array<string | undefined>;
+  // Checked before deepEqual: that assertion narrows `headings` to the tuple.
+  assert.ok(
+    !headings.some((h) => h === 'Befunde'),
+    'Befunde is not a section his letters open with',
+  );
+  assert.deepEqual(headings, [...BERICHT_TEMPLATE_SECTIONS]);
+});
+
+test('the Kopf carries only wording that never changes', () => {
+  const text = templateDoc()
+    .content.map((b) => b.content?.[0]?.text ?? '')
+    .join(' ');
+  assert.match(text, /Sehr geehrte Frau Kollegin/);
+  assert.match(text, /zusammenfassend berichten/);
+  // Nothing patient-specific may ever be born into a blank letter.
+  assert.doesNotMatch(text, /\d{2}\.\d{2}\.\d{4}/, 'no invented date');
 });
 
 test('isTemplateBody recognises a Bericht nobody has written in', () => {
@@ -82,10 +102,7 @@ test('isTemplateBody survives the attributes the editor adds on load', () => {
   const doc = templateDoc();
   // What TipTap hands back after a round trip: attrs that were never written.
   for (const block of doc.content) {
-    (block as Record<string, unknown>).attrs = {
-      ...((block as { attrs?: object }).attrs ?? {}),
-      textAlign: null,
-    };
+    block.attrs = { ...(block.attrs ?? {}), textAlign: null };
   }
   assert.equal(isTemplateBody(doc), true);
 });
@@ -96,9 +113,23 @@ test('isTemplateBody counts extra empty lines as still untouched', () => {
   assert.equal(isTemplateBody(doc), true);
 });
 
+test('isTemplateBody refuses a Kopf he has filled in', () => {
+  const doc = templateDoc();
+  const anIndex = doc.content.findIndex((b) => b.content?.[0]?.text === 'An');
+  doc.content[anIndex + 1] = {
+    type: 'paragraph',
+    content: [{ type: 'text', text: 'Dres. med. Roth/Hagenbäumer/Göhre' }],
+  };
+  assert.equal(isTemplateBody(doc), false);
+});
+
 test('isTemplateBody refuses anything he actually put there', () => {
   const typed = templateDoc();
-  typed.content[2] = { type: 'paragraph', content: [{ type: 'text', text: 'Z.n. Stent' }] } as never;
+  const firstHeading = typed.content.findIndex((b) => b.type === 'heading');
+  typed.content[firstHeading + 1] = {
+    type: 'paragraph',
+    content: [{ type: 'text', text: 'Z.n. Stent' }],
+  };
   assert.equal(isTemplateBody(typed), false, 'text typed under a heading');
 
   const listed = templateDoc();
@@ -106,11 +137,12 @@ test('isTemplateBody refuses anything he actually put there', () => {
   assert.equal(isTemplateBody(listed), false, 'a list inserted at the end');
 
   const renamedHeading = templateDoc();
-  renamedHeading.content[1] = {
+  const idx = renamedHeading.content.findIndex((b) => b.type === 'heading');
+  renamedHeading.content[idx] = {
     type: 'heading',
     attrs: { level: 2 },
     content: [{ type: 'text', text: 'Verlauf' }],
-  } as never;
+  };
   assert.equal(isTemplateBody(renamedHeading), false, 'a heading he renamed');
 
   const short = templateDoc();

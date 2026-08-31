@@ -130,7 +130,9 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
           basedOn: 'Normal',
           next: 'Normal',
           quickFormat: true,
-          run: { font: 'Calibri', size: 24, bold: true, color: '000000' },
+          // His own section headings: body size, bold, underlined. Word must
+          // match the screen, and the screen matches his letters.
+          run: { font: 'Calibri', size: 22, bold: true, underline: {}, color: '000000' },
           paragraph: { spacing: { before: 240, after: 100 } },
         },
         {
