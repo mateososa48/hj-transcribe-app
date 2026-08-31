@@ -97,7 +97,10 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={go.home}
-          className="-mx-1 block rounded-md px-1 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          // The name sat on the tray's outer EDGE while every word inside the
+          // tray began 10px further in, so it read as pressed against the
+          // sidebar wall. It starts on that inner edge now.
+          className="-ms-1 block rounded-md ps-3.5 pe-1 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
           {/* The ribbon rides the NAME line, not the whole block: beside both
               lines it stole 49px from the widest one and cut his own name to
