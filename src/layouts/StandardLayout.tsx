@@ -1,5 +1,6 @@
 import type React from 'react';
 
+import { RecordingIndicator } from '@/components/recording-indicator';
 import { AppSidebar } from '@/components/app-sidebar';
 import { BrandWave } from '@/components/brand-wave';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -37,6 +38,9 @@ export function StandardLayout() {
     <SidebarProvider style={{ '--sidebar-width': '272px' } as React.CSSProperties}>
       <AppSidebar />
       <SidebarInset className="min-w-0">
+        {/* Above every view, at every width: the microphone is never open
+            without the app saying so. */}
+        <RecordingIndicator />
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
           <SidebarTrigger />
           <span className="text-base font-semibold tracking-tight">Arzt-Assistent</span>

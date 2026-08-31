@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { findRecoverableSessions, recoverSession } from '@/lib/session/recording-session';
+import { useRecordingState } from '@/features/record/useRecording';
 import { pipeline } from '@/lib/transcription/pipeline';
 import type { Session } from '@/lib/db';
 import { createDocument, documentRowTitle } from '@/lib/documents';
@@ -49,12 +50,14 @@ export function StartScreen() {
   const openDocument = useAppStore((s) => s.openDocument);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const [recoverable, setRecoverable] = useState<Session[]>([]);
+  // A recording in progress looks exactly like a crashed one in the database.
+  const live = useRecordingState();
   const { sessions } = useSessions(12);
   const { documents } = useDocuments();
 
   useEffect(() => {
-    void findRecoverableSessions().then(setRecoverable);
-  }, []);
+    void findRecoverableSessions(live.sessionId).then(setRecoverable);
+  }, [live.sessionId]);
 
   /** The last few things he touched, whatever kind they were. */
   const recent = useMemo(() => {
@@ -128,7 +131,7 @@ export function StartScreen() {
                         variant="destructive"
                         onClick={async () => {
                           await deleteSession(session.id);
-                          setRecoverable(await findRecoverableSessions());
+                          setRecoverable(await findRecoverableSessions(live.sessionId));
                           touchSessions();
                           toast.success('Aufnahme verworfen.');
                         }}

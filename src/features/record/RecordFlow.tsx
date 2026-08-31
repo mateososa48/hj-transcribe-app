@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import type { SessionKind } from '@/lib/db';
-import { pipeline } from '@/lib/transcription/pipeline';
 import { useAppStore } from '@/store/app-store';
 import type { OrbState } from './RecordingOrb';
 import { RecordingWave } from './RecordingWave';
 import { recordingSession, useElapsed, useRecordingState } from './useRecording';
+import { useStopRecording } from './useStopRecording';
 
 const COPY: Record<SessionKind, { heading: string; idle: string; running: string; stop: string; after: string }> = {
   gespraech: {
@@ -36,9 +36,9 @@ const COPY: Record<SessionKind, { heading: string; idle: string; running: string
  */
 export function RecordFlow({ kind }: { kind: SessionKind }) {
   const goHome = useAppStore((s) => s.goHome);
-  const openSession = useAppStore((s) => s.openSession);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const recording = useRecordingState();
+  const { stop: stopRecording } = useStopRecording();
   const [starting, setStarting] = useState(false);
   const copy = COPY[kind];
 
@@ -67,12 +67,9 @@ export function RecordFlow({ kind }: { kind: SessionKind }) {
 
   async function handleToggle() {
     if (isRecording) {
-      const sessionId = await recordingSession.stop();
-      if (sessionId) {
-        touchSessions();
-        openSession(sessionId);
-        void pipeline.process(sessionId);
-      }
+      // The same four steps the global indicator performs — one implementation,
+      // so the two controls can never end a sitting differently.
+      await stopRecording();
       return;
     }
     setStarting(true);

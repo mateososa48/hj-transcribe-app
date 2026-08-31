@@ -203,7 +203,27 @@ export class RecordingSession {
       }
     });
 
-    recorder.start();
+    // MediaRecorder.start() throws synchronously when the browser will not
+    // record this stream at all — an unsupported container, a device already
+    // committed elsewhere. Uncaught, the status stayed at 'requesting-mic'
+    // forever: the start button disabled with no message, the microphone still
+    // open, and this session row left behind as a phantom crashed recording.
+    // The recorder must come back to a state he can press again.
+    try {
+      recorder.start();
+    } catch (error) {
+      await db.sessions.delete(session.id);
+      await this.teardown();
+      this.set({
+        ...INITIAL,
+        status: 'error',
+        error:
+          'Die Aufnahme konnte nicht gestartet werden. Bitte prüfen Sie, ob das Mikrofon von einem anderen Programm belegt ist, und versuchen Sie es erneut.',
+      });
+      console.error('MediaRecorder start failed', error);
+      return false;
+    }
+
     this.wakeLock = new ScreenWakeLock();
     void this.wakeLock.acquire();
     window.addEventListener('beforeunload', this.handleBeforeUnload);
@@ -299,11 +319,19 @@ export class RecordingSession {
  * Sessions left mid-recording by a crash or closed tab. Their persisted chunks
  * concatenate into a valid playable prefix, so nothing is lost — they just need
  * to be marked stopped and sent through the normal pipeline.
+ *
+ * `activeSessionId` is the recording happening RIGHT NOW, which carries the
+ * same open status as a crashed one and must be left alone: offering to
+ * discard it would delete a consultation while the microphone is still on.
+ * Since the global indicator made leaving the recorder mid-recording normal,
+ * that screen is reachable at any moment during a sitting.
  */
-export async function findRecoverableSessions(): Promise<Session[]> {
+export async function findRecoverableSessions(
+  activeSessionId?: string | null,
+): Promise<Session[]> {
   const open = (await db.sessions.where('status').equals('recording').toArray())
     // Ergänzungen belong to their parent's page, not the start screen.
-    .filter((s) => !s.parentId);
+    .filter((s) => !s.parentId && s.id !== activeSessionId);
   const withAudio: Session[] = [];
   for (const session of open) {
     const chunkCount = await db.chunks
