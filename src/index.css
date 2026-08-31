@@ -574,18 +574,31 @@ h1, h2, h3 {
    press motion, because a tray that rises when the cursor crosses it is a
    tray pretending to be a key. A faint base keeps it a surface on white. */
 @utility glass-panel {
+  /* A panel is many times the area of a key, so the same ring and shadow
+     spread thin and the gloss disappears. Everything that MAKES it read as
+     glass is stronger here: a real top-to-bottom falloff instead of a flat
+     wash, a dome of specular under the top edge, a firmer ring, and a base
+     dark enough to be a surface at all on a white sidebar. */
   background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.16)),
-    oklch(0.975 0 0);
-  -webkit-backdrop-filter: blur(12px) saturate(1.7);
-  backdrop-filter: blur(12px) saturate(1.7);
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.35) 45%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    /* The base has to sit BELOW white, or the lit top of the panel composites
+       to 255 and its upper half disappears into the sidebar — which is
+       exactly why the gloss read as missing. */
+    oklch(0.90 0 0);
+  -webkit-backdrop-filter: blur(14px) saturate(1.8);
+  backdrop-filter: blur(14px) saturate(1.8);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 1),
-    inset 0 -1px 1px rgba(12, 12, 13, 0.1),
-    inset 1px 0 1px rgba(255, 255, 255, 0.6),
-    inset -1px 0 1px rgba(255, 255, 255, 0.4),
-    inset 0 0 14px rgba(255, 255, 255, 0.22),
-    0 0 0 1px rgba(12, 12, 13, 0.07),
-    0 2px 5px rgba(12, 12, 13, 0.08),
-    0 12px 28px -12px rgba(12, 12, 13, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 10px 18px -10px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(12, 12, 13, 0.14),
+    inset 1px 0 1px rgba(255, 255, 255, 0.7),
+    inset -1px 0 1px rgba(255, 255, 255, 0.5),
+    0 0 0 1px rgba(12, 12, 13, 0.16),
+    0 2px 6px rgba(12, 12, 13, 0.12),
+    0 16px 32px -16px rgba(12, 12, 13, 0.28);
 }
