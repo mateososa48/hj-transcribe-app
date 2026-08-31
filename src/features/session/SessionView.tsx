@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { EditableTitle } from '@/components/editable-title';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
@@ -175,15 +175,13 @@ export function SessionView({ sessionId }: { sessionId: string }) {
           {isTermin ? (
             <Badge variant="secondary">{SESSION_KIND_LABELS[session.kind]}</Badge>
           ) : (
-            <Input
+            <EditableTitle
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => void saveTitle()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-              }}
-              aria-label="Titel der Aufnahme"
-              className="h-auto min-w-0 flex-1 border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
+              onChange={setTitle}
+              onCommit={() => void saveTitle()}
+              label="Titel der Aufnahme"
+              className="min-w-0 flex-1"
+              inputClassName="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
             />
           )}
           <AlertDialog>
@@ -225,15 +223,12 @@ export function SessionView({ sessionId }: { sessionId: string }) {
             The explicit md:text-2xl matters — the input base carries md:text-sm,
             which would otherwise shrink the title back to body size on desktop. */}
         {isTermin ? (
-          <Input
+          <EditableTitle
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={() => void saveTitle()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-            }}
-            aria-label="Titel der Aufnahme"
-            className="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
+            onChange={setTitle}
+            onCommit={() => void saveTitle()}
+            label="Titel der Aufnahme"
+            inputClassName="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
           />
         ) : null}
 

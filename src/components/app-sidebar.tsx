@@ -290,7 +290,7 @@ function SidebarAction({
           // and the press are btn-gloss's own — writing a translate here only
           // fought its transform.
           'flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
-          'btn-gloss bg-primary text-sm font-medium tracking-[-0.01em] text-primary-foreground',
+          'btn-gloss-3d bg-primary text-sm font-medium tracking-[-0.01em] text-primary-foreground',
           'hover:bg-primary',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}

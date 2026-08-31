@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { EditableTitle } from '@/components/editable-title';
 import { Spinner } from '@/components/ui/spinner';
 import { db, newId, type DocumentRecord } from '@/lib/db';
 import { deleteDocument, discardIfUntouched, saveDocument } from '@/lib/documents';
@@ -350,15 +350,13 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
           document names itself — no label above it, nothing between it and
           the instrument row. */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-3 sm:px-6">
-        <Input
+        <EditableTitle
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={() => void saveTitle()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-          aria-label="Titel des Berichts"
-          className="h-11 flex-1 rounded-lg border-transparent bg-transparent px-2 text-2xl font-semibold tracking-tight shadow-none transition-[background-color,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-border/60 hover:bg-muted/40 focus-visible:border-border focus-visible:bg-background md:text-2xl"
+          onChange={setTitle}
+          onCommit={() => void saveTitle()}
+          label="Titel des Berichts"
+          className="min-w-0 flex-1"
+          inputClassName="h-11 rounded-lg border-transparent bg-transparent px-2 text-2xl font-semibold tracking-tight shadow-none transition-[background-color,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-border/60 hover:bg-muted/40 focus-visible:border-border focus-visible:bg-background md:text-2xl"
         />
         <AlertDialog>
             <AlertDialogTrigger
