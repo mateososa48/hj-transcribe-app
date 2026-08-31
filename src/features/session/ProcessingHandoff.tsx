@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 
-import { formatElapsed } from '@/features/record/elapsed';
+import { Spinner } from '@/components/ui/spinner';
 import { usePipelineState } from '@/features/record/useRecording';
 import type { SessionKind } from '@/lib/db';
 import { cn } from '@/lib/utils';
-import { TranscriptionBand } from './TranscriptionBand';
-import { loadRecordingShape } from './recording-shape';
 import {
   estimatePhaseMs,
-  getProcessingHandoffCopy,
   getProcessingSteps,
   isOverrunning,
   type ActiveProcessingPhase,
@@ -19,19 +16,18 @@ import {
 /**
  * What the app is doing between "stop" and "here is your letter".
  *
- * The rule this screen is built on: **nothing here moves unless it is true.**
- * The previous version animated packets along a rail and bounced a row of
- * bars — motion invented to fill a wait, tied to no measurement, and carrying
- * no words at all, so the one person who uses this app had to infer from an
- * abstract diagram whether his dictation was being transcribed or was stuck.
+ * One spinner in the middle of the page, and under it the steps the pipeline
+ * actually has — the transcript, then the text made from it. A step that is
+ * running carries its own small spinner; a step that is finished carries a
+ * check and steps back into grey; the step after it only appears once the one
+ * before it is done. Nothing else is on screen: no tabs, no empty panels
+ * waiting to be filled, no ambient copy.
  *
- * So: no keyframes. The elapsed time is real and counted from the moment the
- * phase actually began (`phaseStartedAt`, not this component's mount, so
- * leaving the page and returning still tells the truth). The bar is elapsed
- * measured against an estimate derived from the real length of the recording,
- * it stops short of the end instead of pretending to finish, and when the
- * estimate is wrong the screen says so in plain German rather than sitting
- * at 100%.
+ * The steps themselves are true — they change when the pipeline changes phase,
+ * not on a timer — and if a phase runs longer than the recording's own length
+ * predicts, the screen says so rather than spinning silently forever. That
+ * sentence is the one thing here that is not decoration, and it is why a
+ * stalled transcription cannot look identical to a slow one.
  */
 export function ProcessingHandoff({
   kind,
@@ -39,7 +35,6 @@ export function ProcessingHandoff({
   sessionId,
   audioDurationMs,
   startedAt: startedAtProp,
-  shape: shapeProp,
 }: {
   kind: SessionKind;
   phase: ActiveProcessingPhase;
@@ -53,10 +48,7 @@ export function ProcessingHandoff({
    * point in the wait — including the overrun state — without waiting it out.
    */
   startedAt?: number | undefined;
-  /** Overrides the recording outline. Used by the preview harness. */
-  shape?: number[] | undefined;
 }) {
-  const copy = getProcessingHandoffCopy(kind, phase);
   const steps = getProcessingSteps(kind, phase);
   const pipelineState = usePipelineState(sessionId ?? null);
 
@@ -65,75 +57,61 @@ export function ProcessingHandoff({
   const mountedAt = useRef(Date.now());
   const startedAt = startedAtProp ?? (pipelineState.phaseStartedAt || mountedAt.current);
 
-  const loadedShape = useRecordingShape(sessionId, shapeProp);
   const now = useTick(1000);
   const elapsedMs = Math.max(0, now - startedAt);
-  const estimateMs = estimatePhaseMs(phase, audioDurationMs);
-  const overrunning = isOverrunning(elapsedMs, estimateMs);
+  const overrunning = isOverrunning(elapsedMs, estimatePhaseMs(phase, audioDurationMs));
+
+  // A step he has not reached yet is not information — it is a promise about
+  // work that has not started. Only what has happened is shown.
+  const reached = steps.filter((step) => step.state !== 'waiting');
 
   return (
     <section
       role="status"
       aria-live="polite"
-      // Capped: a status block stretched across a 1300px column turns the
-      // rail into a hairline and strands the timer a page away from its title.
-      className="max-w-2xl rounded-xl border border-border bg-card px-5 py-5 sm:px-8 sm:py-7"
+      className="flex min-h-[20rem] flex-col items-center justify-center py-16 text-center"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">{copy.title}</h2>
-        {/* Ticking once a second — announced by a live region it would be
-            unbearable, so the phase text carries the meaning for AT. */}
-        <span className="text-2xl font-semibold tabular-nums tracking-tight" aria-hidden>
-          {formatElapsed(startedAt, null, now, true)}
-        </span>
-      </div>
+      <Spinner className="size-8 text-muted-foreground" aria-hidden />
 
-      <p className="mt-1.5 max-w-[60ch] text-base text-muted-foreground">{copy.description}</p>
-
-      <TranscriptionBand
-        shape={loadedShape}
-        startedAt={startedAt}
-        estimateMs={estimateMs}
-        drafting={phase === 'notes'}
-        className="mt-6 h-24"
-      />
-
-      <ol className="mt-5 space-y-2.5">
-        {steps.map((step) => (
+      <ol className="mt-7 space-y-2.5">
+        {reached.map((step) => (
           <Step key={step.label} step={step} />
         ))}
       </ol>
 
-      <p className="mt-5 max-w-[60ch] text-sm text-muted-foreground">
-        {overrunning
-          ? 'Das dauert diesmal länger als sonst. Die Verarbeitung läuft weiter — Sie können das Fenster offen lassen.'
-          : 'Sie können das Fenster offen lassen.'}
-      </p>
+      {overrunning ? (
+        <p className="mt-6 max-w-[46ch] text-sm text-muted-foreground">
+          Das dauert diesmal länger als sonst. Die Verarbeitung läuft weiter — Sie können das
+          Fenster offen lassen.
+        </p>
+      ) : null}
     </section>
   );
 }
 
 function Step({ step }: { step: ProcessingStep }) {
-  const { state, label } = step;
+  const done = step.state === 'done';
   return (
-    <li className="flex items-center gap-3 text-base">
-      <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
-        {state === 'done' ? (
-          <Check className="size-5 text-foreground" />
-        ) : state === 'active' ? (
-          <span className="size-2.5 rounded-full bg-foreground" />
+    <li
+      className={cn(
+        'flex items-center justify-center gap-2.5 text-base',
+        // The second line arrives when its work does.
+        'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300',
+      )}
+    >
+      <span className="grid size-4 shrink-0 place-items-center" aria-hidden>
+        {done ? (
+          <Check className="size-4 motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-200" />
         ) : (
-          <span className="size-2.5 rounded-full border-[1.5px] border-muted-foreground/60" />
+          <Spinner className="size-4" />
         )}
       </span>
-      <span className={cn(state === 'waiting' ? 'text-muted-foreground' : 'font-medium')}>
-        {label}
-      </span>
+      <span className={done ? 'text-muted-foreground' : 'font-medium'}>{step.label}</span>
     </li>
   );
 }
 
-/** Re-renders on an interval so elapsed time stays live. */
+/** Re-renders on an interval so the overrun notice can appear on time. */
 function useTick(everyMs: number): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -141,20 +119,4 @@ function useTick(everyMs: number): number {
     return () => clearInterval(id);
   }, [everyMs]);
   return now;
-}
-
-/** The recording's own outline, loaded once per session. */
-function useRecordingShape(sessionId: string | undefined, override: number[] | undefined): number[] {
-  const [shape, setShape] = useState<number[]>([]);
-  useEffect(() => {
-    if (override || !sessionId) return;
-    let cancelled = false;
-    void loadRecordingShape(sessionId).then((next) => {
-      if (!cancelled) setShape(next);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId, override]);
-  return override ?? shape;
 }

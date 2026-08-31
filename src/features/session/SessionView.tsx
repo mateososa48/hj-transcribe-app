@@ -313,6 +313,10 @@ export function SessionView({ sessionId }: { sessionId: string }) {
         </Item>
       ) : (
         <>
+          {/* While it runs, the handoff is the whole page. The tabs used to sit
+              under it with an empty "Die Notizen erscheinen hier gleich."
+              beneath them — two panels promising content, one of which he
+              could click into and find nothing. */}
           {isTermin && activePhase ? (
             <ProcessingHandoff
               kind={session.kind}
@@ -332,7 +336,7 @@ export function SessionView({ sessionId }: { sessionId: string }) {
             </div>
           ) : null}
 
-          {isTermin ? (
+          {isTermin && activePhase ? null : isTermin ? (
             (() => {
               // The sections are the conversation's own: the result carries
               // its reading order and its headings. Results drafted before

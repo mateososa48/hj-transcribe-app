@@ -7,7 +7,6 @@ import {
   isOverrunning,
   type ActiveProcessingPhase,
 } from '@/features/session/processing-handoff-model';
-import { SHAPE_RESOLUTION } from '@/features/session/recording-shape';
 import type { SessionKind } from '@/lib/db';
 import { cn } from '@/lib/utils';
 
@@ -26,16 +25,6 @@ import { cn } from '@/lib/utils';
  * chunks. Shaped like dictated speech — phrases with breaths between them —
  * so the band behaves here the way it will on a real recording.
  */
-const SAMPLE_SHAPE: number[] = Array.from({ length: SHAPE_RESOLUTION }, (_, i) => {
-  // Two real breaths, where a dictating voice stops to think.
-  if ((i > 34 && i < 42) || (i > 86 && i < 92)) return 0.05;
-  const phrase = Math.sin(i / 6.2) * 0.5 + 0.5;
-  const breath = 0.45 + (Math.sin(i / 22) * 0.5 + 0.5) * 0.55;
-  const grain = Math.sin(i / 3.3) * 0.08;
-  const v = 0.28 + phrase * breath * 0.72 + grain;
-  return Math.min(1, Math.max(0.05, v));
-});
-
 const LENGTHS: Array<{ label: string; ms: number }> = [
   { label: '0:30 min', ms: 30_000 },
   { label: '3:30 min', ms: 210_000 },
@@ -179,7 +168,6 @@ export function ProcessingPreview() {
             phase={phase}
             audioDurationMs={durationMs}
             startedAt={startedAt}
-            shape={SAMPLE_SHAPE}
           />
         </div>
 
