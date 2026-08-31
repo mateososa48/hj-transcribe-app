@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 
+import { Loader } from '@/components/motion/loader';
 import { Spinner } from '@/components/ui/spinner';
 import { usePipelineState } from '@/features/record/useRecording';
 import type { SessionKind } from '@/lib/db';
@@ -71,7 +72,13 @@ export function ProcessingHandoff({
       aria-live="polite"
       className="flex min-h-[20rem] flex-col items-center justify-center py-16 text-center"
     >
-      <Spinner className="size-8 text-muted-foreground" aria-hidden />
+      {/* The instrument of the wait: four breathing bars (beui's loader),
+          echoing the recording ribbon it just replaced on this screen. The
+          section itself is the live region, so the loader stays decorative;
+          under reduced motion the bars trade their scaling for a calm pulse. */}
+      <span aria-hidden>
+        <Loader variant="bars" size={40} className="text-muted-foreground" />
+      </span>
 
       <ol className="mt-7 space-y-2.5">
         {reached.map((step) => (
