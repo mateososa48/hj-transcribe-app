@@ -48,19 +48,25 @@ export const SectionInvite = Extension.create<SectionInviteOptions>({
             const decorations: Decoration[] = [];
             let heading: string | null = null;
             /**
-             * Where the invitation goes: after the last thing the section
-             * actually says. Trailing blank lines do not move it, so an empty
-             * section keeps the key tucked under its heading instead of
-             * pushing it down a line the letter does not use yet.
+             * Where the invitation goes.
+             *
+             * A section with writing in it puts the key after the last thing it
+             * says. A section with nothing in it puts the key INSIDE its empty
+             * line rather than above it — stacked, the key and the blank line
+             * it sits over cost two lines of paper each, four times over, and
+             * a blank letter turned into a column of gaps.
              */
             let anchor = 0;
+            let emptyLine: number | null = null;
+            let written = false;
 
             const place = () => {
               if (!heading) return;
               const title = heading;
+              const at = written ? anchor : (emptyLine ?? anchor);
               decorations.push(
                 Decoration.widget(
-                  anchor,
+                  at,
                   () => {
                       const button = document.createElement('button');
                       button.type = 'button';
@@ -88,11 +94,18 @@ export const SectionInvite = Extension.create<SectionInviteOptions>({
                 place();
                 heading = node.textContent.trim() || null;
                 anchor = offset + node.nodeSize;
+                emptyLine = null;
+                written = false;
                 return;
               }
               if (!heading) return;
               const empty = node.type.name === 'paragraph' && node.content.size === 0;
-              if (!empty) anchor = offset + node.nodeSize;
+              if (empty) {
+                if (emptyLine === null) emptyLine = offset + 1;
+                return;
+              }
+              written = true;
+              anchor = offset + node.nodeSize;
             });
             place();
 

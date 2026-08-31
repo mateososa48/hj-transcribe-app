@@ -147,12 +147,8 @@ export const BERICHT_KOPF: ReadonlyArray<string | null> = [
   null,
   'An',
   null,
-  null,
-  null,
   'Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,',
-  null,
   'ich darf nachfolgend über die letzten Untersuchungen, Herrn/Frau … betreffend, zusammenfassend berichten.',
-  null,
 ];
 
 /**
