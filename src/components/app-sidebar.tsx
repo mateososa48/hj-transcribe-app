@@ -121,7 +121,7 @@ export function AppSidebar() {
           {/* Spelled the way he spells it — Jürgen — and abbreviated as it is
               on his letterhead. At 14px, because 12 sat below everything else
               in an app built at 18px root for a 75-year-old's eyes. */}
-          <span className="-mt-0.5 block truncate text-[0.95rem] text-sidebar-foreground/60">
+          <span className="-mt-0.5 block truncate text-[0.83rem] text-sidebar-foreground/60">
             Prof. Hans-Jürgen Rupprecht
           </span>
         </button>
@@ -130,19 +130,12 @@ export function AppSidebar() {
             the sidebar they read as three unrelated keys that happen to be
             stacked; inside one surface under one heading they read as the
             answer to a single question. */}
-        {/* ── TRAY SHADE ── the one number to turn: the L in oklch(L 0 0).
-            1 is white, 0 is black. bg-muted was 0.97 and read as barely
-            there; 0.945 is one step down. Try 0.955 for lighter, 0.93 for
-            heavier — the file hot-reloads, so it changes as you type. */}
-        <div className="rounded-[1.375rem] bg-[oklch(0.945_0_0)] p-2.5">
+        {/* The same liquid glass the app's light keys wear, held still. */}
+        <div className="glass-panel rounded-[1.375rem] p-2.5">
           {/* "Neu starten" is German for restarting a machine, and verbs are
               not capitalised — this heads three things he CREATES. A label,
               so it sits back from the keys it names. */}
-          {/* ── LABEL STRENGTH ── the /70 is the dial. On the darker tray, 60%
-              composited to #656565 for a contrast of 4.98 — over the line but
-              thin at 13px for his eyes. 70% is #4e4e4e at 7.11, still far
-              quieter than the pills beneath it (17.9). */}
-          <p className="px-2 pt-1 pb-2.5 text-[0.83rem] leading-4 font-medium text-sidebar-foreground/70">
+          <p className="px-2 pt-1 pb-2.5 text-[0.83rem] leading-4 font-medium text-sidebar-foreground">
             Neu anlegen
           </p>
           <div className="flex flex-col gap-2">
@@ -293,9 +286,12 @@ function SidebarAction({
           'flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
           'text-sm font-medium tracking-[-0.01em] text-white',
           'bg-[linear-gradient(180deg,#313131_0%,#1e1e1e_22%,#171717_42%,#161616_80%,#151515_100%)]',
-          'hover:bg-[linear-gradient(180deg,#3d3d3d_0%,#262626_22%,#1e1e1e_42%,#1c1c1c_80%,#1a1a1a_100%)]',
-          'transition-[background-image,transform] duration-200 ease-out motion-reduce:transition-none',
-          'active:scale-[0.985]',
+          // Hover lifts rather than lightens: the face keeps its colour and
+          // the key comes toward you, which is the motion every other control
+          // in the app uses.
+          'transition-[translate,scale,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+          'hover:-translate-y-px hover:scale-[1.01] hover:shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)]',
+          'active:translate-y-0 active:scale-[0.985]',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >

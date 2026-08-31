@@ -34,7 +34,7 @@ export function StandardLayout() {
     // indent 73px to sit under their branch label, which left them ~170px of
     // text — every first line clipped after a couple of words. This gives them
     // 207px without touching the alignment.
-    <SidebarProvider style={{ '--sidebar-width': '296px' } as React.CSSProperties}>
+    <SidebarProvider style={{ '--sidebar-width': '272px' } as React.CSSProperties}>
       <AppSidebar />
       <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
