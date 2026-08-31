@@ -135,7 +135,9 @@ export function AppSidebar() {
           {/* "Neu starten" is German for restarting a machine, and verbs are
               not capitalised — this heads three things he CREATES. A label,
               so it sits back from the keys it names. */}
-          <p className="px-2 pt-1 pb-2.5 text-[0.83rem] leading-4 font-medium text-sidebar-foreground">
+          {/* The same voice as the branch labels below it — Diktate, Termine,
+              Berichte — so the sidebar has one heading style, not two. */}
+          <p className="px-2 pt-1 pb-2.5 text-[0.95rem] font-semibold tracking-tight text-sidebar-foreground">
             Neu anlegen
           </p>
           <div className="flex flex-col gap-2">
