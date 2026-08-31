@@ -279,23 +279,18 @@ function SidebarAction({
           timers.current.push(setTimeout(() => setBeaming(false), 1100));
         }}
         className={cn(
-          // The pill from Mateo's second frame, sampled down its interior:
-          // #313131 at the top edge, through #1a1a1a, settling at #171717 and
-          // closing on #151515 — top-lit, no border, no ring. Those are his
-          // stops, not an approximation of them.
+          // The Kopieren key from the Diktat page, exactly: btn-gloss over
+          // the app's primary, rounded full, with hover:bg-primary holding
+          // the colour still so the key LIFTS rather than lightens. The rise
+          // and the press are btn-gloss's own — writing a translate here only
+          // fought its transform.
           'flex h-10 w-full items-center gap-2.5 rounded-full px-3.5 text-left',
-          'text-sm font-medium tracking-[-0.01em] text-white',
-          'bg-[linear-gradient(180deg,#313131_0%,#1e1e1e_22%,#171717_42%,#161616_80%,#151515_100%)]',
-          // Hover lifts rather than lightens: the face keeps its colour and
-          // the key comes toward you, which is the motion every other control
-          // in the app uses.
-          'transition-[translate,scale,box-shadow] duration-200 ease-out motion-reduce:transition-none',
-          'hover:-translate-y-px hover:scale-[1.01] hover:shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)]',
-          'active:translate-y-0 active:scale-[0.985]',
+          'btn-gloss bg-primary text-sm font-medium tracking-[-0.01em] text-primary-foreground',
+          'hover:bg-primary',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >
-        <Icon aria-hidden className="size-[18px] shrink-0 text-white" />
+        <Icon aria-hidden className="size-[18px] shrink-0 text-primary-foreground" />
         {label}
       </button>
     </BorderBeam>
