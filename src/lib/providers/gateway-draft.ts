@@ -86,8 +86,9 @@ export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL
         ...(request.signal ? { signal: request.signal } : {}),
       });
 
-      const { text, wellFormed } = parseBeurteilung(result.raw);
+      const { heading, text, wellFormed } = parseBeurteilung(result.raw);
       return {
+        heading,
         text,
         wellFormed,
         model: result.model,

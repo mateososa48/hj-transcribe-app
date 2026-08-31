@@ -43,8 +43,12 @@ interface DraftMeta {
   };
 }
 
-/** The dictation feature: one section. */
+/**
+ * The dictation feature: one section, and what the model judged it to be.
+ * Usually "Zusammenfassende Beurteilung"; null when it would not say.
+ */
 export interface BeurteilungResponse extends DraftMeta {
+  heading: string | null;
   text: string;
 }
 

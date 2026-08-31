@@ -37,6 +37,17 @@ import { useBeurteilung } from './useBeurteilung';
  * this is one section on its way into his Word template, and dressing a
  * snippet as a page would promise something it is not.
  */
+/**
+ * One shape and one size for both keys in the stripe.
+ *
+ * The lift under the cursor is already theirs: btn-gloss and btn-liquid both
+ * rise by the same 1px on hover, so adding a translate utility here only
+ * fought their own transform. What actually differed was colour — the primary
+ * also lightened underneath, which is why one key read as answering and the
+ * other as merely moving. `hover:bg-primary` holds it still (see below).
+ */
+const STRIPE_KEY = 'rounded-full px-5';
+
 interface ErgaenzungRow {
   session: Session;
   transcription: Transcription | null;
@@ -179,16 +190,23 @@ export function DiktatContent({
               Sticky, because Kopieren is wanted at the END of reading and a
               key that has scrolled off the top is a key he has to go back
               for. Neu erstellen is not here on purpose — see below. */}
-          <div className="sticky top-0 z-20 -mx-2 mb-8 flex items-center justify-end gap-3 border-b border-border bg-background/85 px-2 py-3 backdrop-blur-md">
+          <div className="sticky top-0 z-20 -mx-2 mb-4 flex items-center justify-end gap-2.5 bg-background/85 px-2 py-2.5 backdrop-blur-md">
             {b.copiedOnce && !b.copied ? (
               <span className="text-sm text-muted-foreground">Bereits kopiert</span>
             ) : null}
-            <ErgaenzungButton onClick={() => setErgOpen(true)} disabled={ergOpen} />
+            {/* One size, one hover. They sat at different heights and answered
+                the cursor differently — one lightening, one lifting — which
+                reads as two unrelated controls that happen to be adjacent. */}
+            <ErgaenzungButton
+              onClick={() => setErgOpen(true)}
+              disabled={ergOpen}
+              className={STRIPE_KEY}
+            />
             <Button
               size="lg"
               variant={b.copied ? 'secondary' : 'default'}
               onClick={() => void b.copy()}
-              className="rounded-full px-5"
+              className={cn(STRIPE_KEY, !b.copied && 'hover:bg-primary')}
             >
               <span className="grid size-4 place-items-center">
                 {b.copied ? (
@@ -204,12 +222,17 @@ export function DiktatContent({
             </Button>
           </div>
 
-          {/* The work. No card, no header rule, no footer — the page IS this. */}
-          <section aria-labelledby="beurteilung-heading">
-            <h2 id="beurteilung-heading" className="mb-3 text-lg font-semibold tracking-tight">
-              Zusammenfassende Beurteilung
+          {/* The work, in one box that looks like what it is: a field of text
+              he can click into. The heading lives inside it — it is the
+              section's own title, not a label sitting above a slab. */}
+          <section
+            aria-labelledby="beurteilung-heading"
+            className="rounded-xl border border-border bg-card px-5 py-4 sm:px-6 sm:py-5"
+          >
+            <h2 id="beurteilung-heading" className="mb-2 text-lg font-semibold tracking-tight">
+              {result.heading?.trim() || 'Zusammenfassende Beurteilung'}
             </h2>
-            <BeurteilungText b={b} className="-mx-3 rounded-lg px-3 py-1" />
+            <BeurteilungText b={b} className="-mx-2 rounded-lg px-2 py-1" />
           </section>
 
           {/* Rare, considered, and only ever wanted AFTER reading — so it sits
@@ -219,14 +242,14 @@ export function DiktatContent({
             result={result}
             running={running}
             onChanged={onChanged}
-            className="mt-6 border-t border-border pt-4"
+            className="mt-3"
           />
 
           {/* The evidence, underneath the thing it produced. */}
-          <section aria-labelledby="aufnahme-heading" className="mt-12">
+          <section aria-labelledby="aufnahme-heading" className="mt-8">
             <h2
               id="aufnahme-heading"
-              className="mb-3 text-sm font-semibold tracking-tight text-muted-foreground"
+              className="mb-2 text-sm font-semibold tracking-tight text-muted-foreground"
             >
               {recordings.length > 1 ? 'Aufnahmen' : 'Aufnahme'}
             </h2>

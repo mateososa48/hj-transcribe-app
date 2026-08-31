@@ -51,9 +51,17 @@ export function ergaenzungJob(parentId: string, childId: string, onMerged: () =>
 }
 
 /** The Ergänzen key for the Aufnahme header. */
-export function ErgaenzungButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+export function ErgaenzungButton({
+  onClick,
+  disabled,
+  className,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  className?: string;
+}) {
   return (
-    <Button variant="outline" onClick={onClick} disabled={disabled} className="rounded-full">
+    <Button variant="outline" size="lg" onClick={onClick} disabled={disabled} className={className}>
       <Mic aria-hidden />
       Ergänzen
     </Button>

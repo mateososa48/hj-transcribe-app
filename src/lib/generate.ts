@@ -96,6 +96,7 @@ export async function generate(sessionId: string, kind: SessionKind): Promise<Ge
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     sections,
+    ...('heading' in response && response.heading ? { heading: response.heading } : {}),
     // Regenerating replaces the model's copy too — the pairing between what he
     // edits and what it said has to stay truthful.
     original: { ...sections },

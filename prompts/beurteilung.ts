@@ -1,5 +1,5 @@
 import type { BeurteilungExample } from './examples/dev/index.ts';
-import { CORE_RULES, glossaryBlock, outputContract, PROMPT_VERSION } from './rules.ts';
+import { CORE_RULES, glossaryBlock, PROMPT_VERSION } from './rules.ts';
 
 /**
  * "Zusammenfassende Beurteilung" — section 5, and the one that matters most.
@@ -47,6 +47,7 @@ wenn eine knappere Formulierung möglich wäre:
   zurückliegendes Ereignis. Übernehmen Sie das Format aus der Quelle.`;
 
 export const BEURTEILUNG_TAG = 'beurteilung';
+export const BEURTEILUNG_TITEL_TAG = 'beurteilung_titel';
 
 export interface BeurteilungPromptInput {
   transcript: string;
@@ -82,8 +83,24 @@ selbst frei; Ihr Text ist ein Entwurf, keine fertige Aussage.
 
 ${CORE_RULES}
 
+WAS DIKTIERT WURDE
+In den allermeisten Fällen diktiert der Arzt eine Zusammenfassende
+Beurteilung: er fasst einen Patientenfall zusammen, ordnet Befunde ein und
+spricht Empfehlungen aus. Dann tragen Sie im Titel-Block genau
+"Zusammenfassende Beurteilung" ein.
+
+Manchmal diktiert er aber etwas anderes — eine Notiz an sich selbst, einen
+einzelnen Befund, einen Brieftext, eine Liste. Dann geben Sie im Titel-Block
+eine kurze, sachliche deutsche Überschrift an, die benennt, was es
+tatsächlich ist ("Notiz", "Befund", "Anamnese", "Telefonat", ...). Setzen Sie
+"Zusammenfassende Beurteilung" NICHT über etwas, das keine ist: die
+Überschrift steht am Ende in seinem Brief, und eine falsche Überschrift ist
+eine falsche Angabe wie jede andere.
+
+Der Aufbau bleibt in beiden Fällen gleich.
+
 AUFBAU DES ABSCHNITTS
-Die Beurteilung besteht aus längeren Aufzählungspunkten, jeweils mit "- "
+Der Abschnitt besteht aus längeren Aufzählungspunkten, jeweils mit "- "
 beginnend. Ein Punkt pro Gedanke, in der Reihenfolge, in der der Arzt sie
 genannt hat. Vollständige Sätze, kein Telegrammstil.
 
@@ -93,7 +110,15 @@ ${glossaryBlock(glossary)}
 
 ${shots}
 
-${outputContract(BEURTEILUNG_TAG)}`;
+AUSGABEFORMAT
+Antworten Sie ausschließlich in genau dieser Form, ohne Text davor oder
+danach:
+
+<${BEURTEILUNG_TITEL_TAG}>Zusammenfassende Beurteilung</${BEURTEILUNG_TITEL_TAG}>
+<${BEURTEILUNG_TAG}>
+- Erster Punkt ...
+- Zweiter Punkt ...
+</${BEURTEILUNG_TAG}>`;
 }
 
 /** The half that changes per patient — never cached. */
@@ -102,7 +127,7 @@ export function buildUserPrompt(input: Pick<BeurteilungPromptInput, 'transcript'
 
 ${input.transcript.trim()}
 
-Erstellen Sie daraus die Zusammenfassende Beurteilung.`;
+Erstellen Sie daraus den Abschnitt und benennen Sie ihn.`;
 }
 
 export const BEURTEILUNG_PROMPT_VERSION = PROMPT_VERSION;
@@ -114,16 +139,27 @@ export const BEURTEILUNG_PROMPT_VERSION = PROMPT_VERSION;
  * the tag is missing we return the whole response and flag it, rather than
  * losing work that is probably fine.
  */
-export function parseBeurteilung(raw: string): { text: string; wellFormed: boolean } {
+export function parseBeurteilung(raw: string): {
+  heading: string | null;
+  text: string;
+  wellFormed: boolean;
+} {
+  const titleMatch = raw.match(
+    new RegExp(`<${BEURTEILUNG_TITEL_TAG}>([\\s\\S]*?)</${BEURTEILUNG_TITEL_TAG}>`, 'i'),
+  );
+  const heading = titleMatch?.[1]?.trim() ? titleMatch[1].trim() : null;
+
   const match = raw.match(
     new RegExp(`<${BEURTEILUNG_TAG}>([\\s\\S]*?)</${BEURTEILUNG_TAG}>`, 'i'),
   );
-  if (match?.[1]) return { text: match[1].trim(), wellFormed: true };
+  if (match?.[1]) return { heading, text: match[1].trim(), wellFormed: true };
 
   // Unclosed tag — take everything after it.
   const open = raw.match(new RegExp(`<${BEURTEILUNG_TAG}>([\\s\\S]*)`, 'i'));
-  if (open?.[1]) return { text: open[1].trim(), wellFormed: false };
+  if (open?.[1]) return { heading, text: open[1].trim(), wellFormed: false };
 
-  return { text: raw.trim(), wellFormed: false };
+  // No tags at all: strip a title remnant so it cannot land in the letter.
+  const withoutTitle = titleMatch ? raw.replace(titleMatch[0], '') : raw;
+  return { heading, text: withoutTitle.trim(), wellFormed: false };
 }
 

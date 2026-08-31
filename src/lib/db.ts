@@ -148,6 +148,13 @@ export interface Result {
   createdAt: number;
   updatedAt: number;
   sections: Record<string, string>;
+  /**
+   * What a dictation turned out to BE, in the model's judgement — nearly
+   * always "Zusammenfassende Beurteilung", but a note or a single finding is
+   * not one, and the heading ends up in his letter. Absent on Termine and on
+   * rows written before this existed.
+   */
+  heading?: string;
   original: Record<string, string>;
   /**
    * The working copy that a regenerate replaced — his corrections may live in

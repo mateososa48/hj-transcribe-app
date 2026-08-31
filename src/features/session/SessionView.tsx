@@ -164,16 +164,27 @@ export function SessionView({ sessionId }: { sessionId: string }) {
     /* A Diktat is one section of prose he reads top to bottom, so it gets one
        reading measure rather than the full working area. A Termin still wants
        the width: its transcript is a two-column conversation. */
-    <div className={cn('space-y-8 pb-16', !isTermin && 'mx-auto w-full max-w-[48rem]')}>
-      <div className="space-y-3">
+    <div className={cn('pb-16', isTermin ? 'space-y-8' : 'mx-auto w-full max-w-[48rem] space-y-5')}>
+      <div className={isTermin ? 'space-y-3' : 'space-y-1'}>
         <div className="flex items-center justify-between gap-3">
           {/* The kind is worth saying where two of them mix. On a Diktat the
               title already begins with the word and the sidebar filed it under
-              Diktate, so the badge is chrome repeating what is already said. */}
+              Diktate, so the badge is chrome repeating what is already said —
+              and with nothing beside it, Löschen floated alone at the very top
+              of the page. On a Diktat the two share the title's own line. */}
           {isTermin ? (
             <Badge variant="secondary">{SESSION_KIND_LABELS[session.kind]}</Badge>
           ) : (
-            <span />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => void saveTitle()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              }}
+              aria-label="Titel der Aufnahme"
+              className="h-auto min-w-0 flex-1 border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
+            />
           )}
           <AlertDialog>
             <AlertDialogTrigger
@@ -213,16 +224,18 @@ export function SessionView({ sessionId }: { sessionId: string }) {
         {/* Editable title, Notion-style: looks like a heading, edits in place.
             The explicit md:text-2xl matters — the input base carries md:text-sm,
             which would otherwise shrink the title back to body size on desktop. */}
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={() => void saveTitle()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-          aria-label="Titel der Aufnahme"
-          className="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
-        />
+        {isTermin ? (
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={() => void saveTitle()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+            aria-label="Titel der Aufnahme"
+            className="h-auto border-transparent px-0 text-2xl font-semibold tracking-tight shadow-none focus-visible:border-border focus-visible:px-2 md:text-2xl"
+          />
+        ) : null}
 
         <p className="text-sm text-muted-foreground">
           {new Date(session.startedAt).toLocaleDateString('de-DE', {
