@@ -114,8 +114,8 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
             type="submit"
             disabled={checking}
             className={cn(
-              'btn-gloss mt-2 flex h-12 w-full items-center justify-center rounded-full bg-primary',
-              'text-base font-medium text-primary-foreground hover:bg-primary',
+              'btn-liquid-dark mt-2 flex h-12 w-full items-center justify-center rounded-full',
+              'text-base font-medium text-white',
               'disabled:pointer-events-none disabled:opacity-55',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
             )}

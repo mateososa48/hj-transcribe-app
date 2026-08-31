@@ -394,11 +394,16 @@ export function SessionView({ sessionId }: { sessionId: string }) {
 
               return (
                 <Tabs defaultValue="notizen">
-                  <TabsList className="group-data-horizontal/tabs:h-11">
-                    <TabsTrigger value="notizen" className="px-3 text-base">
+                  {/* The switch wears the app's glass too — the raised segment
+                      is the same lens as every other key here. */}
+                  <TabsList className="rounded-full p-1 group-data-horizontal/tabs:h-11">
+                    <TabsTrigger value="notizen" className="tab-liquid rounded-full px-3.5 text-base">
                       <FileText aria-hidden /> Notizen
                     </TabsTrigger>
-                    <TabsTrigger value="transkript" className="px-3 text-base">
+                    <TabsTrigger
+                      value="transkript"
+                      className="tab-liquid rounded-full px-3.5 text-base"
+                    >
                       <ListTree aria-hidden /> Transkript
                     </TabsTrigger>
                   </TabsList>

@@ -156,7 +156,7 @@ export function EditorToolbar({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={cn('shrink-0 px-3', extra)}
+      className={cn('shrink-0 rounded-full px-3.5', extra)}
     >
       {icon}
       <span className="hidden xl:inline">{label}</span>
@@ -268,7 +268,7 @@ export function EditorToolbar({
                   variant="outline"
                   title="Diktieren"
                   disabled={recording}
-                  className="shrink-0 px-3"
+                  className="shrink-0 rounded-full px-3.5"
                 >
                   <Mic aria-hidden />
                   <span className="hidden xl:inline">Diktieren</span>
@@ -312,7 +312,7 @@ export function EditorToolbar({
             variant={copied ? 'secondary' : 'default'}
             onClick={() => void copyAll()}
             title="Kopieren"
-            className="shrink-0 px-4"
+            className="shrink-0 rounded-full px-4"
           >
             {/* The confirmation swaps in place — the key never resizes under
                 the cursor mid-click. */}

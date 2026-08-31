@@ -8,7 +8,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "btn-gloss bg-primary text-primary-foreground hover:bg-primary/80",
+        // Black liquid glass, the same material as the three keys in the
+        // sidebar. The utility owns the surface, so there is no bg-* here — a
+        // background colour sits on top of the lens and flattens it.
+        default: "btn-liquid-dark text-white",
         outline:
           "btn-liquid border-white/80 text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:

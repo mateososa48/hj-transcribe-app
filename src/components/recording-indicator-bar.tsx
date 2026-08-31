@@ -77,7 +77,7 @@ export function RecordingIndicatorBar({
         disabled={stopping}
         className={cn(
           'btn-gloss ms-auto flex h-10 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground',
-          'hover:bg-primary disabled:pointer-events-none disabled:opacity-60',
+          'disabled:pointer-events-none disabled:opacity-60',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
         )}
       >

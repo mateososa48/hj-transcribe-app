@@ -247,11 +247,9 @@ function PrimaryStart({
       onClick={onRun}
       className={cn(
         'group flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left text-white',
-        // The sidebar pill's own ramp, at card scale.
-        'bg-[linear-gradient(180deg,#313131_0%,#1e1e1e_22%,#171717_42%,#161616_80%,#151515_100%)]',
-        'hover:bg-[linear-gradient(180deg,#3d3d3d_0%,#262626_22%,#1e1e1e_42%,#1c1c1c_80%,#1a1a1a_100%)]',
-        'transition-[background-image,transform] duration-200 ease-out active:scale-[0.995]',
-        'motion-reduce:transition-none',
+        // The sidebar key's own material, at card scale. The lift and the
+        // press are the lens's own — a transition here only fights them.
+        'btn-liquid-dark',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
       )}
     >
@@ -287,9 +285,9 @@ function SecondaryStart({
       type="button"
       onClick={onRun}
       className={cn(
-        'group flex w-full items-center gap-3 rounded-2xl border border-foreground/15 bg-background px-4 py-3.5 text-left',
-        'transition-colors duration-200 ease-out hover:border-foreground/30 hover:bg-muted/50',
-        'motion-reduce:transition-none',
+        'group flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left',
+        // Clear glass to the black card's dark glass — one material, two tints.
+        'btn-liquid',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
       )}
     >

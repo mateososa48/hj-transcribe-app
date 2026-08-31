@@ -40,11 +40,11 @@ import { useBeurteilung } from './useBeurteilung';
 /**
  * One shape and one size for both keys in the stripe.
  *
- * The lift under the cursor is already theirs: btn-gloss and btn-liquid both
- * rise by the same 1px on hover, so adding a translate utility here only
- * fought their own transform. What actually differed was colour — the primary
- * also lightened underneath, which is why one key read as answering and the
- * other as merely moving. `hover:bg-primary` holds it still (see below).
+ * The lift under the cursor is already theirs: every key material in this app
+ * rises by the same 1px on hover, so adding a translate utility here only
+ * fought their own transform. Colour used to differ — the primary lightened
+ * underneath while the outline did not — and no longer does now that the
+ * primary is a lens rather than a fill.
  */
 const STRIPE_KEY = 'rounded-full px-5';
 
@@ -206,7 +206,7 @@ export function DiktatContent({
               size="lg"
               variant={b.copied ? 'secondary' : 'default'}
               onClick={() => void b.copy()}
-              className={cn(STRIPE_KEY, !b.copied && 'hover:bg-primary')}
+              className={STRIPE_KEY}
             >
               <span className="grid size-4 place-items-center">
                 {b.copied ? (
