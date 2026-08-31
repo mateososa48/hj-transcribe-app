@@ -44,6 +44,12 @@ function fontSizeToHalfPoints(value: unknown): number | undefined {
 function runsOf(node: TiptapNode): TextRun[] {
   const runs: TextRun[] = [];
   for (const child of node.content ?? []) {
+    // Shift+Enter inside a paragraph. Skipping it silently welded two lines
+    // together in Word — the Medikation block is exactly where he uses them.
+    if (child.type === 'hardBreak') {
+      runs.push(new TextRun({ break: 1 }));
+      continue;
+    }
     if (child.type !== 'text' || !child.text) continue;
     const marks = child.marks ?? [];
     const bold = marks.some((m) => m.type === 'bold');
@@ -55,11 +61,14 @@ function runsOf(node: TiptapNode): TextRun[] {
     // Literal tabs become real Word tabs, not spaces.
     const parts = child.text.split('\t');
     const children = parts.flatMap((part, i) => (i > 0 ? [new Tab(), part] : [part]));
+    // Only ever turn formatting ON. `bold: false` on a heading run is not
+    // "inherit" — it is an explicit off that beats the heading style, which is
+    // how his headings came out unbolded no matter what the style said.
     runs.push(
       new TextRun({
         children,
-        bold,
-        italics,
+        ...(bold ? { bold: true } : {}),
+        ...(italics ? { italics: true } : {}),
         ...(underline ? { underline: {} } : {}),
         ...(size ? { size } : {}),
       }),
@@ -68,7 +77,14 @@ function runsOf(node: TiptapNode): TextRun[] {
   return runs;
 }
 
-export async function exportDocx(json: unknown, title: string): Promise<void> {
+/**
+ * Bericht JSON -> a docx Document, with no browser in sight.
+ *
+ * Split from the download so the mapping can be packed and read back in a
+ * test: a Word file that quietly loses his tab stops or his bullets is not
+ * something a screenshot can catch.
+ */
+export function buildDocx(json: unknown, title: string): { file: Document; fileName: string } {
   const doc = json as TiptapNode;
   const paragraphs: Paragraph[] = [];
   let orderedInstance = 0;
@@ -111,40 +127,28 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
     // Word's built-in heading styles are light blue — his letters are black,
     // bold, Calibri. Define the look explicitly so the export IS the letter.
     styles: {
+      // `default` OVERRIDES Word's built-in styles. `paragraphStyles` with the
+      // same ids only appends duplicates, and Word resolves a duplicate
+      // styleId to the first one it finds — its own. That is why every Bericht
+      // exported so far carried Word's light blue headings despite the code
+      // setting them black.
       default: {
         document: { run: { font: 'Calibri', size: 22, color: '000000' } },
-      },
-      paragraphStyles: [
-        {
-          id: 'Heading1',
-          name: 'Heading 1',
-          basedOn: 'Normal',
-          next: 'Normal',
-          quickFormat: true,
+        heading1: {
           run: { font: 'Calibri', size: 28, bold: true, color: '000000' },
           paragraph: { spacing: { before: 280, after: 120 } },
         },
-        {
-          id: 'Heading2',
-          name: 'Heading 2',
-          basedOn: 'Normal',
-          next: 'Normal',
-          quickFormat: true,
-          // His own section headings: body size, bold, underlined. Word must
-          // match the screen, and the screen matches his letters.
+        // His own section headings: body size, bold, underlined. Word matches
+        // the screen, and the screen matches his letters.
+        heading2: {
           run: { font: 'Calibri', size: 22, bold: true, underline: {}, color: '000000' },
           paragraph: { spacing: { before: 240, after: 100 } },
         },
-        {
-          id: 'Heading3',
-          name: 'Heading 3',
-          basedOn: 'Normal',
-          next: 'Normal',
-          quickFormat: true,
+        heading3: {
           run: { font: 'Calibri', size: 22, bold: true, color: '000000' },
           paragraph: { spacing: { before: 200, after: 80 } },
         },
-      ],
+      },
     },
     numbering: {
       config: [
@@ -162,11 +166,19 @@ export async function exportDocx(json: unknown, title: string): Promise<void> {
     sections: [{ children: paragraphs }],
   });
 
+  return {
+    file,
+    fileName: `${title.replace(/[\\/:*?"<>|]/g, '-').trim() || 'Bericht'}.docx`,
+  };
+}
+
+export async function exportDocx(json: unknown, title: string): Promise<void> {
+  const { file, fileName } = buildDocx(json, title);
   const blob = await Packer.toBlob(file);
   const url = URL.createObjectURL(blob);
   const a = window.document.createElement('a');
   a.href = url;
-  a.download = `${title.replace(/[\\/:*?"<>|]/g, '-').trim() || 'Bericht'}.docx`;
+  a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
 }

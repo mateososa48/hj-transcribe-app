@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { db, KIND_SECTIONS, SECTION_LABELS, type Result } from '@/lib/db';
+import { db, KIND_SECTIONS, SECTION_LABELS, type Result, type SessionKind } from '@/lib/db';
 import {
   sessionSubtitle,
   sessionTimeTitle,
@@ -26,6 +26,21 @@ import { cn } from '@/lib/utils';
  * right shape here (one focused pick-one-of-N task); the working copy WITH
  * his corrections is what gets imported, never the model's original.
  */
+/**
+ * What a section is called when it arrives in the letter.
+ *
+ * A Diktat carries its own name now — the model decides whether what he spoke
+ * really was a Zusammenfassende Beurteilung, and a note or a single finding is
+ * not one. Importing under the generic label would have put the wrong heading
+ * over it, and the heading ends up in a letter he signs.
+ */
+function sectionLabel(kind: SessionKind, key: string, result: Result | null): string {
+  if (kind === 'beurteilung' && key === 'beurteilung' && result?.heading?.trim()) {
+    return result.heading.trim();
+  }
+  return SECTION_LABELS[key] ?? key;
+}
+
 export function ImportDialog({
   open,
   onOpenChange,
@@ -67,7 +82,7 @@ export function ImportDialog({
       .filter((key) => selected.has(key))
       .map((key) => ({
         key,
-        label: SECTION_LABELS[key] ?? key,
+        label: sectionLabel(picked.session.kind, key, result),
         text: result.sections[key] ?? '',
       }));
     onInsert(sections);
@@ -174,7 +189,9 @@ export function ImportDialog({
                       >
                         {on ? <Check className="size-4" aria-hidden /> : null}
                       </span>
-                      <span className="font-medium">{SECTION_LABELS[key] ?? key}</span>
+                      <span className="font-medium">
+                        {sectionLabel(picked.session.kind, key, result)}
+                      </span>
                     </button>
                   );
                 })}

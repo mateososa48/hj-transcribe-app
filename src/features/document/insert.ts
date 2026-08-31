@@ -115,6 +115,10 @@ const SECTION_ALIASES: Record<string, string> = {
   werte: 'Befunde',
   beurteilung: 'Zusammenfassende Beurteilung',
   'zusammenfassende beurteilung': 'Zusammenfassende Beurteilung',
+  // A Termin's notes call this "Zusammenfassung". Without the alias it landed
+  // as a brand-new heading at the very END of the letter, under Aktuelle
+  // Therapie — the summary of the appointment filed after the medication.
+  zusammenfassung: 'Zusammenfassende Beurteilung',
   medikation: 'Aktuelle Therapie',
   therapie: 'Aktuelle Therapie',
   'aktuelle therapie': 'Aktuelle Therapie',
