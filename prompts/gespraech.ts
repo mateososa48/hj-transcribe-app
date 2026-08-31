@@ -72,8 +72,9 @@ FORM
   eine Anamnese, die als Verlauf erzählt wird, oder eine Reihe von
   Verneinungen: "Luftnot, Palpitationen, Schwindel und Beinödeme werden
   verneint."
-- Medikamente, wo sie vorkommen: Präparatename und Stärke OHNE Einheit, dann
-  ein TABULATOR, dann das Schema, ein Präparat pro Zeile:
+- Medikamente, wo sie vorkommen, sind KEINE Aufzählungspunkte: kein "- " davor.
+  Präparatename und Stärke OHNE Einheit, dann ein TABULATOR, dann das Schema,
+  ein Präparat pro Zeile:
       ASS 100	1-0-0
       Clopidogrel 75	1-0-0 bis 5/26
   "ASS hundert" wird zu "ASS 100", niemals zu "ASS 100 mg". Fehlt das Schema,

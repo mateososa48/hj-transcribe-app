@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { BULLET_SECTIONS, bulletsToHtml, bulletsToPlain } from '@/lib/format';
+import { clipboardPayload } from '@/lib/format';
 import type { Result } from '@/lib/db';
 import { saveSection } from '@/lib/generate';
 
@@ -62,15 +62,16 @@ export function useBeurteilung(result: Result | null) {
     if (timer.current) clearTimeout(timer.current);
     await saveSection(result.id, 'beurteilung', text);
     try {
-      if (BULLET_SECTIONS.has('beurteilung') && /^\s*[•-]\s/m.test(text)) {
+      const payload = clipboardPayload(text);
+      if (payload.html) {
         await navigator.clipboard.write([
           new ClipboardItem({
-            'text/html': new Blob([bulletsToHtml(text)], { type: 'text/html' }),
-            'text/plain': new Blob([bulletsToPlain(text)], { type: 'text/plain' }),
+            'text/html': new Blob([payload.html], { type: 'text/html' }),
+            'text/plain': new Blob([payload.plain], { type: 'text/plain' }),
           }),
         ]);
       } else {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(payload.plain);
       }
     } catch {
       // Select the rendered text so one keystroke still finishes the job.

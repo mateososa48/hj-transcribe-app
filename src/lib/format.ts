@@ -12,9 +12,43 @@
 /** Sections whose content is a bullet list. Medikation (tabs) and Anamnese (prose) are not. */
 export const BULLET_SECTIONS = new Set(['beurteilung', 'zusammenfassung', 'diagnosen']);
 
-/** "- foo" -> "• foo", preserving indentation for nested items. */
+/**
+ * What to put on the clipboard for a piece of section text.
+ *
+ * Decided by what the text IS, never by which section it came from. That
+ * distinction used to be a hard-coded list of three keys — fine while every
+ * section had a fixed name, and silently wrong the moment a Termin's sections
+ * became the conversation's own: "Beschwerden" was not on the list, so its
+ * bullets pasted into Word as literal • characters instead of a real list.
+ *
+ * A tab anywhere means columns (the medication schemes), and those go plain:
+ * the tab is what lands them on his Word tab stops, and an HTML flavour would
+ * be pasted in preference to it.
+ */
+export function clipboardPayload(text: string): { html?: string; plain: string } {
+  if (/\t/.test(text)) return { plain: text };
+  if (!/^\s*[•-]\s/m.test(text)) return { plain: text };
+  return { html: bulletsToHtml(text), plain: bulletsToPlain(text) };
+}
+
+/**
+ * "- foo" -> "• foo", preserving indentation for nested items.
+ *
+ * A line holding a TAB is a column pair, not a list item — the medication
+ * schemes. It keeps no marker at all: a leading "• " pushes the drug name off
+ * the Word tab stop the tab exists to hit, and the model bullets those lines
+ * anyway now that bullets are the default form. So they are stripped, not
+ * converted.
+ */
 export function toBulletText(text: string): string {
-  return text.replace(/^(\s*)-\s+/gm, '$1• ');
+  return text
+    .split('\n')
+    .map((line) =>
+      /\t/.test(line)
+        ? line.replace(/^(\s*)[-•]\s+/, '$1')
+        : line.replace(/^(\s*)-\s+/, '$1• '),
+    )
+    .join('\n');
 }
 
 const escapeHtml = (s: string): string =>
