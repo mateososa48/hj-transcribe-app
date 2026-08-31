@@ -676,3 +676,18 @@ h1, h2, h3 {
     0 2px 6px rgba(12, 12, 13, 0.12),
     0 16px 32px -16px rgba(12, 12, 13, 0.28);
 }
+
+/* Lock screen: the refused-key wiggle. One brisk horizontal shake, settling
+   fast — a physical "no" without bounce or theatrics. */
+@keyframes lock-shake {
+  15% { translate: -6px 0; }
+  35% { translate: 5px 0; }
+  55% { translate: -3px 0; }
+  75% { translate: 2px 0; }
+}
+.lock-shake {
+  animation: lock-shake 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lock-shake { animation: none; }
+}

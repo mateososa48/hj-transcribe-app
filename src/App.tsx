@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
 import { Toaster } from '@/components/ui/sonner';
+import { LockScreen } from '@/features/auth/LockScreen';
+import { isUnlocked } from '@/lib/auth';
 import { StandardLayout } from '@/layouts/StandardLayout';
 
 /**
@@ -7,6 +11,12 @@ import { StandardLayout } from '@/layouts/StandardLayout';
  * candidates plus the switcher are deleted — git history has all of them.
  */
 export default function App() {
+  // The door: the deployed URL is public, so nothing of the app renders until
+  // the password has been given once on this browser (src/lib/auth.ts).
+  const [unlocked, setUnlocked] = useState(isUnlocked);
+
+  if (!unlocked) return <LockScreen onUnlock={() => setUnlocked(true)} />;
+
   return (
     <>
       <StandardLayout />
