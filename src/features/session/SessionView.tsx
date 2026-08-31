@@ -334,13 +334,24 @@ export function SessionView({ sessionId }: { sessionId: string }) {
 
           {isTermin ? (
             (() => {
+              // The sections are the conversation's own: the result carries
+              // its reading order and its headings. Results drafted before
+              // that fall back to the fixed four, minus any that came back
+              // empty — an empty heading was never a section.
+              const order =
+                result?.sectionOrder?.length
+                  ? result.sectionOrder
+                  : KIND_SECTIONS.gespraech.filter((k) => (result?.sections[k] ?? '').trim());
               const notesBlock = result ? (
-                <div className="space-y-8">
-                  {KIND_SECTIONS.gespraech.map((section) => (
+                <div className="space-y-4">
+                  {order.map((section) => (
                     <SectionCard
                       key={section}
                       resultId={result.id}
                       section={section}
+                      {...(result.sectionLabels?.[section]
+                        ? { label: result.sectionLabels[section] }
+                        : {})}
                       initialText={result.sections[section] ?? ''}
                     />
                   ))}

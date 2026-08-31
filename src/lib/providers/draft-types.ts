@@ -1,5 +1,4 @@
 import type { BeurteilungExample } from '../../../prompts/examples/dev/index.ts';
-import type { GespraechSection } from '../../../prompts/gespraech.ts';
 
 /**
  * Drafting provider contract — one method per feature.

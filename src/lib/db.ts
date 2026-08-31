@@ -155,6 +155,14 @@ export interface Result {
    * rows written before this existed.
    */
   heading?: string;
+  /**
+   * A Termin's sections are the conversation's own, not a fixed four, so the
+   * result carries its own reading order and its own headings. Absent on
+   * dictations and on rows drafted before that — those fall back to
+   * KIND_SECTIONS.
+   */
+  sectionOrder?: string[];
+  sectionLabels?: Record<string, string>;
   original: Record<string, string>;
   /**
    * The working copy that a regenerate replaced — his corrections may live in

@@ -22,10 +22,13 @@ const AUTOSAVE_MS = 800;
 export function SectionCard({
   resultId,
   section,
+  label,
   initialText,
 }: {
   resultId: string;
   section: string;
+  /** The heading the model chose. Falls back to the old fixed labels. */
+  label?: string;
   initialText: string;
 }) {
   /**
@@ -35,7 +38,11 @@ export function SectionCard({
    * paste is right. A monospace stack plus a wide tab-size aligns what he sees
    * without changing a byte of what he copies.
    */
-  const columnar = section === 'medikation';
+  // Medication is two tab-separated columns wherever it lands — detected by
+  // the tabs themselves now, since the section is no longer always called
+  // "medikation".
+  const columnar = section === 'medikation' || /\t/.test(initialText);
+  const heading = label ?? SECTION_LABELS[section] ?? section;
   const [text, setText] = useState(initialText);
   const [copied, setCopied] = useState(false);
   /**
@@ -115,11 +122,11 @@ export function SectionCard({
   const empty = !text.trim();
 
   return (
-    <section className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg font-semibold tracking-tight">
-            {SECTION_LABELS[section] ?? section}
+            {heading}
           </h2>
           {copiedOnce ? (
             <Badge variant="secondary">
@@ -146,14 +153,15 @@ export function SectionCard({
           setCopiedOnce(false);
           scheduleSave(e.target.value);
         }}
-        aria-label={SECTION_LABELS[section] ?? section}
+        aria-label={heading}
         placeholder="Hier wurde nichts eingetragen — Sie können selbst ergänzen."
-        // Styled as a letter sheet, not a form field: the border only announces
-        // itself on hover/focus, the padding is a page margin, and the leading
-        // is reading rhythm. field-sizing:content still grows it with the text.
+        // The section IS the box now — the card draws the border, so the field
+        // inside it draws none. It used to be a borderless field on white that
+        // only outlined itself under the cursor, which left the notes floating
+        // in open space with nothing saying where one section ended.
         className={cn(
-          'min-h-32 rounded-xl border-transparent bg-card px-6 py-5 text-base leading-[1.85] shadow-none',
-          'transition-colors hover:border-border focus-visible:border-border',
+          'min-h-24 rounded-none border-0 bg-transparent px-5 py-4 text-base leading-[1.8] shadow-none',
+          'focus-visible:ring-0 focus-visible:outline-none',
           columnar && !empty && 'font-mono text-[0.95rem] leading-[1.9] [tab-size:18]',
         )}
       />

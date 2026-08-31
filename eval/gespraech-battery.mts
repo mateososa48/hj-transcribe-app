@@ -16,7 +16,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 
 import {
-  GESPRAECH_SECTIONS,
   buildGespraechSystemPrompt,
   buildGespraechUserPrompt,
   parseGespraech,
@@ -75,9 +74,15 @@ const EXPECTED_MEDS: Record<string, { must: RegExp[]; mustNot: RegExp[] }> = {
     mustNot: [],
   },
   'G2-erstvorstellung': {
-    // "Nehmen Sie Medikamente? Nein, gar keine."
-    must: [/^\s*Keine\s*$/im],
-    mustNot: [/\d/],
+    // "Nehmen Sie Medikamente? Nein, gar keine." — the notes must SAY she
+    // takes none. Written section-agnostically: the sections are the
+    // conversation's own now, and the old rule (the medication block must be
+    // exactly the word "Keine") only made sense when there was one.
+    must: [/kein[e]?\s+(Dauer)?medikation|keine\s+Medikamente|Medikamente[^\n]{0,12}keine/i],
+    // She takes nothing, so ANY drug line is invention. The old rule banned
+    // every digit in the medication block; applied to notes that also carry
+    // her age, height and weight, that flagged the truth as a fabrication.
+    mustNot: [/^[^\n\t]{2,40}\t\s*\d[-\d]/m, /\b\d-\d-\d\b/],
   },
   'G3-unsauber': {
     must: [/\bMetoprolol 50\b/, /\bTorasemid 10\b/, /\bXarelto 20\b/, /\bSimvastatin 40\b/, /\bMetformin 1000\b/],
@@ -87,47 +92,55 @@ const EXPECTED_MEDS: Record<string, { must: RegExp[]; mustNot: RegExp[] }> = {
   },
 };
 
-/** Properties a section must have, judged mechanically. */
+/**
+ * Properties the notes must have, judged mechanically.
+ *
+ * The sections are the conversation's own now, so nothing here may name one.
+ * What is checked is the FORM — bullets, medication shape, no invented
+ * measurements, no placeholders — across whatever sections came back.
+ */
 function check(s: Record<string, string>, fixture?: string) {
   const flags: string[] = [];
   const all = Object.values(s).join('\n');
+  const bodies = Object.values(s).filter((t) => t.trim());
 
-  // Diagnosen is a list; Anamnese is prose. Swapping them is the classic failure.
-  if (s.diagnosen && !/^\s*-/m.test(s.diagnosen)) flags.push('DIAG_NOT_LIST');
-  if (s.anamnese && /^\s*-\s/m.test(s.anamnese)) flags.push('ANAM_IS_LIST');
+  // Bullets are the default form. Prose is allowed for a section or two (an
+  // Anamnese told as a story, a run of negations) — a majority in prose is not.
+  const listy = bodies.filter((t) => /^\s*[-•]/m.test(t)).length;
+  if (bodies.length >= 2 && listy * 2 < bodies.length) flags.push('MOSTLY_PROSE');
 
-  // Medication: bare strength, no unit, tab before the scheme.
-  const medLines = (s.medikation ?? '')
+  // A section that came back with a heading and nothing under it.
+  if (Object.values(s).some((t) => !t.trim())) flags.push('EMPTY_SECTION');
+
+  // Medication, wherever it landed: bare strength, no unit, tab before scheme.
+  const medLines = all
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l && l.toLowerCase() !== 'keine');
+    .filter((l) => /\t/.test(l) || /\b\d+\s*(mg|milligramm|µg|IE)\b/i.test(l));
   if (medLines.some((l) => /\b\d+\s*(mg|milligramm|g|µg|ml|IE)\b/i.test(l))) flags.push('MED_HAS_UNIT');
-  // A line may legitimately have no scheme (incomplete dictation → drug and
-  // strength only). But if a scheme is present it must sit behind a tab.
   if (medLines.some((l) => !/\t/.test(l) && /\d-\d(-\d)?/.test(l))) flags.push('MED_NO_TAB');
-  // A dosing scheme must survive as a scheme, never collapse into a number.
   const schemeOf = (l: string) => (l.includes('\t') ? l.slice(l.indexOf('\t') + 1) : '');
   if (medLines.some((l) => /\b[01]{3}\b/.test(schemeOf(l)))) flags.push('MED_SCHEME_COLLAPSED');
 
   // Machine measurements must not appear — they happen after the conversation.
   if (/\b(EF|LVEF|Ejektionsfraktion|TAPSE)\b|\bmmHg\b/i.test(all)) flags.push('MACHINE_VALUES');
 
-  // No commentary about the recording, and no summary/recommendation.
+  // No commentary about the recording, and no recommendation of its own.
   if (/(Gespräch|Aufnahme|Diktat)[^.\n]{0,60}(nicht verwertbar|enthält keine)/i.test(all)) flags.push('BANNER');
+  if (/(empfehle|empfiehlt sich|sollte.{0,20}erfolgen)/i.test(all)) flags.push('RECOMMENDS');
+
+  // The thing he complained about: a gap written down as a gap. Any bracketed
+  // note about something missing, unclear or not said is a relic.
   if (/\[FEHLT/i.test(all)) flags.push('MARKER_RELIC');
-  if (s.zusammenfassung && !/^\s*-/m.test(s.zusammenfassung)) flags.push('SUMMARY_NOT_LIST');
-  const letterBound = [s.diagnosen, s.anamnese, s.medikation].join('\n');
-  if (/\b(empfehle|empfiehlt sich|sollte.{0,20}erfolgen)\b/i.test(letterBound)) flags.push('RECOMMENDS');
-
-
-  const missing = GESPRAECH_SECTIONS.filter((k) => !s[k]?.trim());
-  if (missing.length) flags.push(`EMPTY:${missing.join('+')}`);
+  if (/\[[^\]\n]{0,60}(fehlt|unklar|unverständlich|nicht genannt|nicht erwähnt|keine Angabe)[^\]\n]{0,60}\]/i.test(all)) {
+    flags.push('PLACEHOLDER');
+  }
+  if (/(nicht|keine)\s+(genannt|erwähnt|besprochen|angegeben)\b/i.test(all)) flags.push('ABSENCE_REPORTED');
 
   const expected = fixture ? EXPECTED_MEDS[fixture] : undefined;
   if (expected) {
-    const med = s.medikation ?? '';
-    const absent = expected.must.filter((re) => !re.test(med));
-    const forbidden = expected.mustNot.filter((re) => re.test(med));
+    const absent = expected.must.filter((re) => !re.test(all));
+    const forbidden = expected.mustNot.filter((re) => re.test(all));
     if (absent.length) flags.push(`MED_MISSING:${absent.length}`);
     if (forbidden.length) flags.push('MED_FABRICATED');
   }
@@ -142,17 +155,18 @@ for (const file of files) {
   const src = readFileSync(`${DIR}/${file}`, 'utf8');
   for (let i = 0; i < RUNS; i++) {
     try {
-      const { sections, wellFormed } = await run(src);
+      const { sections, order, labels, wellFormed } = await run(src);
       const { flags } = check(sections, file.replace('.txt', ''));
+      const chars = Object.values(sections).join('').length;
       console.log(
         `${file.replace('.txt', '').padEnd(22)} run${i + 1}  ${wellFormed ? 'tagged  ' : 'UNTAGGED'}  ` +
-          `d:${String(sections.diagnosen.length).padStart(4)} a:${String(sections.anamnese.length).padStart(4)} ` +
-          `m:${String(sections.medikation.length).padStart(4)}  z:${String(sections.zusammenfassung.length).padStart(4)}  ` +
+          `${String(order.length).padStart(2)} Abschnitte  ${String(chars).padStart(5)} Zeichen  ` +
           `${flags.length ? '⚠ ' + flags.join(',') : 'clean'}`,
       );
+      console.log(`${' '.repeat(24)}${order.map((k) => labels[k] ?? k).join(' · ')}`);
       if (VERBOSE) {
-        for (const k of GESPRAECH_SECTIONS) {
-          console.log(`\n  ── ${k} ──\n${sections[k].split('\n').map((l) => '  ' + l).join('\n')}`);
+        for (const k of order) {
+          console.log(`\n  ── ${labels[k] ?? k} ──\n${(sections[k] ?? '').split('\n').map((l) => '  ' + l).join('\n')}`);
         }
         console.log();
       }

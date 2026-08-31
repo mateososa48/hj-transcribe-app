@@ -62,35 +62,68 @@ test('German content survives parsing byte-for-byte', () => {
   assert.equal(text, body);
 });
 
-test('the four consultation sections parse independently', () => {
+test('the model\'s own sections parse in order, with their headings', () => {
+  const raw = `<abschnitt titel="Anlass">\n- Verlaufskontrolle nach Infarkt\n</abschnitt>
+<abschnitt titel="Beschwerden">\n- Beschwerdefrei\n</abschnitt>
+<abschnitt titel="Medikation">\nASS 100\t1-0-0\n</abschnitt>`;
+  const { sections, order, labels, wellFormed } = parseGespraech(raw);
+  assert.equal(wellFormed, true);
+  assert.deepEqual(order, ['anlass', 'beschwerden', 'medikation']);
+  assert.equal(labels.anlass, 'Anlass');
+  assert.equal(sections.anlass, '- Verlaufskontrolle nach Infarkt');
+  assert.equal(sections.medikation, 'ASS 100\t1-0-0');
+});
+
+test('a heading with nothing under it is not a section at all', () => {
+  const raw = `<abschnitt titel="Anlass">\n- x\n</abschnitt>
+<abschnitt titel="Medikation">\n\n</abschnitt>`;
+  const { order, sections } = parseGespraech(raw);
+  assert.deepEqual(order, ['anlass']);
+  assert.equal(sections.medikation, undefined);
+});
+
+test('two sections sharing a heading never overwrite each other', () => {
+  const raw = `<abschnitt titel="Befund">\n- eins\n</abschnitt>
+<abschnitt titel="Befund">\n- zwei\n</abschnitt>`;
+  const { order, sections, labels } = parseGespraech(raw);
+  assert.deepEqual(order, ['befund', 'befund-2']);
+  assert.equal(sections.befund, '- eins');
+  assert.equal(sections['befund-2'], '- zwei');
+  assert.equal(labels['befund-2'], 'Befund');
+});
+
+test('umlauts in a heading fold into the key but stay in the label', () => {
+  const { order, labels } = parseGespraech('<abschnitt titel="Nächste Schritte">\n- x\n</abschnitt>');
+  assert.deepEqual(order, ['naechste-schritte']);
+  assert.equal(labels['naechste-schritte'], 'Nächste Schritte');
+});
+
+test('a final block with no closing tag is recovered and flagged', () => {
+  const raw = `<abschnitt titel="Anlass">\n- x\n</abschnitt>\n<abschnitt titel="Rest">\n- y`;
+  const { sections, order, wellFormed } = parseGespraech(raw);
+  assert.equal(wellFormed, false);
+  assert.deepEqual(order, ['anlass', 'rest']);
+  assert.ok(sections.rest?.includes('- y'));
+});
+
+test('results drafted with the old four fixed tags still parse', () => {
   const raw = `<zusammenfassung>\n- Verlaufskontrolle\n</zusammenfassung>
 <diagnosen>\n- KHK\n</diagnosen>
 <anamnese>\nBeschwerdefrei.\n</anamnese>
 <medikation>\nASS 100\t1-0-0\n</medikation>`;
-  const { sections, wellFormed } = parseGespraech(raw);
-  assert.equal(wellFormed, true);
-  assert.equal(sections.zusammenfassung, '- Verlaufskontrolle');
-  assert.equal(sections.diagnosen, '- KHK');
+  const { sections, order, labels } = parseGespraech(raw);
+  assert.deepEqual(order, ['zusammenfassung', 'diagnosen', 'anamnese', 'medikation']);
+  assert.equal(labels.diagnosen, 'Diagnosen');
   assert.equal(sections.anamnese, 'Beschwerdefrei.');
-  assert.equal(sections.medikation, 'ASS 100\t1-0-0');
 });
 
-test('an empty section block parses as empty, and stays well-formed', () => {
+test('an empty block in the old shape drops out rather than showing a heading', () => {
   const raw = `<zusammenfassung>\n- x\n</zusammenfassung>
 <diagnosen>\n</diagnosen>
 <anamnese>\nText.\n</anamnese>
 <medikation>\nKeine\n</medikation>`;
-  const { sections, wellFormed } = parseGespraech(raw);
-  assert.equal(wellFormed, true);
-  assert.equal(sections.diagnosen, '');
-});
-
-test('a missing closing tag on one section recovers the content and flags it', () => {
-  const raw = `<zusammenfassung>\n- x\n<diagnosen>\n- KHK\n</diagnosen>\n<anamnese>\nT.\n</anamnese>\n<medikation>\nKeine\n</medikation>`;
-  const { sections, wellFormed } = parseGespraech(raw);
-  assert.equal(wellFormed, false);
-  assert.ok(sections.zusammenfassung.includes('- x'));
-  assert.equal(sections.diagnosen, '- KHK');
+  const { order } = parseGespraech(raw);
+  assert.ok(!order.includes('diagnosen'));
 });
 
 // ---------------------------------------------------------------- content ---
@@ -136,11 +169,19 @@ test('patient data never enters the cached prompt half', () => {
   assert.ok(gUser.includes('PATIENT-MARKER-XYZ'));
 });
 
-test('the consultation prompt demands all four blocks', () => {
+test('the consultation prompt asks for the conversation\'s own sections, not four fixed ones', () => {
   const prompt = buildGespraechSystemPrompt([]);
+  // The shape is one repeatable block whose title the model chooses.
+  assert.match(prompt, /<abschnitt titel="/);
+  // And none of the old fixed blocks are demanded any more.
   for (const key of GESPRAECH_SECTIONS) {
-    assert.ok(prompt.includes(`<${key}>`), `missing block ${key}`);
+    assert.ok(!prompt.includes(`<${key}>`), `still demands the fixed block ${key}`);
   }
-  assert.match(prompt, /MEDIKATION[\s\S]*TABULATOR/);
+  // A section only exists if the conversation filled it.
+  assert.match(prompt, /Kein Block ohne Inhalt/);
+  assert.match(prompt, /keine leere/);
+  // Bullets are the default form, and the medication format survives.
+  assert.match(prompt, /Aufzählungspunkte sind die Regel/);
+  assert.match(prompt, /TABULATOR/);
   assert.match(prompt, /niemals zu "ASS 100 mg"/);
 });

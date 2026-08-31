@@ -81,15 +81,27 @@ export async function generate(sessionId: string, kind: SessionKind): Promise<Ge
 
   const sections: Record<string, string> =
     'sections' in response ? { ...response.sections } : { beurteilung: response.text };
-  // List sections are stored the way a letter looks: real bullets, not the
-  // model's "- " markers. Editing and copying then start from the right shape.
+  // Bullets are stored the way a letter looks: real bullets, not the model's
+  // "- " markers, so editing and copying start from the right shape.
+  //
+  // A Termin's sections are the conversation's own now, so there is no list of
+  // keys to check against — every one of them is converted, and a section
+  // written as prose simply has no markers to convert.
   for (const key of Object.keys(sections)) {
-    if (BULLET_SECTIONS.has(key)) sections[key] = toBulletText(sections[key] ?? '');
+    if (kind === 'gespraech' || BULLET_SECTIONS.has(key)) {
+      sections[key] = toBulletText(sections[key] ?? '');
+    }
   }
 
   const now = Date.now();
   const existing = await db.results.where('sessionId').equals(sessionId).first();
+  const ordering =
+    'order' in response && response.order.length > 0
+      ? { sectionOrder: response.order, sectionLabels: response.labels }
+      : {};
+
   const result: Result = {
+    ...ordering,
     id: existing?.id ?? newId(),
     sessionId,
     kind,
