@@ -525,6 +525,11 @@ h1, h2, h3 {
   );
   -webkit-backdrop-filter: blur(12px) saturate(1.7);
   backdrop-filter: blur(12px) saturate(1.7);
+  /*
+   * No outer hairline. btn-liquid carries one because a pale lens on a pale
+   * page has no edge of its own; a black key on white is its own edge, and a
+   * ring around it reads as a drawn stroke rather than a material.
+   */
   box-shadow:
     /* the lit edges of the slab */
     inset 0 1px 1px rgba(255, 255, 255, 0.34),
@@ -533,10 +538,9 @@ h1, h2, h3 {
     inset -1px 0 1px rgba(255, 255, 255, 0.08),
     /* light held inside the lens */
     inset 0 0 16px rgba(255, 255, 255, 0.07),
-    /* the hairline where the glass meets the tray, and its weight on it */
-    0 0 0 1px rgba(12, 12, 13, 0.55),
-    0 2px 5px rgba(12, 12, 13, 0.18),
-    0 12px 28px -12px rgba(12, 12, 13, 0.38);
+    /* its weight on the surface */
+    0 1px 2px rgba(12, 12, 13, 0.16),
+    0 8px 20px -10px rgba(12, 12, 13, 0.30);
   transition:
     box-shadow 200ms ease-out,
     transform 200ms ease-out,
@@ -552,9 +556,8 @@ h1, h2, h3 {
       inset 1px 0 1px rgba(255, 255, 255, 0.12),
       inset -1px 0 1px rgba(255, 255, 255, 0.10),
       inset 0 0 20px rgba(255, 255, 255, 0.11),
-      0 0 0 1px rgba(12, 12, 13, 0.55),
-      0 4px 8px rgba(12, 12, 13, 0.18),
-      0 18px 36px -14px rgba(12, 12, 13, 0.42);
+      0 2px 4px rgba(12, 12, 13, 0.18),
+      0 14px 30px -12px rgba(12, 12, 13, 0.34);
   }
 
   &:active {
@@ -563,8 +566,7 @@ h1, h2, h3 {
       inset 0 1px 1px rgba(255, 255, 255, 0.22),
       inset 0 1px 4px rgba(12, 12, 13, 0.55),
       inset 0 0 10px rgba(255, 255, 255, 0.05),
-      0 0 0 1px rgba(12, 12, 13, 0.55),
-      0 1px 3px rgba(12, 12, 13, 0.2);
+      0 1px 2px rgba(12, 12, 13, 0.18);
   }
 
   @media (prefers-reduced-motion: reduce) {
