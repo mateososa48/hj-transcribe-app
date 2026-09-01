@@ -1,0 +1,72 @@
+/**
+ * Landing-only styling. Everything token-like comes from the app's own
+ * index.css — this file adds only what a marketing page needs and the app
+ * does not: the marquee, the paper minis, selection colour.
+ */
+
+::selection {
+  background: #4230ff;
+  color: #fff;
+}
+
+/* The quiet fact band. One slow pass; duplicated content makes the loop seamless. */
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.landing-marquee {
+  display: flex;
+  width: max-content;
+  animation: landing-marquee 42s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee {
+    animation: none;
+  }
+}
+
+/* A miniature letter, as paper: the document face, a hairline, real shadow. */
+.paper-mini {
+  font-family: var(--font-document);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow:
+    0 1px 2px rgba(12, 12, 13, 0.05),
+    0 10px 24px -14px rgba(12, 12, 13, 0.18);
+  transition:
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+a:hover > .paper-mini,
+button:hover > .paper-mini {
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 4px rgba(12, 12, 13, 0.06),
+    0 18px 36px -16px rgba(12, 12, 13, 0.26);
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-mini {
+    transition: none;
+  }
+}
+
+/* The app in a window: how every real screenshot is framed. */
+.app-shot {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(12, 12, 13, 0.06),
+    0 24px 60px -24px rgba(12, 12, 13, 0.3);
+}
+.app-shot > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

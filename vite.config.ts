@@ -74,6 +74,14 @@ export default defineConfig({
     // Everything is bundled — no runtime CDN fetches (SPEC constraint 2).
     assetsInlineLimit: 0,
     sourcemap: false,
+    rollupOptions: {
+      // Without explicit inputs only index.html ships; the landing page is a
+      // real production page, not a dev tool like motion-lab/preview.
+      input: {
+        index: resolve(rootDir, 'index.html'),
+        landing: resolve(rootDir, 'landing.html'),
+      },
+    },
   },
   server: { port: 5173 },
   preview: { port: 4173 },
