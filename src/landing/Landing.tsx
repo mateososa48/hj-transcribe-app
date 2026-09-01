@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   motion,
   useMotionValueEvent,
@@ -493,7 +493,7 @@ function Vorlagen() {
           <ul className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
             {TEMPLATES.map((t) => (
               <li key={t.name}>
-                <a href={CONTACT} className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+                <div className="group">
                   <span className="paper-mini block aspect-[3/4] px-4 pt-4 pb-3">
                     <span className="block text-[0.72rem] leading-snug font-bold underline underline-offset-2">
                       {t.name}
@@ -511,7 +511,7 @@ function Vorlagen() {
                   <span className="mt-2.5 block text-center text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                     {t.name}
                   </span>
-                </a>
+                </div>
               </li>
             ))}
             <li>
@@ -578,8 +578,9 @@ function FinalCta() {
   return (
     <section className="py-28 sm:py-40">
       <div className="mx-auto w-full max-w-[76rem] px-6 text-center">
+        <LiveRibbon className="mx-auto h-24 w-full max-w-3xl" />
         <Reveal>
-          <h2 className="mx-auto max-w-[16ch] text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+          <h2 className="mx-auto mt-4 max-w-[16ch] text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
             Weniger Tastatur. <em className="font-document italic">Mehr Medizin.</em>
           </h2>
           <p className="mx-auto mt-5 max-w-[44ch] text-lg leading-relaxed text-muted-foreground">
@@ -615,10 +616,3 @@ function Footer() {
   );
 }
 
-/** Scroll restoration off — a marketing page always opens at the top. */
-export function useTopOnLoad() {
-  useEffect(() => {
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    window.scrollTo(0, 0);
-  }, []);
-}

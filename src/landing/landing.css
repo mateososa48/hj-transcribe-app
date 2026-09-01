@@ -43,7 +43,7 @@
     box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 a:hover > .paper-mini,
-button:hover > .paper-mini {
+.group:hover > .paper-mini {
   transform: translateY(-4px);
   box-shadow:
     0 2px 4px rgba(12, 12, 13, 0.06),
@@ -69,4 +69,11 @@ button:hover > .paper-mini {
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* Anchor jumps glide — for those who have not asked motion to stop. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
