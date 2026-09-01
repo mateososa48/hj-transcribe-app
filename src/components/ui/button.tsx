@@ -11,7 +11,12 @@ const buttonVariants = cva(
         // Black liquid glass, the same material as the three keys in the
         // sidebar. The utility owns the surface, so there is no bg-* here — a
         // background colour sits on top of the lens and flattens it.
-        default: "btn-liquid-dark text-white",
+        //
+        // bg-clip-border undoes the base's bg-clip-padding. Clipped to the
+        // padding box, the lens stopped 1px short and the base's transparent
+        // border let the toolbar behind show through it — a white ring inside
+        // the dark one, which is not an edge this app has anywhere else.
+        default: "btn-liquid-dark bg-clip-border text-white",
         outline:
           "btn-liquid border-white/80 text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
