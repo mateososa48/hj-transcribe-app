@@ -77,3 +77,17 @@ a:hover > .paper-mini,
     scroll-behavior: smooth;
   }
 }
+
+/* The app in a window, framed for the dark slab. */
+.app-shot-dark {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
+}
+.app-shot-dark > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

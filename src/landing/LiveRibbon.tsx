@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { WaveEngine } from '@/features/record/wave/engine';
 import { cn } from '@/lib/utils';
+import { createSpeechEnvelope } from './speech';
 
 /**
  * The app's actual recording ribbon — the same WebGL shader the product runs —
@@ -26,39 +27,12 @@ export function LiveRibbon({ dark = false, className }: { dark?: boolean; classN
     if (!host) return;
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const started = performance.now();
-
-    // Smoothed state, so bursts never snap.
-    let level = 0;
-    let low = 0;
-    let high = 0;
-    let last = started;
+    const envelope = createSpeechEnvelope();
 
     const engine = new WaveEngine(host, {
       reducedMotion: false,
       dark,
-      probe: () => {
-        const now = performance.now();
-        const t = (now - started) / 1000;
-        const dt = Math.min((now - last) / 1000, 0.1);
-        last = now;
-
-        // Phrases: ~70% talking, with breaths. Two slow sines beat against
-        // each other so the pattern never visibly repeats.
-        const phrase = Math.sin(t * 0.43) + Math.sin(t * 0.19 + 1.7);
-        const speaking = phrase > -0.35 ? 1 : 0;
-        // Syllables at a talking cadence, only while speaking.
-        const syllable = Math.max(0, Math.sin(t * 10.7) * 0.6 + Math.sin(t * 6.1 + 0.8) * 0.4);
-        const target = speaking * (0.32 + 0.5 * syllable);
-
-        // Attack fast, release slow — how a voice actually meets a meter.
-        const rate = target > level ? 9 : 3.2;
-        level += (target - level) * Math.min(1, rate * dt);
-        low += (speaking * (0.45 + 0.25 * Math.sin(t * 1.3)) - low) * Math.min(1, 4 * dt);
-        high += (speaking * Math.max(0, Math.sin(t * 13.7)) * 0.5 - high) * Math.min(1, 6 * dt);
-
-        return { low, mid: level * 0.5, high, level };
-      },
+      probe: () => envelope(performance.now()),
     });
 
     if (!engine.ok) {
