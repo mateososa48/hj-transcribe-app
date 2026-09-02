@@ -168,7 +168,7 @@ function BandWord() {
       <div className="lg:col-span-5">
         <h3 className="text-2xl font-semibold tracking-tight text-balance">Landet in Word, wie er gehört.</h3>
         <p className="mt-3 max-w-[38ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-          Echte Überschriften, echte Tabstopps. Die Dosierungsspalten sitzen auf Tabulatoren, nicht auf Leerzeichen. Gesprochene Zahlen werden zu 1-0-0.
+          Echte Überschriften, echte Tabstopps. Die Dosierungsspalten sitzen auf Tabulatoren, nicht auf Leerzeichen, und überleben jede Bearbeitung in Word.
         </p>
       </div>
       <div className="lg:col-span-7">

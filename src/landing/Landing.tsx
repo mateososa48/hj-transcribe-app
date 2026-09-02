@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { BrandWave } from '@/components/brand-wave';
 import { cn } from '@/lib/utils';
 import { Bento } from './Bento';
+import { Genauigkeit } from './Genauigkeit';
 import { HeroDemo } from './HeroDemo';
 import { Nav } from './Nav';
 import { Scrollytelling } from './Scrollytelling';
@@ -38,6 +39,7 @@ export function Landing() {
       <main>
         <Hero />
         <Scrollytelling />
+        <Genauigkeit />
         <Bento heading={<SectionHeading title="Die Details, an denen man Sorgfalt erkennt." />} />
         <Vorlagen
           heading={
