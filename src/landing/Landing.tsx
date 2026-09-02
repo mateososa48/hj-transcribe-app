@@ -1,11 +1,12 @@
-import { useState, type ReactNode } from 'react';
-import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react';
+import type { ReactNode } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 
 import { BrandWave } from '@/components/brand-wave';
 import { cn } from '@/lib/utils';
 import { Bento } from './Bento';
 import { HeroDemo } from './HeroDemo';
+import { Nav } from './Nav';
 import { Scrollytelling } from './Scrollytelling';
 import { ShaderField } from './ShaderField';
 import { Vorlagen } from './Vorlagen';
@@ -33,7 +34,7 @@ const CONTACT = 'mailto:mateo_sosa@icloud.com?subject=Arzt-Assistent%20Zugang';
 export function Landing() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <Nav />
+      <Nav contact={CONTACT} />
       <main>
         <Hero />
         <Scrollytelling />
@@ -50,61 +51,6 @@ export function Landing() {
       </main>
       <Closing />
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------ nav -- */
-
-function Nav() {
-  // Read the real position on mount: the page may open already scrolled.
-  const [scrolled, setScrolled] = useState(() => window.scrollY > 24);
-  const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 24));
-
-  const link = 'hidden rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:block';
-
-  return (
-    <header className="fixed inset-x-0 top-3 z-50 sm:top-4">
-      {/* Same container as the content, so the wordmark sits on the page's
-          left edge and the key on its right edge; the pill reaches past both
-          by exactly its own padding. */}
-      <div
-        className={cn(
-          // Solid when scrolled, not glass: the mark paints an opaque white
-          // ground and can only multiply cleanly onto a fully white pill.
-          'mx-auto flex h-14 w-[calc(100%-1rem)] max-w-[calc(72rem-1rem)] items-center gap-1 rounded-full border ps-4 pe-4 transition-[background-color,border-color,box-shadow] duration-300',
-          scrolled
-            ? 'border-border bg-background shadow-[0_1px_2px_rgba(12,12,13,0.04),0_12px_32px_-16px_rgba(12,12,13,0.22)]'
-            : 'border-transparent bg-transparent',
-        )}
-      >
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="Arzt-Assistent, zum Seitenanfang"
-          className="flex cursor-pointer items-center gap-1.5 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-        >
-          <span className="text-[1.05rem] font-semibold tracking-tight">Arzt-Assistent</span>
-          {/* The mark paints an opaque white ground; multiply lets it sit on
-              the pill and the shader field without a box. */}
-          <BrandWave className="h-9 w-11 shrink-0 mix-blend-multiply" />
-        </button>
-        <nav className="ms-auto flex items-center gap-1">
-          <a href="#werkzeuge" className={link}>
-            Die Werkzeuge
-          </a>
-          <a href="#vorlagen" className={link}>
-            Vorlagen
-          </a>
-          <a
-            href={CONTACT}
-            className="btn-liquid-dark ms-1 flex h-10 items-center rounded-full px-4 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            Früher Zugang
-          </a>
-        </nav>
-      </div>
-    </header>
   );
 }
 

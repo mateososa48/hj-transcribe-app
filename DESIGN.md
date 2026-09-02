@@ -397,7 +397,7 @@ A second Vite entry, `landing.html` → `src/landing/main.tsx`, built alongside 
 
 **Type.** Two faces: Outfit (variable, bundled via `@fontsource-variable/outfit`, `.font-display` in `landing.css`) at medium weight, never heavier, for the headline, the slab title and the section titles; Geist for everything else, as in the app. The headline is one colour: no grey first line. The letter and the paper minis use the document face.
 
-**Rhythm and alignment.** The nav pill shares the content container: the wordmark sits on the page's left content edge and the key on its right one, at every width (measured, not eyeballed). Every text on white clears 4.5:1; Lighthouse reads 100 for accessibility, best practices and SEO.
+**Rhythm and alignment.** The nav pill (`Nav.tsx`) shares the content container: the wordmark sits on the page's left content edge and the key on its right one, at every width (measured, not eyeballed). Resting on the hero it is transparent and 56px tall; once the page moves it turns solid white and 48px, steps out of the way on the way down and returns on the first move up, and one highlight slides between the section links, following the pointer and otherwise resting on the section that crosses the middle of the viewport. Every text on white clears 4.5:1; Lighthouse reads 100 for accessibility, best practices and SEO.
 
 **Rules that hold here.** No eyebrows (uppercase tracked labels), no em-dashes anywhere visible, no mixed-family italic in headlines, no three-equal-cards, one dark slab per page, buttons and chips are pills, panels 24px, paper 6px. One CTA label per intent ("Früher Zugang" everywhere). Every loop pauses offscreen and stands still under reduced motion.
 
