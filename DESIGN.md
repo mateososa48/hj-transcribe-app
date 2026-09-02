@@ -386,3 +386,15 @@ table; child dictations use Session.parentId = documentId. The sidebar is
 now a three-node file tree (Diktate/Termine/Berichte): house grid-rows
 animation, guide line via SidebarMenuSub, per-row stagger, inert collapsed
 branches; the VISIBLE_LIMIT/"Alle anzeigen" mechanism is gone.
+
+## 11. The landing page (2026-09-01)
+
+A second Vite entry, `landing.html` → `src/landing/main.tsx`, built alongside the app (`vite.config.ts` `rollupOptions.input`). It shares `index.css` (tokens, `btn-liquid-dark`, Geist, the document face) and adds only `src/landing/landing.css` (paper minis, framed screenshots, selection colour).
+
+**Design read.** Product-led landing for German clinicians, calm and precise: monochrome Geist, the app's own spectral ribbon as the single colour device, the product shown real and running. Studied against wisprflow.ai, granola.ai, heidihealth.com, linear.app, raycast.com and lovable.dev; each owns one signature visual device and shows the product large. Ours is the ribbon.
+
+**Composition** (`Landing.tsx`): floating pill nav → hero (left-aligned two-line headline, ≤20-word sub, one primary + one secondary CTA) → the one picture: `HeroDemo` (recorder on the left, letter on the right) with `LiveRibbon` full-bleed behind it, listening to the demo through `voice.ts` so it swells while the recorder hears and settles while the letter is written → two-tone statement → `Scrollytelling` (the only dark slab; three chapters with real screenshots from `public/landing/*.webp`, a progress rail, click-to-jump) → `Bento` (wide tile + narrow tile + full-width band, each a working model) → `Vorlagen` (template list beside one letter whose sections re-order with layout animation; auto-advances until touched; this feature is not built yet and is shown as if it were) → Vertrauen (three divided columns) → final CTA with the ribbon above the words → footer.
+
+**Rules that hold here.** No eyebrows (uppercase tracked labels), no em-dashes anywhere visible, no mixed-family italic in headlines, no three-equal-cards, one dark slab per page, buttons and chips are pills, panels 24px, paper 6px. One CTA label per intent ("Früher Zugang" everywhere). Every loop pauses offscreen and stands still under reduced motion.
+
+**Verifying.** Desktop at 1440 and a true 390 in two browser tabs (phone tab: `new_page` with an isolated context, then emulate, then reload). If `innerWidth` differs from `documentElement.clientWidth` on the phone tab, the page overflows: find the first element whose right edge passes `clientWidth`. Full-page screenshots skip `whileInView` reveals; scroll each section into view and capture the viewport. The contact address in `CONTACT` is a placeholder for the real inbox.
