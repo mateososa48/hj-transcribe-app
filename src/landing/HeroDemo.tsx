@@ -164,7 +164,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
           aria-label="So arbeitet der Arzt-Assistent: ein Diktat wird zum Briefabschnitt"
           className="mt-12 select-none lg:mt-14"
         >
-          <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-5 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(12,12,13,0.4)]">
+          <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-5 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(217,42,104,0.28)]">
             <div className="flex items-center gap-4">
               <LiveRibbon probe={heroVoice} className="h-12 w-40 shrink-0 sm:w-44" />
               <span className="text-2xl font-semibold tracking-tight tabular-nums">
@@ -206,7 +206,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
         style={{ transformPerspective: 1400, transformOrigin: '50% 0%' }}
         className="relative h-[34rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_78%,transparent_100%)] sm:h-[36rem] sm:[mask-image:linear-gradient(to_bottom,black_64%,transparent_96%)] lg:col-span-6 lg:h-[42rem]"
       >
-        <div className="rounded-[6px] border border-border bg-white px-8 py-9 shadow-[0_1px_2px_rgba(12,12,13,0.05),0_40px_90px_-30px_rgba(12,12,13,0.35)] sm:px-12 sm:py-12">
+        <div className="rounded-[6px] border border-border bg-white px-8 py-9 shadow-[0_1px_2px_rgba(12,12,13,0.05),0_40px_90px_-30px_rgba(66,48,255,0.22)] sm:px-12 sm:py-12">
           <div className="font-document text-[0.95rem] leading-[1.75] text-foreground/75 sm:text-[1.02rem]">
             <p className="text-end">Mainz, 31.08.2026</p>
             {/* The address block only where the page is tall enough to spare it:

@@ -71,30 +71,38 @@ void main() {
   vec2 w = p + (0.8 + 0.5 * v) * (q - 0.5);
   float n1 = fbm(w * 0.55 + vec2(t * 0.3, 0.0));
   float n2 = fbm(w * 0.95 + vec2(0.0, -t * 0.25) + 5.0);
+  float n3 = fbm(w * 0.75 + vec2(-t * 0.2, t * 0.15) + 9.0);
 
-  // The ribbon's hues: violet, magenta, rose. The amber only as a trace.
-  vec3 c1 = vec3(0.259, 0.188, 1.000);
-  vec3 c2 = vec3(0.647, 0.169, 0.847);
-  vec3 c3 = vec3(0.851, 0.165, 0.408);
-  vec3 c4 = vec3(0.706, 0.439, 0.059);
-  vec3 col = mix(c1, c2, smoothstep(0.30, 0.70, n1));
-  col = mix(col, c3, smoothstep(0.40, 0.80, n2));
-  col = mix(col, c4, 0.30 * smoothstep(0.78, 1.0, n1 * n2 * 2.2));
-  // Pull the hues a step toward grey: printed light, not candy.
-  col = mix(col, vec3(dot(col, vec3(0.30, 0.59, 0.11))), 0.12);
+  // The ribbon's four hues as light on white: blue, violet, rose, and the
+  // amber lit to peach (the raw amber turns to sand on white). Each hue owns
+  // a region of the hero and the noise blurs the borders between them.
+  vec3 cBlue = vec3(0.259, 0.188, 1.000);
+  vec3 cViolet = vec3(0.647, 0.169, 0.847);
+  vec3 cRose = vec3(0.851, 0.165, 0.408);
+  vec3 cPeach = vec3(0.980, 0.520, 0.250);
+  // Blue lives high, peach low and right, rose low and left, violet between.
+  float toBlue = smoothstep(0.45, 0.95, uv.y + 0.25 * (n1 - 0.5));
+  float toPeach = smoothstep(0.35, 0.85, (1.0 - uv.y) * 0.6 + uv.x * 0.5 + 0.3 * (n3 - 0.5));
+  float toRose = smoothstep(0.35, 0.85, (1.0 - uv.y) * 0.6 + (1.0 - uv.x) * 0.5 + 0.3 * (n2 - 0.5));
+  vec3 col = cViolet;
+  col = mix(col, cBlue, toBlue);
+  col = mix(col, cRose, toRose * (1.0 - toBlue));
+  col = mix(col, cPeach, toPeach * (1.0 - toBlue) * 0.85);
+  // A step toward grey, a small one: printed light, not candy.
+  col = mix(col, vec3(dot(col, vec3(0.30, 0.59, 0.11))), 0.06);
 
   // Presence: a broad base everywhere the mask allows, with only gentle
   // swells, so the wash reads as even light rather than patches.
-  float d = 0.45 + 0.55 * smoothstep(0.25, 0.85, n1 * 0.5 + n2 * 0.5);
+  float d = 0.5 + 0.5 * smoothstep(0.25, 0.85, n1 * 0.5 + n2 * 0.5);
   // One wide gradient across the hero: lighter at the top left, fuller
   // toward the letter on the right and the foot of the section.
-  float across = 0.25 + 0.75 * smoothstep(0.0, 1.0, uv.x * 0.7 + (1.0 - uv.y) * 0.5);
-  float top = 1.0 - smoothstep(0.66, 0.97, uv.y);
+  float across = 0.3 + 0.7 * smoothstep(0.0, 1.0, uv.x * 0.6 + (1.0 - uv.y) * 0.5);
+  float top = 1.0 - smoothstep(0.70, 0.98, uv.y);
   float bottom = smoothstep(0.0, 0.16, uv.y);
-  float alpha = d * across * top * bottom * (0.50 + 0.28 * v);
+  float alpha = d * across * top * bottom * (0.56 + 0.26 * v);
 
-  // Ink on white, lifted so it glows instead of muddying.
-  vec3 ink = col * 0.85 + 0.15;
+  // Ink on white, lifted a little so it glows instead of muddying.
+  vec3 ink = col * 0.9 + 0.1;
   vec3 outc = mix(vec3(1.0), ink, alpha);
   // Grain lives in the colour and dissolves with it, so the canvas has no edge
   // against the page's white.
@@ -114,8 +122,12 @@ export function ShaderField({ className, voice }: { className?: string; voice?: 
     if (!host) return;
 
     const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+    // Arrives as light does: a slow fade rather than a pop on load.
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 1400ms ease-out';
     host.appendChild(canvas);
+    requestAnimationFrame(() => {
+      canvas.style.opacity = '1';
+    });
     const gl = canvas.getContext('webgl2', {
       alpha: false,
       antialias: false,
