@@ -156,11 +156,12 @@ export function Scrollytelling() {
   return (
     <section id="werkzeuge" className="scroll-mt-24 px-3 sm:px-4">
       <div ref={ref} className="relative h-[380vh]">
-        <div className="sticky top-0 flex min-h-dvh items-center py-4">
+        {/* On phones the scene pins under the nav pill, not behind it. */}
+        <div className="sticky top-[4.25rem] flex min-h-[calc(100dvh-4.25rem)] items-start py-3 sm:top-0 sm:min-h-dvh sm:items-center sm:py-4">
           <div className="relative w-full overflow-hidden rounded-3xl bg-[#0e0e10] py-8 text-white shadow-[0_40px_120px_-40px_rgba(12,12,13,0.5)] sm:py-14 lg:py-16">
             <Glow />
-            <div className="relative mx-auto w-full max-w-6xl px-6 sm:px-10">
-              <h2 className="font-display mb-6 max-w-[24ch] text-[1.45rem] leading-[1.1] font-medium text-balance sm:mb-10 sm:text-[2rem]">
+            <div className="relative mx-auto hidden w-full max-w-6xl px-6 sm:block sm:px-10">
+              <h2 className="font-display mb-10 max-w-[24ch] text-[2rem] leading-[1.1] font-medium text-balance">
                 Drei Werkzeuge, ein Brief.
                 <span className="text-white/50"> Was Sie sprechen, wird an der richtigen Stelle Text.</span>
               </h2>
