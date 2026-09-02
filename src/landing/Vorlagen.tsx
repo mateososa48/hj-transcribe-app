@@ -115,68 +115,133 @@ export function Vorlagen({ heading }: { heading: ReactNode }) {
 
 /* --------------------------------------------------------------- sheets -- */
 
-function Sheet({ template, raised }: { template: Template; raised: boolean }) {
+/** Paragraph shapes: a few lines of varying length per section, so a page
+ *  reads as written rather than as a list of labels. */
+const SHAPES: number[][] = [
+  [100, 100, 62],
+  [100, 84],
+  [100, 100, 100, 48],
+  [100, 72],
+  [100, 100, 36],
+];
+
+function Paragraph({ shape }: { shape: number }) {
+  const widths = SHAPES[shape % SHAPES.length]!;
+  return (
+    <div className="mt-[3px] space-y-[3px]" aria-hidden>
+      {widths.map((w, i) => (
+        <span key={i} className="block h-[3px] rounded-full bg-foreground/[0.13]" style={{ width: `${w}%` }} />
+      ))}
+    </div>
+  );
+}
+
+/** One A4 page with the anatomy of a real doctor's letter. */
+function Page({
+  subject,
+  sections,
+  own = false,
+  raised,
+  ariaLabel,
+  ariaHidden,
+}: {
+  subject: ReactNode;
+  sections: ReactNode;
+  own?: boolean;
+  raised: boolean;
+  ariaLabel?: string;
+  ariaHidden?: boolean;
+}) {
   return (
     <article
+      aria-hidden={ariaHidden ? true : undefined}
+      aria-label={ariaLabel}
       className={cn(
-        'paper-mini w-[16rem] shrink-0 px-6 py-6 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-[0_2px_4px_rgba(12,12,13,0.06),0_28px_56px_-24px_rgba(66,48,255,0.28)] sm:w-[18rem]',
-        raised && 'mt-6',
+        'paper-page w-[15rem] shrink-0 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-[0_2px_4px_rgba(12,12,13,0.06),0_28px_56px_-24px_rgba(66,48,255,0.28)] sm:w-[16.5rem]',
+        own && 'paper-page-own',
+        raised && 'mt-5',
       )}
-      aria-label={`Vorlage ${template.name}`}
+      style={{ aspectRatio: '1 / 1.414' }}
     >
-      <p className="font-document text-[0.95rem] leading-snug font-bold underline underline-offset-4">{template.name}</p>
-      <div className="mt-4 space-y-3">
-        {template.sections.map((s) => (
-          <div key={s}>
-            <p className="font-document text-[0.78rem] leading-snug font-bold">{s}</p>
-            <div className="mt-1 space-y-1" aria-hidden>
-              <span className="block h-1 w-full rounded-full bg-foreground/8" />
-              <span className="block h-1 w-[72%] rounded-full bg-foreground/8" />
-            </div>
+      <div className="font-document flex h-full flex-col px-5 pt-5 pb-4 text-[7.5px] leading-[1.5] text-foreground/85">
+        {/* Letterhead and date. */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-[3px]" aria-hidden>
+            <span className="block h-[5px] w-24 rounded-full bg-foreground/60" />
+            <span className="block h-[3px] w-20 rounded-full bg-foreground/[0.13]" />
+            <span className="block h-[3px] w-14 rounded-full bg-foreground/[0.13]" />
           </div>
-        ))}
+          <span className="shrink-0 text-[7px] text-foreground/60">Mainz, 31.08.2026</span>
+        </div>
+        {/* Address block. */}
+        <div className="mt-4 space-y-[3px]" aria-hidden>
+          <span className="block h-[3px] w-10 rounded-full bg-foreground/[0.13]" />
+          <span className="block h-[3px] w-24 rounded-full bg-foreground/[0.13]" />
+          <span className="block h-[3px] w-20 rounded-full bg-foreground/[0.13]" />
+        </div>
+        {/* Subject: the report type. */}
+        <p className="mt-4 text-[8.5px] leading-snug font-bold">{subject}</p>
+        <p className="mt-2">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+        <div className="mt-2 space-y-2">{sections}</div>
+        {/* Closing and signature. */}
+        <div className="mt-auto pt-3">
+          <p>Mit freundlichen kollegialen Grüßen</p>
+          <span className="mt-2 block h-[4px] w-16 rounded-full bg-foreground/35" aria-hidden />
+        </div>
       </div>
-      <p className="font-document mt-5 text-[0.72rem] text-foreground/50">Mit freundlichen kollegialen Grüßen</p>
     </article>
+  );
+}
+
+function Sheet({ template, raised }: { template: Template; raised: boolean }) {
+  return (
+    <Page
+      raised={raised}
+      ariaLabel={`Vorlage ${template.name}`}
+      subject={template.name}
+      sections={template.sections.map((s, i) => (
+        <div key={s}>
+          <p className="font-bold underline underline-offset-[2px]">{s}</p>
+          <Paragraph shape={i + template.name.length} />
+        </div>
+      ))}
+    />
   );
 }
 
 function OwnSheet({ t, raised, ghost = false }: { t: number; raised: boolean; ghost?: boolean }) {
   const typedCount = Math.min(OWN_SECTIONS.length, Math.floor(t / OWN_STEP_MS));
   const inProgress = t < OWN_SECTIONS.length * OWN_STEP_MS ? OWN_SECTIONS[typedCount] : null;
-  const partial = inProgress ? inProgress.slice(0, Math.round(((t % OWN_STEP_MS) / (OWN_STEP_MS * 0.7)) * inProgress.length)) : '';
+  const partial = inProgress ? inProgress.slice(0, Math.round(Math.min(1, (t % OWN_STEP_MS) / (OWN_STEP_MS * 0.7)) * inProgress.length)) : '';
 
   return (
-    <article
-      aria-hidden={ghost ? true : undefined}
-      aria-label={ghost ? undefined : 'Ihre eigene Vorlage'}
-      className={cn(
-        'w-[16rem] shrink-0 rounded-[6px] border border-dashed border-foreground/30 bg-background/70 px-6 py-6 backdrop-blur-sm transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 sm:w-[18rem]',
-        raised && 'mt-6',
-      )}
-    >
-      <p className="flex items-center gap-1.5 font-document text-[0.95rem] leading-snug font-bold underline underline-offset-4">
-        <Plus className="size-3.5 shrink-0" aria-hidden />
-        Eigene Vorlage
-      </p>
-      <div className="mt-4 min-h-[9.5rem] space-y-3">
-        {OWN_SECTIONS.slice(0, typedCount).map((s) => (
-          <div key={s}>
-            <p className="font-document text-[0.78rem] leading-snug font-bold">{s}</p>
-            <div className="mt-1 space-y-1" aria-hidden>
-              <span className="block h-1 w-full rounded-full bg-foreground/8" />
-              <span className="block h-1 w-[72%] rounded-full bg-foreground/8" />
+    <Page
+      own
+      raised={raised}
+      ariaHidden={ghost}
+      {...(ghost ? {} : { ariaLabel: 'Ihre eigene Vorlage' })}
+      subject={
+        <span className="flex items-center gap-1">
+          <Plus className="size-2.5 shrink-0" aria-hidden />
+          Eigene Vorlage
+        </span>
+      }
+      sections={
+        <>
+          {OWN_SECTIONS.slice(0, typedCount).map((s, i) => (
+            <div key={s}>
+              <p className="font-bold underline underline-offset-[2px]">{s}</p>
+              <Paragraph shape={i + 2} />
             </div>
-          </div>
-        ))}
-        {inProgress ? (
-          <p className="font-document text-[0.78rem] leading-snug font-bold">
-            {partial}
-            <span className="-mb-px inline-block h-[1em] w-px bg-foreground/70" aria-hidden />
-          </p>
-        ) : null}
-      </div>
-      <p className="font-document mt-5 text-[0.72rem] text-foreground/50">Ihre Abschnitte, Ihre Reihenfolge.</p>
-    </article>
+          ))}
+          {inProgress ? (
+            <p className="font-bold">
+              {partial}
+              <span className="-mb-px inline-block h-[1em] w-px bg-foreground/70" aria-hidden />
+            </p>
+          ) : null}
+        </>
+      }
+    />
   );
 }

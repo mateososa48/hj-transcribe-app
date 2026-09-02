@@ -54,6 +54,23 @@
     0 40px 120px -40px rgba(12, 12, 13, 0.5);
 }
 
+/* A page: A4 proportion, a hairline, the weight of paper. */
+.paper-page {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  box-shadow:
+    0 1px 2px rgba(12, 12, 13, 0.06),
+    0 14px 30px -18px rgba(12, 12, 13, 0.28);
+}
+.paper-page-own {
+  background: rgba(255, 255, 255, 0.72);
+  border-style: dashed;
+  border-color: rgba(12, 12, 13, 0.3);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
 /* A miniature letter, as paper: the document face, a hairline, real shadow. */
 .paper-mini {
   font-family: var(--font-document);
