@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Check, Mic } from 'lucide-react';
 
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { LiveRibbon } from './LiveRibbon';
 import { createSpeechEnvelope } from './speech';
-import { publishVoice, SILENCE } from './voice';
+import { heroVoice, publishVoice, SILENCE } from './voice';
 
 /**
- * The product, running in the hero: voice on the left, letter on the right,
- * the app's ribbon streaming between them (mounted by the Hero behind this).
+ * The hero: the letter is the object.
  *
- * Not a video and not a screenshot: the app's own grammar rebuilt small. The
- * recording window with a live meter and a running clock, the spoken words
- * arriving as they are recognised, the letter assembling itself in the
- * document face, the app's real job-chip filing the result. One rAF clock
- * drives the whole scene and publishes its voice for the ribbon to hear.
+ * A tall A4 page on the right, set in the document face, dissolving below the
+ * fold; the words and the app's own recording window on the left. One rAF
+ * clock runs the scene: the recorder hears speech (its ribbon is the app's
+ * real one, listening to the same voice the shader field hears), the spoken
+ * words arrive as they are recognised, Fertig is pressed, and the section
+ * writes itself into the letter where it belongs, filed by the app's job chip.
  *
  * The dosing line is the whole product in one beat: "eins null null" is what
  * was SAID, "1-0-0" is what lands in the letter.
@@ -41,8 +43,6 @@ const T = {
   hold: 10200,
   total: 11000,
 };
-
-const BAR_COUNT = 28;
 
 interface Scene {
   t: number;
@@ -85,16 +85,14 @@ const FINISHED: Scene = {
   fade: 0,
 };
 
-export function HeroDemo({ className }: { className?: string }) {
+export function HeroDemo({ lead }: { lead: ReactNode }) {
+  const reduce = useReducedMotion();
   const [scene, setScene] = useState<Scene>(() => sceneAt(0));
-  const [reduced, setReduced] = useState(false);
-  const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (motionQuery.matches) {
-      setReduced(true);
       setScene(FINISHED);
       publishVoice(SILENCE);
       return;
@@ -118,16 +116,8 @@ export function HeroDemo({ className }: { className?: string }) {
           ? prev
           : s,
       );
-      // The voice runs outside React: the ribbon and the meter read it directly.
-      const frame = envelope(now, s.speaking);
-      publishVoice(frame);
-      barsRef.current.forEach((bar, i) => {
-        if (!bar) return;
-        const phase = Math.sin(now / 90 + i * 1.7) * 0.5 + 0.5;
-        const center = 1 - Math.abs(i - (BAR_COUNT - 1) / 2) / ((BAR_COUNT - 1) / 2);
-        const h = 0.16 + frame.level * (0.45 + 0.85 * phase) * (0.35 + 0.65 * center) * 1.15;
-        bar.style.transform = `scaleY(${Math.min(1, h)})`;
-      });
+      // The voice runs outside React: the ribbon and the field read it directly.
+      publishVoice(envelope(now, s.speaking));
       raf = requestAnimationFrame(tick);
     };
 
@@ -164,102 +154,117 @@ export function HeroDemo({ className }: { className?: string }) {
     remaining -= shown;
     return { ...line, shown };
   });
+  const demoOpacity = 1 - scene.fade * 0.9;
 
   return (
-    <div
-      ref={hostRef}
-      aria-label="So arbeitet der Arzt-Assistent: ein Diktat wird zum Briefabschnitt"
-      role="img"
-      className={cn('relative grid items-center gap-10 select-none lg:grid-cols-12 lg:gap-8', className)}
-      style={{ opacity: 1 - scene.fade * 0.9 }}
-    >
-      {/* The voice: the app's own recording window, and what it hears. */}
-      <div className="relative z-10 lg:col-span-5">
-        <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-5 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(12,12,13,0.4)]">
-          <div className="flex items-center gap-4">
-            <span className="flex h-10 w-36 items-center justify-between gap-[2.5px]" aria-hidden>
-              {Array.from({ length: BAR_COUNT }, (_, i) => (
-                <span
-                  key={i}
-                  ref={(el) => {
-                    barsRef.current[i] = el;
-                  }}
-                  className="w-[3px] origin-center rounded-full bg-foreground/70"
-                  style={{ height: '100%', transform: 'scaleY(0.12)' }}
-                />
-              ))}
-            </span>
-            <span className="text-xl font-semibold tracking-tight tabular-nums">
-              0:{String(Math.min(59, Math.floor(Math.min(scene.t, T.speakEnd) / 1000))).padStart(2, '0')}
-            </span>
-            <span
-              className={cn(
-                'btn-liquid-dark flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-medium text-white transition-transform duration-150',
-                scene.pressed && !reduced && 'scale-[0.96]',
-              )}
-            >
-              <Check className="size-4" aria-hidden />
-              Fertig
-            </span>
-          </div>
-          <p className="mt-1 self-end pe-1 text-xs text-muted-foreground">In „Aktuelle Therapie"</p>
-        </div>
-
-        {/* What was heard, streaming in as it is recognised. */}
-        <p className="mt-5 min-h-[4.5rem] max-w-[34ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-          <Mic className="me-1.5 inline size-3.5 -translate-y-px" aria-hidden />
-          {SPOKEN_WORDS.map((w, i) => (
-            <span
-              key={i}
-              className={cn('transition-opacity duration-200', i < scene.spokenCount ? 'opacity-100' : 'opacity-0')}
-            >
-              {w}{' '}
-            </span>
-          ))}
-        </p>
-      </div>
-
-      {/* The letter, assembling itself in the document face. */}
-      <div className="relative z-10 lg:col-span-6 lg:col-start-7">
-        <div className="paper-mini relative px-8 py-7 sm:px-10 sm:py-8">
-          <div className="font-document text-[1.02rem] leading-[1.85] sm:text-[1.08rem]">
-            {/* The section that was already there, so this is a letter, not a blank sheet. */}
-            <p className="font-bold underline underline-offset-4">Diagnosen</p>
-            <p className="text-foreground/75">1. Koronare Herzkrankheit, Z. n. PCI/Stent RIVA 03/2026</p>
-            <p className="mb-[0.6em] text-foreground/75">2. Arterielle Hypertonie</p>
-            {lines.map((line) => (
-              <p
-                key={line.text}
-                className={cn('min-h-[1.85em] whitespace-pre', line.heading && 'font-bold underline underline-offset-4')}
-              >
-                {line.text.slice(0, line.shown)}
-                {line.shown > 0 && line.shown < line.text.length ? (
-                  <span className="-mb-0.5 inline-block h-[1.1em] w-[2px] translate-y-1 bg-foreground/70" aria-hidden />
-                ) : null}
-              </p>
-            ))}
-          </div>
-
-          {/* The app's real job-chip, filing the dictation. */}
-          <div
-            className={cn(
-              'absolute -right-2 -bottom-4 flex max-w-[calc(100%+0.5rem)] items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 shadow-lg transition-[opacity,transform] duration-300 sm:-right-6 sm:max-w-none',
-              scene.job === 'none' ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100',
-            )}
-          >
-            {scene.job === 'done' ? (
-              <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-background">
-                <Check className="size-3.5" aria-hidden />
+    <div ref={hostRef} className="grid items-start gap-12 lg:grid-cols-12 lg:gap-10">
+      {/* The words, then the voice: the app's own recording window. */}
+      <div className="lg:col-span-6">
+        {lead}
+        <div
+          role="img"
+          aria-label="So arbeitet der Arzt-Assistent: ein Diktat wird zum Briefabschnitt"
+          className="mt-12 select-none lg:mt-14"
+          style={{ opacity: demoOpacity }}
+        >
+          <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-5 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(12,12,13,0.4)]">
+            <div className="flex items-center gap-4">
+              <LiveRibbon probe={heroVoice} className="h-12 w-40 shrink-0 sm:w-44" />
+              <span className="text-2xl font-semibold tracking-tight tabular-nums">
+                0:{String(Math.min(59, Math.floor(Math.min(scene.t, T.speakEnd) / 1000))).padStart(2, '0')}
               </span>
-            ) : (
-              <Spinner className="size-4" />
-            )}
-            <span className={cn('text-sm', scene.job === 'done' && 'font-medium')}>
-              {scene.job === 'done' ? 'In „Aktuelle Therapie" eingefügt' : '„Aktuelle Therapie" wird geschrieben …'}
-            </span>
+              <span
+                className={cn(
+                  'btn-liquid-dark flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-medium text-white transition-transform duration-150',
+                  scene.pressed && !reduce && 'scale-[0.96]',
+                )}
+              >
+                <Check className="size-4" aria-hidden />
+                Fertig
+              </span>
+            </div>
+            <p className="mt-1 self-end pe-1 text-xs text-muted-foreground">In „Aktuelle Therapie"</p>
           </div>
+
+          {/* What was heard, streaming in as it is recognised. */}
+          <p className="mt-5 min-h-[4.5rem] max-w-[36ch] text-[0.95rem] leading-relaxed text-muted-foreground">
+            <Mic className="me-1.5 inline size-3.5 -translate-y-px" aria-hidden />
+            {SPOKEN_WORDS.map((w, i) => (
+              <span
+                key={i}
+                className={cn('transition-opacity duration-200', i < scene.spokenCount ? 'opacity-100' : 'opacity-0')}
+              >
+                {w}{' '}
+              </span>
+            ))}
+          </p>
         </div>
       </div>
+
+      {/* The letter: a page, laid on the desk, dissolving below the fold. */}
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 48, rotateX: 9 }}
+        animate={{ opacity: 1, y: 0, rotateX: 0 }}
+        transition={{ delay: 0.35, type: 'spring', stiffness: 170, damping: 26 }}
+        style={{ transformPerspective: 1400, transformOrigin: '50% 0%' }}
+        className="relative h-[33rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_66%,transparent)] sm:h-[36rem] lg:col-span-6 lg:h-[42rem]"
+      >
+        <div className="rounded-[6px] border border-border bg-white px-8 py-9 shadow-[0_1px_2px_rgba(12,12,13,0.05),0_40px_90px_-30px_rgba(12,12,13,0.35)] sm:px-12 sm:py-12">
+          <div className="font-document text-[0.95rem] leading-[1.75] text-foreground/75 sm:text-[1.02rem]">
+            <p className="text-end">Mainz, 31.08.2026</p>
+            {/* The address block only where the page is tall enough to spare it:
+                on a phone the written section must arrive before the fade. */}
+            <div className="hidden sm:block">
+              <p className="mt-[1.4em]">An</p>
+              <p>Dres. med. Weber / Kaufmann</p>
+              <p>Rheinallee 12, 55118 Mainz</p>
+            </div>
+            <p className="mt-[1.4em]">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+            <p>ich darf nachfolgend über die letzten Untersuchungen, Herrn Vollmer betreffend, zusammenfassend berichten.</p>
+            <p className="mt-[1.4em] font-bold underline underline-offset-4">Diagnosen</p>
+            <p>1. Koronare Herzkrankheit, Z. n. PCI/Stent RIVA 03/2026</p>
+            <p>2. Arterielle Hypertonie</p>
+
+            {/* The section being written, in the letter's own ink. */}
+            <div className="relative mt-[1.4em] text-foreground" style={{ opacity: demoOpacity }}>
+              {lines.map((line) => (
+                <p
+                  key={line.text}
+                  className={cn('min-h-[1.75em] whitespace-pre', line.heading && 'font-bold underline underline-offset-4')}
+                >
+                  {line.text.slice(0, line.shown)}
+                  {line.shown > 0 && line.shown < line.text.length ? (
+                    <span className="-mb-0.5 inline-block h-[1.1em] w-[2px] translate-y-1 bg-foreground/70" aria-hidden />
+                  ) : null}
+                </p>
+              ))}
+
+              {/* The app's real job-chip, filing the dictation. */}
+              <div
+                className={cn(
+                  'absolute top-1/2 -right-4 flex -translate-y-1/2 items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 font-sans shadow-lg transition-[opacity,transform] duration-300 sm:-right-8',
+                  scene.job === 'none' ? 'translate-x-2 opacity-0' : 'translate-x-0 opacity-100',
+                )}
+              >
+                {scene.job === 'done' ? (
+                  <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-background">
+                    <Check className="size-3.5" aria-hidden />
+                  </span>
+                ) : (
+                  <Spinner className="size-4" />
+                )}
+                <span className={cn('text-sm whitespace-nowrap', scene.job === 'done' && 'font-medium')}>
+                  {scene.job === 'done' ? 'In „Aktuelle Therapie" eingefügt' : '„Aktuelle Therapie" wird geschrieben …'}
+                </span>
+              </div>
+            </div>
+
+            <p className="mt-[1.4em] font-bold underline underline-offset-4">Zusammenfassende Beurteilung</p>
+            <p>Herr Vollmer stellte sich zur Verlaufskontrolle vor. Unter Belastung keine Angina pectoris; die Belastbarkeit ist gut.</p>
+            <p>Im EKG bestand ein normaler Sinusrhythmus. Echokardiographisch zeigte sich eine gute globale und regionale linksventrikuläre Funktion.</p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

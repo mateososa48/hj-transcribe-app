@@ -120,55 +120,48 @@ function Hero() {
   const second = ['Der', 'Brief', 'schreibt', 'sich.'];
 
   return (
-    <section className="relative overflow-hidden pt-32 sm:pt-36 lg:pt-40">
+    <section className="relative overflow-hidden pt-28 pb-10 sm:pt-32 sm:pb-8 lg:pt-36">
       {/* The atmosphere: a shader under the whole hero, listening to the demo. */}
       <ShaderField voice={heroLevel} className="absolute inset-0" />
 
+      {/* Words and voice on the left, the letter on the right: one picture. */}
       <div className="relative mx-auto w-full max-w-6xl px-6">
-        <h1 className="max-w-[24ch] text-[2.9rem] leading-[1.02] font-semibold tracking-[-0.025em] sm:text-[3.4rem] lg:text-[4.6rem]">
-          <span className="block text-muted-foreground">{first.map((w, i) => word(w, i))}</span>
-          <span className="block">{second.map((w, i) => word(w, i + first.length))}</span>
-        </h1>
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, type: 'spring', stiffness: 220, damping: 30 }}
-        >
-          <p className="mt-7 max-w-[44ch] text-lg leading-relaxed text-pretty text-muted-foreground sm:text-xl">
-            Diktat, Sprechstunde und Arztbrief: transkribiert, in Ihrem Stil formuliert, als
-            Word-Datei exportiert. Alles bleibt auf Ihrem Rechner.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a
-              href={CONTACT}
-              className="btn-liquid-dark flex h-12 items-center gap-2 rounded-full px-6 text-base font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              Früher Zugang
-              <ArrowRight className="size-4" aria-hidden />
-            </a>
-            <a
-              href="#werkzeuge"
-              className="btn-liquid flex h-12 items-center gap-2 rounded-full border border-white/80 px-6 text-base font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              Die Werkzeuge
-            </a>
-          </div>
-        </motion.div>
+        <HeroDemo
+          lead={
+            <>
+              <h1 className="text-[2.9rem] leading-[1.02] font-semibold tracking-[-0.025em] sm:text-[3.6rem] lg:text-[4.3rem]">
+                <span className="block text-muted-foreground">{first.map((w, i) => word(w, i))}</span>
+                <span className="block">{second.map((w, i) => word(w, i + first.length))}</span>
+              </h1>
+              <motion.div
+                initial={reduce ? false : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, type: 'spring', stiffness: 220, damping: 30 }}
+              >
+                <p className="mt-6 max-w-[42ch] text-lg leading-relaxed text-pretty text-muted-foreground sm:text-xl">
+                  Diktat, Sprechstunde und Arztbrief: transkribiert, in Ihrem Stil formuliert, als
+                  Word-Datei exportiert. Alles bleibt auf Ihrem Rechner.
+                </p>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <a
+                    href={CONTACT}
+                    className="btn-liquid-dark flex h-12 items-center gap-2 rounded-full px-6 text-base font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    Früher Zugang
+                    <ArrowRight className="size-4" aria-hidden />
+                  </a>
+                  <a
+                    href="#werkzeuge"
+                    className="btn-liquid flex h-12 items-center gap-2 rounded-full border border-white/80 px-6 text-base font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    Die Werkzeuge
+                  </a>
+                </div>
+              </motion.div>
+            </>
+          }
+        />
       </div>
-
-      {/* The product, running: voice on the left, letter on the right, the
-          field under both listening to the demo's speech. The page's one picture. */}
-      <div className="relative mt-20 sm:mt-24 lg:mt-28">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55, type: 'spring', stiffness: 220, damping: 30 }}
-          className="relative mx-auto w-full max-w-6xl px-6"
-        >
-          <HeroDemo />
-        </motion.div>
-      </div>
-      <div className="h-28 sm:h-36" aria-hidden />
     </section>
   );
 }
@@ -177,7 +170,7 @@ function Hero() {
 
 function Statement() {
   return (
-    <section className="pb-24 sm:pb-32">
+    <section className="pt-10 pb-24 sm:pt-16 sm:pb-32">
       <div className="mx-auto w-full max-w-6xl px-6">
         <Reveal>
           <p className="max-w-[34ch] text-[1.6rem] leading-[1.2] font-semibold tracking-[-0.02em] text-balance sm:text-[2.5rem] sm:leading-[1.18]">

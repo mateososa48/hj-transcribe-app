@@ -80,12 +80,16 @@ void main() {
   // Pull the hues a step toward grey: printed light, not candy.
   col = mix(col, vec3(dot(col, vec3(0.30, 0.59, 0.11))), 0.14);
 
-  // Where the field is lit, and where on the page it is allowed to be.
+  // Where the field is lit, and where on the page it is allowed to be: it
+  // gathers behind the letter on the right and pools under the recorder at
+  // the lower left, and stays off the headline.
   float d = smoothstep(0.30, 0.85, n1 * 0.55 + n2 * 0.55);
-  float band = exp(-pow((uv.y - 0.36) / 0.30, 2.0));
-  float top = 1.0 - smoothstep(0.70, 0.97, uv.y);
-  float bottom = smoothstep(0.0, 0.22, uv.y);
-  float alpha = d * band * top * bottom * (0.54 + 0.30 * v);
+  float page = exp(-pow((uv.x - 0.74) / 0.34, 2.0)) * exp(-pow((uv.y - 0.48) / 0.42, 2.0));
+  float pocket = 0.75 * exp(-pow((uv.x - 0.2) / 0.24, 2.0)) * exp(-pow((uv.y - 0.24) / 0.24, 2.0));
+  float band = max(page, pocket);
+  float top = 1.0 - smoothstep(0.72, 0.97, uv.y);
+  float bottom = smoothstep(0.0, 0.18, uv.y);
+  float alpha = d * band * top * bottom * (0.56 + 0.30 * v);
 
   // Ink on white, lifted so it glows instead of muddying.
   vec3 ink = col * 0.85 + 0.15;
@@ -177,7 +181,9 @@ export function ShaderField({ className, voice }: { className?: string; voice?: 
       gl.uniform2f(uRes, width, height);
       gl.uniform1f(uTime, time);
       gl.uniform1f(uVoice, level);
-      gl.uniform1f(uGrain, 0.045);
+      // Half-resolution grain is two device pixels on a 1× screen and four on
+      // a 2× one; keep the grain fine rather than chunky on phones.
+      gl.uniform1f(uGrain, window.devicePixelRatio >= 2 ? 0.028 : 0.045);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
     const tick = () => {
