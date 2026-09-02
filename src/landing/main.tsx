@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '@/index.css';
+import '@fontsource-variable/bricolage-grotesque/standard.css';
 import './landing.css';
 import { Landing } from './Landing';
 

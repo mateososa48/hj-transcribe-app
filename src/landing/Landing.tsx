@@ -129,7 +129,7 @@ function Hero() {
         <HeroDemo
           lead={
             <>
-              <h1 className="text-[2.9rem] leading-[1.02] font-semibold tracking-[-0.025em] sm:text-[3.6rem] lg:text-[4.3rem]">
+              <h1 className="font-display text-[3rem] leading-[0.98] font-bold sm:text-[3.8rem] lg:text-[4.5rem]">
                 <span className="block text-muted-foreground">{first.map((w, i) => word(w, i))}</span>
                 <span className="block">{second.map((w, i) => word(w, i + first.length))}</span>
               </h1>
@@ -173,7 +173,7 @@ function Statement() {
     <section className="pt-10 pb-24 sm:pt-16 sm:pb-32">
       <div className="mx-auto w-full max-w-6xl px-6">
         <Reveal>
-          <p className="max-w-[34ch] text-[1.6rem] leading-[1.2] font-semibold tracking-[-0.02em] text-balance sm:text-[2.5rem] sm:leading-[1.18]">
+          <p className="font-display max-w-[34ch] text-[1.6rem] leading-[1.15] font-semibold text-balance sm:text-[2.5rem] sm:leading-[1.12]">
             Drei Werkzeuge, ein Brief.{' '}
             <span className="text-muted-foreground">
               Das Diktat wird zur Beurteilung, das Gespräch zu Notizen, die Seite zur Word-Datei.
@@ -206,7 +206,7 @@ function Reveal({ children, className }: { children: ReactNode; className?: stri
 function SectionHeading({ title, body }: { title: string; body?: string }) {
   return (
     <Reveal>
-      <h2 className="max-w-[22ch] text-[2.1rem] leading-[1.08] font-semibold tracking-[-0.02em] text-balance sm:text-[2.6rem]">
+      <h2 className="font-display max-w-[22ch] text-[2.2rem] leading-[1.04] font-semibold text-balance sm:text-[2.8rem]">
         {title}
       </h2>
       {body ? <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-pretty text-muted-foreground">{body}</p> : null}
@@ -236,7 +236,7 @@ function Vertrauen() {
     <section className="border-t border-border py-24 sm:py-32">
       <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 lg:grid-cols-12 lg:gap-8">
         <Reveal className="lg:col-span-4">
-          <h2 className="text-[2.1rem] leading-[1.08] font-semibold tracking-[-0.02em] sm:text-[2.6rem]">Bleibt bei Ihnen.</h2>
+          <h2 className="font-display text-[2.2rem] leading-[1.04] font-semibold sm:text-[2.8rem]">Bleibt bei Ihnen.</h2>
         </Reveal>
         <div className="grid gap-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border lg:col-span-8">
           {POINTS.map((x, i) => (
@@ -260,7 +260,7 @@ function FinalCta() {
         {/* The instrument's reprise sits above the words, never through them. */}
         <LiveRibbon className="pointer-events-none relative -mb-20 h-[16rem] w-full sm:-mb-24 sm:h-[20rem]" />
         <Reveal className="relative mx-auto w-full max-w-6xl px-6 text-center">
-          <h2 className="mx-auto max-w-[16ch] text-[2.6rem] leading-[1.04] font-semibold tracking-[-0.025em] text-balance sm:text-6xl">
+          <h2 className="font-display mx-auto max-w-[16ch] text-[2.8rem] leading-[1] font-bold text-balance sm:text-[4rem]">
             Weniger Tastatur. Mehr Medizin.
           </h2>
           <p className="mx-auto mt-6 max-w-[44ch] text-lg leading-relaxed text-pretty text-muted-foreground">
