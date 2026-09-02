@@ -23,7 +23,7 @@ const TEMPLATES: Array<{ name: string; sections: string[] }> = [
   { name: 'Überweisung', sections: ['Diagnosen', 'Fragestellung', 'Bisherige Therapie'] },
 ];
 
-const DWELL_MS = 3400;
+const DWELL_MS = 4200;
 
 export function Vorlagen({ contact, heading }: { contact: string; heading: ReactNode }) {
   const reduce = useReducedMotion();

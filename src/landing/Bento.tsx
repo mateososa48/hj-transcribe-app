@@ -73,9 +73,11 @@ const typed = (text: string, from: number, to: number, t: number) =>
 const ERG_LINE = 'Eine Kontrolle in 6 Monaten wurde vereinbart.';
 
 function TileErgaenzen() {
-  const { t, finished, ref } = useLoopClock(9000);
-  const phase = finished ? 'done' : t < 1800 ? 'idle' : t < 2600 ? 'busy' : t < 6200 ? 'typing' : t < 8200 ? 'done' : 'idle';
-  const line = phase === 'idle' && !finished ? '' : typed(ERG_LINE, 2600, 6000, finished ? 9e9 : t);
+  // No idle phase: the chip is always saying something, so the tile never
+  // opens a hole where a hidden chip reserves its space.
+  const { t, finished, ref } = useLoopClock(7400);
+  const phase = finished ? 'done' : t < 900 ? 'busy' : t < 4300 ? 'typing' : 'done';
+  const line = phase === 'busy' ? '' : typed(ERG_LINE, 900, 4100, finished ? 9e9 : t);
 
   return (
     <div ref={ref} className="grid gap-8 rounded-3xl border border-border bg-background p-7 sm:p-8 lg:col-span-2 lg:grid-cols-2 lg:items-center">
@@ -84,12 +86,7 @@ function TileErgaenzen() {
         <p className="mt-3 max-w-[36ch] text-[0.95rem] leading-relaxed text-muted-foreground">
           Ihnen fällt nach dem Diktat noch etwas ein? Sprechen Sie es nach. Es wird in den stehenden Text eingearbeitet, nicht angehängt.
         </p>
-        <div
-          className={cn(
-            'mt-5 flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs shadow-sm transition-opacity duration-300',
-            phase === 'idle' ? 'opacity-0' : 'opacity-100',
-          )}
-        >
+        <div className="mt-5 flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs shadow-sm">
           {phase === 'busy' || phase === 'typing' ? (
             <>
               <Spinner className="size-3.5" />
@@ -175,7 +172,7 @@ function BandWord() {
         </p>
       </div>
       <div className="lg:col-span-7">
-        <div className="paper-mini px-6 py-5 sm:px-8 sm:py-6">
+        <div className="paper-mini max-w-[30rem] px-6 py-5 sm:px-8 sm:py-6 lg:ms-auto">
           <div className="font-document text-[0.95rem] leading-[1.85]">
             <p className="font-bold underline underline-offset-2">Aktuelle Therapie</p>
             <TabRow name="ASS 100" dose="1-0-0" />

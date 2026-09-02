@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 
@@ -68,12 +68,15 @@ function Nav() {
   const link = 'hidden rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:block';
 
   return (
-    <header className="fixed inset-x-3 top-3 z-50 sm:inset-x-4 sm:top-4">
+    <header className="fixed inset-x-0 top-3 z-50 sm:top-4">
+      {/* Same container as the content, so the wordmark sits on the page's
+          left edge and the key on its right edge; the pill reaches past both
+          by exactly its own padding. */}
       <div
         className={cn(
           // Solid when scrolled, not glass: the mark paints an opaque white
           // ground and can only multiply cleanly onto a fully white pill.
-          'mx-auto flex h-14 w-full max-w-5xl items-center gap-1 rounded-full border ps-5 pe-2 transition-[background-color,border-color,box-shadow] duration-300',
+          'mx-auto flex h-14 w-[calc(100%-1rem)] max-w-[calc(72rem-1rem)] items-center gap-1 rounded-full border ps-4 pe-4 transition-[background-color,border-color,box-shadow] duration-300',
           scrolled
             ? 'border-border bg-background shadow-[0_1px_2px_rgba(12,12,13,0.04),0_12px_32px_-16px_rgba(12,12,13,0.22)]'
             : 'border-transparent bg-transparent',
@@ -124,7 +127,7 @@ function Hero() {
   const second = ['Der', 'Brief', 'schreibt', 'sich.'];
 
   return (
-    <section className="relative overflow-hidden pt-28 pb-10 sm:pt-32 sm:pb-8 lg:pt-36">
+    <section className="relative overflow-hidden pt-28 pb-2 sm:pt-32 sm:pb-8 lg:pt-36">
       {/* The atmosphere: a shader under the whole hero, listening to the demo. */}
       <ShaderField voice={heroLevel} className="absolute inset-0" />
 
@@ -172,19 +175,58 @@ function Hero() {
 
 /* ------------------------------------------------------------ statement -- */
 
+const STATEMENT_REST =
+  'Das Diktat wird zur Beurteilung, das Gespräch zu Notizen, die Seite zur Word-Datei. Jeder Satz geht durch Ihre Hände, bevor er im Brief steht.'.split(' ');
+
+/**
+ * The statement reads itself in as it scrolls through the middle of the
+ * viewport: the grey continuation lights up word by word at reading pace.
+ * Driven imperatively from one scroll value; static and fully lit under
+ * reduced motion.
+ */
 function Statement() {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLParagraphElement | null>(null);
+  const words = useRef<Array<HTMLSpanElement | null>>([]);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 88%', 'end 45%'] });
+  const light = (p: number) => {
+    const n = STATEMENT_REST.length;
+    words.current.forEach((el, i) => {
+      if (!el) return;
+      const k = Math.min(1, Math.max(0, p * (n + 2) - i));
+      el.style.opacity = String(0.28 + 0.72 * k);
+    });
+  };
+  useMotionValueEvent(scrollYProgress, 'change', (p) => {
+    if (!reduce) light(p);
+  });
+  useEffect(() => {
+    light(reduce ? 1 : scrollYProgress.get());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduce]);
+
   return (
-    <section className="pt-10 pb-24 sm:pt-16 sm:pb-32">
+    <section className="pt-6 pb-20 sm:pt-16 sm:pb-24">
       <div className="mx-auto w-full max-w-6xl px-6">
-        <Reveal>
-          <p className="font-display max-w-[34ch] text-[1.6rem] leading-[1.15] font-semibold text-balance sm:text-[2.5rem] sm:leading-[1.12]">
-            Drei Werkzeuge, ein Brief.{' '}
-            <span className="text-muted-foreground">
-              Das Diktat wird zur Beurteilung, das Gespräch zu Notizen, die Seite zur Word-Datei.
-              Jeder Satz geht durch Ihre Hände, bevor er im Brief steht.
-            </span>
-          </p>
-        </Reveal>
+        <p
+          ref={ref}
+          className="font-display max-w-[34ch] text-[1.6rem] leading-[1.15] font-semibold text-balance sm:text-[2.5rem] sm:leading-[1.12]"
+        >
+          Drei Werkzeuge, ein Brief.{' '}
+          <span className="text-muted-foreground">
+            {STATEMENT_REST.map((w, i) => (
+              <span
+                key={i}
+                ref={(el) => {
+                  words.current[i] = el;
+                }}
+                className="transition-opacity duration-150"
+              >
+                {w}{' '}
+              </span>
+            ))}
+          </span>
+        </p>
       </div>
     </section>
   );
@@ -241,6 +283,9 @@ function Vertrauen() {
       <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 lg:grid-cols-12 lg:gap-8">
         <Reveal className="lg:col-span-4">
           <h2 className="font-display text-[2.2rem] leading-[1.04] font-semibold sm:text-[2.8rem]">Bleibt bei Ihnen.</h2>
+          <p className="mt-4 max-w-[30ch] text-lg leading-relaxed text-muted-foreground">
+            Drei Grundsätze, die im Werkzeug selbst stecken, nicht in einer Vereinbarung.
+          </p>
         </Reveal>
         <div className="grid gap-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border lg:col-span-8">
           {POINTS.map((x, i) => (
@@ -262,7 +307,7 @@ function FinalCta() {
     <section className="overflow-hidden pt-10 pb-28 sm:pt-12 sm:pb-40">
       <div className="relative">
         {/* The instrument's reprise sits above the words, never through them. */}
-        <LiveRibbon className="pointer-events-none relative -mb-20 h-[16rem] w-full sm:-mb-24 sm:h-[20rem]" />
+        <LiveRibbon className="pointer-events-none relative -mb-16 h-[16rem] w-full sm:-mb-20 sm:h-[20rem]" />
         <Reveal className="relative mx-auto w-full max-w-6xl px-6 text-center">
           <h2 className="font-display mx-auto max-w-[16ch] text-[2.8rem] leading-[1] font-semibold text-balance sm:text-[4rem]">
             Weniger Tastatur. Mehr Medizin.
