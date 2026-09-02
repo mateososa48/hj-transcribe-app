@@ -24,11 +24,9 @@ import { heroVoice, publishVoice, SILENCE } from './voice';
 
 const SPOKEN_WORDS = 'Aktuelle Therapie: ASS hundert eins null null, Clopidogrel fünfundsiebzig eins null null bis Mai sechsundzwanzig.'.split(' ');
 
-const LETTER_LINES = [
-  { text: 'Aktuelle Therapie', heading: true },
-  { text: 'ASS 100   1-0-0' },
-  { text: 'Clopidogrel 75  1-0-0 bis 5/26' },
-];
+/** The section heading stands in the letter from the start, as the template
+ *  put it there; the dictation fills the lines beneath it. */
+const LETTER_LINES = [{ text: 'ASS 100   1-0-0' }, { text: 'Clopidogrel 75  1-0-0 bis 5/26' }];
 
 /** Scene timeline, in ms on the shared clock. */
 const T = {
@@ -206,7 +204,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
         animate={{ opacity: 1, y: 0, rotateX: 0 }}
         transition={{ delay: 0.35, type: 'spring', stiffness: 170, damping: 26 }}
         style={{ transformPerspective: 1400, transformOrigin: '50% 0%' }}
-        className="relative h-[32rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_62%,transparent_94%)] sm:h-[36rem] lg:col-span-6 lg:h-[42rem]"
+        className="relative h-[34rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_78%,transparent_100%)] sm:h-[36rem] sm:[mask-image:linear-gradient(to_bottom,black_64%,transparent_96%)] lg:col-span-6 lg:h-[42rem]"
       >
         <div className="rounded-[6px] border border-border bg-white px-8 py-9 shadow-[0_1px_2px_rgba(12,12,13,0.05),0_40px_90px_-30px_rgba(12,12,13,0.35)] sm:px-12 sm:py-12">
           <div className="font-document text-[0.95rem] leading-[1.75] text-foreground/75 sm:text-[1.02rem]">
@@ -219,24 +217,38 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               <p>Rheinallee 12, 55118 Mainz</p>
             </div>
             <p className="mt-[1.4em]">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
-            <p>ich darf nachfolgend über die letzten Untersuchungen, Herrn Vollmer betreffend, zusammenfassend berichten.</p>
+            <p className="hidden sm:block">ich darf nachfolgend über die letzten Untersuchungen, Herrn Vollmer betreffend, zusammenfassend berichten.</p>
             <p className="mt-[1.4em] font-bold underline underline-offset-4">Diagnosen</p>
             <p>1. Koronare Herzkrankheit, Z. n. PCI/Stent RIVA 03/2026</p>
             <p>2. Arterielle Hypertonie</p>
 
-            {/* The section being written, in the letter's own ink. */}
-            <div className="relative mt-[1.4em] text-foreground" style={{ opacity: demoOpacity }}>
-              {lines.map((line) => (
-                <p
-                  key={line.text}
-                  className={cn('min-h-[1.75em] whitespace-pre', line.heading && 'font-bold underline underline-offset-4')}
-                >
-                  {line.text.slice(0, line.shown)}
-                  {line.shown > 0 && line.shown < line.text.length ? (
-                    <span className="-mb-0.5 inline-block h-[1.1em] w-[2px] translate-y-1 bg-foreground/70" aria-hidden />
-                  ) : null}
-                </p>
-              ))}
+            {/* The section being written, in the letter's own ink. Its heading
+                waits in the letter, grey until the dictation arrives. */}
+            <div className="relative mt-[1.4em] text-foreground">
+              <p
+                className={cn(
+                  'font-bold underline underline-offset-4 transition-colors duration-300',
+                  scene.charsWritten === 0 ? 'text-foreground/40' : 'text-foreground',
+                )}
+              >
+                Aktuelle Therapie
+              </p>
+              <div style={{ opacity: demoOpacity }}>
+                {lines.map((line, i) => (
+                  <p key={line.text} className="min-h-[1.75em] whitespace-pre">
+                    {line.text.slice(0, line.shown)}
+                    {(line.shown > 0 && line.shown < line.text.length) || (i === 0 && scene.charsWritten === 0) ? (
+                      <span
+                        className={cn(
+                          '-mb-0.5 inline-block h-[1.1em] w-[2px] translate-y-1 bg-foreground/70',
+                          scene.charsWritten === 0 && !reduce && 'animate-pulse',
+                        )}
+                        aria-hidden
+                      />
+                    ) : null}
+                  </p>
+                ))}
+              </div>
 
               {/* The app's real job-chip, filing the dictation. */}
               <div

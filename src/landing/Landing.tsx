@@ -309,7 +309,7 @@ function FinalCta() {
         {/* The instrument's reprise sits above the words, never through them. */}
         <LiveRibbon className="pointer-events-none relative -mb-16 h-[16rem] w-full sm:-mb-20 sm:h-[20rem]" />
         <Reveal className="relative mx-auto w-full max-w-6xl px-6 text-center">
-          <h2 className="font-display mx-auto max-w-[16ch] text-[2.8rem] leading-[1] font-semibold text-balance sm:text-[4rem]">
+          <h2 className="font-display mx-auto max-w-[16ch] text-[2.4rem] leading-[1] font-semibold text-balance sm:text-[4rem]">
             Weniger Tastatur. Mehr Medizin.
           </h2>
           <p className="mx-auto mt-6 max-w-[44ch] text-lg leading-relaxed text-pretty text-muted-foreground">
