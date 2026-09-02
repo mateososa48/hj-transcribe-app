@@ -71,15 +71,19 @@ function Nav() {
     <header className="fixed inset-x-3 top-3 z-50 sm:inset-x-4 sm:top-4">
       <div
         className={cn(
-          'mx-auto flex h-14 w-full max-w-5xl items-center gap-1 rounded-full border ps-5 pe-2 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300',
+          // Solid when scrolled, not glass: the mark paints an opaque white
+          // ground and can only multiply cleanly onto a fully white pill.
+          'mx-auto flex h-14 w-full max-w-5xl items-center gap-1 rounded-full border ps-5 pe-2 transition-[background-color,border-color,box-shadow] duration-300',
           scrolled
-            ? 'border-border bg-background/85 shadow-[0_1px_2px_rgba(12,12,13,0.04),0_12px_32px_-16px_rgba(12,12,13,0.22)]'
+            ? 'border-border bg-background shadow-[0_1px_2px_rgba(12,12,13,0.04),0_12px_32px_-16px_rgba(12,12,13,0.22)]'
             : 'border-transparent bg-transparent',
         )}
       >
         <a href="#" className="flex items-center gap-1.5 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
           <span className="text-[1.05rem] font-semibold tracking-tight">Arzt-Assistent</span>
-          <BrandWave className="h-9 w-11 shrink-0" />
+          {/* The mark paints an opaque white ground; multiply lets it sit on
+              the glass pill and the shader field without a box. */}
+          <BrandWave className="h-9 w-11 shrink-0 mix-blend-multiply" />
         </a>
         <nav className="ms-auto flex items-center gap-1">
           <a href="#werkzeuge" className={link}>
@@ -288,7 +292,7 @@ function Footer() {
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-4 px-6 text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5 font-medium text-foreground">
           Arzt-Assistent
-          <BrandWave className="h-8 w-10 shrink-0" />
+          <BrandWave className="h-8 w-10 shrink-0 mix-blend-multiply" />
         </span>
         <span className="ms-auto">© {new Date().getFullYear()} Arzt-Assistent. Für Ärztinnen und Ärzte gemacht.</span>
       </div>

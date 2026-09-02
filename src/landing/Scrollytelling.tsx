@@ -225,8 +225,10 @@ function ChapterLayer({ chapter, index, progress }: { chapter: Chapter; index: n
     inverse.set(1 / s);
     x.set(`${transform(q, [0.3, 0.72], [0, (0.5 - fx) * 100])}%`);
     y.set(`${transform(q, [0.3, 0.72], [0, (0.5 - fy) * 100])}%`);
-    const fadeIn = index === 0 ? 1 : transform(p, [start - 0.04, start], [0, 1]);
-    const fadeOut = index === COUNT - 1 ? 1 : transform(p, [end, end + 0.04], [1, 0]);
+    // One short dissolve just after each boundary, both layers crossing in
+    // the same window, so the next tool never ghosts over the current one.
+    const fadeIn = index === 0 ? 1 : transform(p, [start, start + 0.03], [0, 1]);
+    const fadeOut = index === COUNT - 1 ? 1 : transform(p, [end, end + 0.03], [1, 0]);
     opacity.set(Math.min(fadeIn, fadeOut));
     const c = transform(q, [0.58, 0.72], [0, 1]);
     calloutOpacity.set(c);
