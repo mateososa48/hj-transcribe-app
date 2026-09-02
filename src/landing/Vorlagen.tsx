@@ -97,11 +97,11 @@ export function Vorlagen({ heading }: { heading: ReactNode }) {
       {/* The shelf. */}
       <div
         className={cn(
-          'relative mt-12 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]',
+          'relative mt-6 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]',
           reduce && 'overflow-x-auto [scrollbar-width:none]',
         )}
       >
-        <div className={cn('flex w-max items-start gap-5 py-4 ps-6', !reduce && 'vorlagen-shelf')}>
+        <div className={cn('flex w-max items-start gap-5 py-10 ps-6', !reduce && 'vorlagen-shelf')}>
           {sheets.map((tpl, i) => (
             <Sheet key={`${tpl.name}-${i}`} template={tpl} raised={i % 2 === 1} />
           ))}
@@ -118,11 +118,11 @@ export function Vorlagen({ heading }: { heading: ReactNode }) {
 /** Paragraph shapes: a few lines of varying length per section, so a page
  *  reads as written rather than as a list of labels. */
 const SHAPES: number[][] = [
-  [100, 100, 62],
+  [100, 62],
   [100, 84],
-  [100, 100, 100, 48],
+  [100, 100, 48],
   [100, 72],
-  [100, 100, 36],
+  [100, 36],
 ];
 
 function Paragraph({ shape }: { shape: number }) {
@@ -165,19 +165,18 @@ function Page({
     >
       <div className="font-document flex h-full flex-col px-5 pt-5 pb-4 text-[7.5px] leading-[1.5] text-foreground/85">
         {/* Letterhead and date. */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-[3px]" aria-hidden>
-            <span className="block h-[5px] w-24 rounded-full bg-foreground/60" />
-            <span className="block h-[3px] w-20 rounded-full bg-foreground/[0.13]" />
-            <span className="block h-[3px] w-14 rounded-full bg-foreground/[0.13]" />
+        <div className="flex items-start justify-between gap-4 text-[7px] leading-[1.45] text-foreground/60">
+          <div>
+            <p className="font-bold text-foreground/80">Kardiologische Praxis</p>
+            <p>Am Brand 8, 55116 Mainz</p>
           </div>
-          <span className="shrink-0 text-[7px] text-foreground/60">Mainz, 31.08.2026</span>
+          <p className="shrink-0">Mainz, 31.08.2026</p>
         </div>
         {/* Address block. */}
-        <div className="mt-4 space-y-[3px]" aria-hidden>
-          <span className="block h-[3px] w-10 rounded-full bg-foreground/[0.13]" />
-          <span className="block h-[3px] w-24 rounded-full bg-foreground/[0.13]" />
-          <span className="block h-[3px] w-20 rounded-full bg-foreground/[0.13]" />
+        <div className="mt-4 text-[7px] leading-[1.45] text-foreground/70">
+          <p>Dres. med. Weber / Kaufmann</p>
+          <p>Rheinallee 12</p>
+          <p>55118 Mainz</p>
         </div>
         {/* Subject: the report type. */}
         <p className="mt-4 text-[8.5px] leading-snug font-bold">{subject}</p>
