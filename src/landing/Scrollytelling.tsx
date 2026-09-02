@@ -130,8 +130,7 @@ export function Scrollytelling() {
   if (reduce) {
     return (
       <section id="werkzeuge" className="scroll-mt-24 px-3 sm:px-4">
-        <div className="relative overflow-hidden rounded-3xl bg-[#0e0e10] py-20 text-white sm:py-24">
-          <Glow />
+        <div className="slab-dark relative overflow-hidden rounded-3xl py-20 text-white sm:py-24">
           <div className="relative mx-auto w-full max-w-6xl px-6 sm:px-10">
             <h2 className="font-display mb-14 max-w-[24ch] text-[1.6rem] leading-[1.1] font-medium text-balance sm:text-[2rem]">
               Drei Werkzeuge, ein Brief.
@@ -158,8 +157,7 @@ export function Scrollytelling() {
       <div ref={ref} className="relative h-[380vh]">
         {/* On phones the scene pins under the nav pill, not behind it. */}
         <div className="sticky top-[4.25rem] flex min-h-[calc(100dvh-4.25rem)] items-start py-3 sm:top-0 sm:min-h-dvh sm:items-center sm:py-4">
-          <div className="relative w-full overflow-hidden rounded-3xl bg-[#0e0e10] py-8 text-white shadow-[0_40px_120px_-40px_rgba(12,12,13,0.5)] sm:py-14 lg:py-16">
-            <Glow />
+          <div className="slab-dark relative w-full overflow-hidden rounded-3xl py-8 text-white sm:py-14 lg:py-16">
             <div className="relative mx-auto hidden w-full max-w-6xl px-6 sm:block sm:px-10">
               <h2 className="font-display mb-10 max-w-[24ch] text-[2rem] leading-[1.1] font-medium text-balance">
                 Drei Werkzeuge, ein Brief.
@@ -195,16 +193,6 @@ export function Scrollytelling() {
         </div>
       </div>
     </section>
-  );
-}
-
-/* A quiet violet light from the slab's foot: the ribbon's first hue, on dark. */
-function Glow() {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_55%_at_72%_105%,rgba(66,48,255,0.20),transparent_62%)]"
-    />
   );
 }
 
