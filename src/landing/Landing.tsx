@@ -45,7 +45,7 @@ export function Landing() {
           heading={
             <SectionHeading
               title="Ihre Abschnitte. Ihre Briefe."
-              body="Jede Praxis schreibt anders. Legen Sie eigene Berichtsvorlagen an: Abschnitte hinzufügen, umsortieren, benennen. Jeder neue Brief beginnt so, wie Sie ihn schreiben würden. Probieren Sie es hier aus."
+              body="Jede Praxis schreibt anders. Legen Sie eigene Berichtsvorlagen an: Abschnitte hinzufügen, umsortieren, benennen. Jeder neue Brief beginnt so, wie Sie ihn schreiben würden."
             />
           }
         />

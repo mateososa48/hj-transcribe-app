@@ -17,6 +17,28 @@
   letter-spacing: -0.02em;
 }
 
+/* The shelf of templates: duplicated content, one slow pass, paused under
+   the pointer so a sheet can lift. The page's one marquee. */
+@keyframes vorlagen-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.vorlagen-shelf {
+  animation: vorlagen-drift 110s linear infinite;
+}
+.vorlagen-shelf:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vorlagen-shelf {
+    animation: none;
+  }
+}
+
 /* A miniature letter, as paper: the document face, a hairline, real shadow. */
 .paper-mini {
   font-family: var(--font-document);
