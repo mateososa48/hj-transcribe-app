@@ -82,12 +82,17 @@ function Nav() {
             : 'border-transparent bg-transparent',
         )}
       >
-        <a href="#" className="flex items-center gap-1.5 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Arzt-Assistent, zum Seitenanfang"
+          className="flex cursor-pointer items-center gap-1.5 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        >
           <span className="text-[1.05rem] font-semibold tracking-tight">Arzt-Assistent</span>
           {/* The mark paints an opaque white ground; multiply lets it sit on
-              the glass pill and the shader field without a box. */}
+              the pill and the shader field without a box. */}
           <BrandWave className="h-9 w-11 shrink-0 mix-blend-multiply" />
-        </a>
+        </button>
         <nav className="ms-auto flex items-center gap-1">
           <a href="#werkzeuge" className={link}>
             Die Werkzeuge
@@ -189,12 +194,16 @@ function Statement() {
   const ref = useRef<HTMLParagraphElement | null>(null);
   const words = useRef<Array<HTMLSpanElement | null>>([]);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 88%', 'end 45%'] });
+  // Unlit words are a mid grey that still passes AA on white; lit words are
+  // the foreground. A colour move, not an opacity one, so nothing on the page
+  // is ever too faint to read.
   const light = (p: number) => {
     const n = STATEMENT_REST.length;
     words.current.forEach((el, i) => {
       if (!el) return;
       const k = Math.min(1, Math.max(0, p * (n + 2) - i));
-      el.style.opacity = String(0.28 + 0.72 * k);
+      const c = Math.round(118 + (12 - 118) * k);
+      el.style.color = `rgb(${c}, ${c}, ${c + 1})`;
     });
   };
   useMotionValueEvent(scrollYProgress, 'change', (p) => {
@@ -213,14 +222,14 @@ function Statement() {
           className="font-display max-w-[34ch] text-[1.6rem] leading-[1.15] font-semibold text-balance sm:text-[2.5rem] sm:leading-[1.12]"
         >
           Drei Werkzeuge, ein Brief.{' '}
-          <span className="text-muted-foreground">
+          <span>
             {STATEMENT_REST.map((w, i) => (
               <span
                 key={i}
                 ref={(el) => {
                   words.current[i] = el;
                 }}
-                className="transition-opacity duration-150"
+                className="transition-colors duration-150"
               >
                 {w}{' '}
               </span>

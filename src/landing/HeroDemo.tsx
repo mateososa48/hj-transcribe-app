@@ -228,7 +228,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               <p
                 className={cn(
                   'font-bold underline underline-offset-4 transition-colors duration-300',
-                  scene.charsWritten === 0 ? 'text-foreground/40' : 'text-foreground',
+                  scene.charsWritten === 0 ? 'text-foreground/55' : 'text-foreground',
                 )}
               >
                 Aktuelle Therapie
