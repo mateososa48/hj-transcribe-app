@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react';
 import { FileText, Mic, Stethoscope } from 'lucide-react';
 
@@ -53,9 +53,18 @@ export function Scrollytelling() {
   const ref = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
   const [active, setActive] = useState(0);
-  useMotionValueEvent(scrollYProgress, 'change', (p) => {
-    setActive(Math.min(CHAPTERS.length - 1, Math.floor(p * CHAPTERS.length)));
-  });
+  const chapterAt = (p: number) => Math.min(CHAPTERS.length - 1, Math.max(0, Math.floor(p * CHAPTERS.length)));
+  useMotionValueEvent(scrollYProgress, 'change', (p) => setActive(chapterAt(p)));
+  // The page may open already inside the slab (a reload, an anchor); the
+  // change event alone would leave chapter one lit until the first scroll.
+  // Measured from the DOM, because the motion value may not have settled yet.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const travel = Math.max(1, el.offsetHeight - window.innerHeight);
+    setActive(chapterAt((window.scrollY - top) / travel));
+  }, []);
 
   const jumpTo = (i: number) => {
     const el = ref.current;

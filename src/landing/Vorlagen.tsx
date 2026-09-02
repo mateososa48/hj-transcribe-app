@@ -36,18 +36,25 @@ export function Vorlagen({ contact, heading }: { contact: string; heading: React
     const host = hostRef.current;
     if (!host) return;
     let timer = 0;
+    let onscreen = false;
+    const run = () => {
+      window.clearInterval(timer);
+      if (onscreen && document.visibilityState === 'visible') {
+        timer = window.setInterval(() => setActive((i) => (i + 1) % TEMPLATES.length), DWELL_MS);
+      }
+    };
     const observer = new IntersectionObserver(
       ([e]) => {
-        window.clearInterval(timer);
-        if (e?.isIntersecting) {
-          timer = window.setInterval(() => setActive((i) => (i + 1) % TEMPLATES.length), DWELL_MS);
-        }
+        onscreen = e?.isIntersecting ?? false;
+        run();
       },
       { threshold: 0.5 },
     );
     observer.observe(host);
+    document.addEventListener('visibilitychange', run);
     return () => {
       observer.disconnect();
+      document.removeEventListener('visibilitychange', run);
       window.clearInterval(timer);
     };
   }, [reduce, touched]);
@@ -56,6 +63,20 @@ export function Vorlagen({ contact, heading }: { contact: string; heading: React
     setTouched(true);
     setActive(i);
   };
+
+  // On phones the list is a horizontal row; keep the lit template in view as
+  // it advances, without ever moving the page vertically.
+  const listRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const list = listRef.current;
+    const item = list?.children[active] as HTMLElement | undefined;
+    if (!list || !item || list.scrollWidth <= list.clientWidth) return;
+    const left = item.offsetLeft - list.offsetLeft;
+    const right = left + item.offsetWidth;
+    if (left < list.scrollLeft || right > list.scrollLeft + list.clientWidth) {
+      list.scrollTo({ left: Math.max(0, left - 8), behavior: reduce ? 'auto' : 'smooth' });
+    }
+  }, [active, reduce]);
 
   const template = TEMPLATES[active]!;
 
@@ -66,18 +87,15 @@ export function Vorlagen({ contact, heading }: { contact: string; heading: React
         <div className="mt-12 grid gap-10 lg:grid-cols-12 lg:gap-14">
           {/* The list. */}
           <div className="min-w-0 lg:col-span-5">
-            <div role="tablist" aria-label="Berichtsvorlagen" className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-2 [scrollbar-width:none] lg:mx-0 lg:block lg:space-y-1 lg:overflow-visible lg:px-0 lg:pb-0">
+            <div ref={listRef} aria-label="Berichtsvorlagen" className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-2 [scrollbar-width:none] lg:mx-0 lg:block lg:space-y-1 lg:overflow-visible lg:px-0 lg:pb-0">
               {TEMPLATES.map((t, i) => {
                 const on = i === active;
                 return (
                   <button
                     key={t.name}
                     type="button"
-                    role="tab"
-                    aria-selected={on}
+                    aria-pressed={on}
                     onClick={() => choose(i)}
-                    onMouseEnter={() => choose(i)}
-                    onFocus={() => choose(i)}
                     className={cn(
                       'group flex shrink-0 snap-start items-center gap-3 rounded-full border px-4 py-2.5 text-start text-sm font-medium transition-colors lg:w-full lg:rounded-2xl lg:border-transparent lg:px-4 lg:py-3.5 lg:text-base',
                       on

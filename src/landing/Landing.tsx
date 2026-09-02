@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
-import { BorderBeam } from 'border-beam';
 
 import { BrandWave } from '@/components/brand-wave';
 import { cn } from '@/lib/utils';
@@ -9,8 +8,9 @@ import { Bento } from './Bento';
 import { HeroDemo } from './HeroDemo';
 import { LiveRibbon } from './LiveRibbon';
 import { Scrollytelling } from './Scrollytelling';
+import { ShaderField } from './ShaderField';
 import { Vorlagen } from './Vorlagen';
-import { heroVoice } from './voice';
+import { heroLevel } from './voice';
 
 /**
  * The landing page: the product's own language doing the selling.
@@ -20,8 +20,9 @@ import { heroVoice } from './voice';
  * device, the product shown real and running.
  *
  * The one signature picture is the hero: the recorder on the left, the letter
- * on the right, and the app's live ribbon streaming full-bleed between them,
- * breathing in time with the demo's speech. Everything after it is quieter.
+ * on the right, and a shader field under both, the ribbon's four hues laid on
+ * white like ink under light and breathing in time with the demo's speech.
+ * Everything after it is quieter.
  *
  * Shape system: buttons and chips are pills, panels and tiles are 24px,
  * paper is 6px. One dark slab on the page (the tools), everything else light.
@@ -59,7 +60,8 @@ export function Landing() {
 /* ------------------------------------------------------------------ nav -- */
 
 function Nav() {
-  const [scrolled, setScrolled] = useState(false);
+  // Read the real position on mount: the page may open already scrolled.
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 24);
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 24));
 
@@ -102,7 +104,6 @@ function Nav() {
 
 function Hero() {
   const reduce = useReducedMotion();
-  const [beam, setBeam] = useState(false);
 
   const word = (w: string, i: number) => (
     <motion.span
@@ -120,8 +121,11 @@ function Hero() {
 
   return (
     <section className="relative overflow-hidden pt-32 sm:pt-36 lg:pt-40">
-      <div className="mx-auto w-full max-w-6xl px-6">
-        <h1 className="max-w-[24ch] text-[2.9rem] leading-[1.02] font-semibold tracking-[-0.025em] sm:text-6xl lg:text-[4.6rem]">
+      {/* The atmosphere: a shader under the whole hero, listening to the demo. */}
+      <ShaderField voice={heroLevel} className="absolute inset-0" />
+
+      <div className="relative mx-auto w-full max-w-6xl px-6">
+        <h1 className="max-w-[24ch] text-[2.9rem] leading-[1.02] font-semibold tracking-[-0.025em] sm:text-[3.4rem] lg:text-[4.6rem]">
           <span className="block text-muted-foreground">{first.map((w, i) => word(w, i))}</span>
           <span className="block">{second.map((w, i) => word(w, i + first.length))}</span>
         </h1>
@@ -135,28 +139,13 @@ function Hero() {
             Word-Datei exportiert. Alles bleibt auf Ihrem Rechner.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <BorderBeam
-              size="md"
-              theme="dark"
-              colorVariant="ocean"
-              staticColors
-              active={beam}
-              borderRadius={24}
-              duration={1.15}
-              brightness={2.4}
-              saturation={2.4}
-              className="rounded-full"
+            <a
+              href={CONTACT}
+              className="btn-liquid-dark flex h-12 items-center gap-2 rounded-full px-6 text-base font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              <a
-                href={CONTACT}
-                onMouseEnter={() => setBeam(true)}
-                onMouseLeave={() => setBeam(false)}
-                className="btn-liquid-dark flex h-12 items-center gap-2 rounded-full px-6 text-base font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              >
-                Früher Zugang
-                <ArrowRight className="size-4" aria-hidden />
-              </a>
-            </BorderBeam>
+              Früher Zugang
+              <ArrowRight className="size-4" aria-hidden />
+            </a>
             <a
               href="#werkzeuge"
               className="btn-liquid flex h-12 items-center gap-2 rounded-full border border-white/80 px-6 text-base font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -168,13 +157,8 @@ function Hero() {
       </div>
 
       {/* The product, running: voice on the left, letter on the right, the
-          app's own ribbon streaming full-bleed between them and listening to
-          the demo's speech. This is the page's one picture. */}
+          field under both listening to the demo's speech. The page's one picture. */}
       <div className="relative mt-20 sm:mt-24 lg:mt-28">
-        <LiveRibbon
-          probe={heroVoice}
-          className="pointer-events-none absolute inset-x-0 top-1/2 h-[24rem] -translate-y-1/2 sm:h-[32rem]"
-        />
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}

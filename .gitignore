@@ -38,3 +38,4 @@ eval/results/
 HJ report examples/
 .vercel
 .env*
+.shots/

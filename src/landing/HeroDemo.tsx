@@ -30,6 +30,7 @@ const LETTER_LINES = [
 
 /** Scene timeline, in ms on the shared clock. */
 const T = {
+  fadeIn: 400,
   speakStart: 500,
   speakEnd: 4600,
   press: 4900,
@@ -65,8 +66,12 @@ function sceneAt(t: number): Scene {
     pressed: t >= T.press,
     job: t < T.jobStart ? 'none' : t < T.jobDone ? 'busy' : 'done',
     charsWritten: Math.round(writeP * totalChars),
-    // Ease everything out at the end of the loop instead of hard-cutting.
-    fade: t > T.hold ? Math.min(1, (t - T.hold) / (T.total - T.hold)) : 0,
+    // Ease out at the end of the loop and back in at the start, so the wrap
+    // from the finished letter to the empty one is a breath, not a pop.
+    fade: Math.max(
+      t > T.hold ? Math.min(1, (t - T.hold) / (T.total - T.hold)) : 0,
+      t < T.fadeIn ? 1 - t / T.fadeIn : 0,
+    ),
   };
 }
 

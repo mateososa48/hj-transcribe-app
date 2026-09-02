@@ -19,3 +19,8 @@ export function publishVoice(frame: SpeechFrame): void {
 export function heroVoice(): SpeechFrame {
   return current;
 }
+
+/** Just the loudness, for instruments that only need to know "is someone speaking". */
+export function heroLevel(): number {
+  return current.level;
+}

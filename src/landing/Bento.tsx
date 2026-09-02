@@ -29,8 +29,16 @@ function useLoopClock(totalMs: number): { t: number; finished: boolean; ref: Rea
     let raf = 0;
     let running = false;
     let started = performance.now();
+    let lastStep = -1;
     const tick = () => {
-      setT((performance.now() - started) % totalMs);
+      // Twenty-five updates a second is plenty for typing and word sweeps;
+      // rendering React at display rate for three tiles is not.
+      const elapsed = (performance.now() - started) % totalMs;
+      const step = Math.floor(elapsed / 40);
+      if (step !== lastStep) {
+        lastStep = step;
+        setT(elapsed);
+      }
       raf = requestAnimationFrame(tick);
     };
     const observer = new IntersectionObserver(
