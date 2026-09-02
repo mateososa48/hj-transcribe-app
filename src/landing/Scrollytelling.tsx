@@ -72,7 +72,9 @@ const CHAPTERS: Chapter[] = [
     body: 'Die Aufnahme läuft mit, während Sie beim Patienten sind. Danach: Transkript nach Sprechern getrennt, Notizen in Abschnitten, jedes Wort anklickbar.',
     img: '/landing/transkript.webp',
     alt: 'Ein Sprechstunden-Transkript, nach Arzt und Patient getrennt',
-    camera: { x: 0.5, y: 0.49, zoom: 1.6 },
+    // The frame's top edge lands at y - 0.3125; the meta line at 0.176 needs
+    // room above it for its callout.
+    camera: { x: 0.5, y: 0.455, zoom: 1.6 },
     callouts: [
       { x: 0.384, y: 0.176, text: 'Automatisch nach Sprechern getrennt', side: 'right' },
       { x: 0.35, y: 0.694, text: 'Ein Klick springt in den Ton', side: 'right' },
