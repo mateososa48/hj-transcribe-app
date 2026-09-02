@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '@/index.css';
-import '@fontsource-variable/instrument-sans/index.css';
+import '@fontsource-variable/outfit/index.css';
 import './landing.css';
 import { Landing } from './Landing';
 

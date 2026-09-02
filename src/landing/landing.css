@@ -9,12 +9,12 @@
   color: #fff;
 }
 
-/* The display face: Instrument Sans for the headline, the statement and the
-   section titles, at semibold, never heavier. Geist stays the UI and body
-   face, as in the app. */
+/* The display face: Outfit at medium weight for the headline and the section
+   titles. Slim strokes, geometric, modern; never heavier than 500. Geist
+   stays the UI and body face, as in the app. */
 .font-display {
-  font-family: 'Instrument Sans Variable', var(--font-sans);
-  letter-spacing: -0.025em;
+  font-family: 'Outfit Variable', var(--font-sans);
+  letter-spacing: -0.02em;
 }
 
 /* A miniature letter, as paper: the document face, a hairline, real shadow. */

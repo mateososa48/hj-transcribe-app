@@ -47,49 +47,51 @@ float noise(vec2 p) {
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 float fbm(vec2 p) {
+  // Three octaves only: the field is a wash of light, not a texture.
   float v = 0.0;
-  float a = 0.5;
+  float a = 0.55;
   mat2 r = mat2(0.8, 0.6, -0.6, 0.8);
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 3; i++) {
     v += a * noise(p);
-    p = r * p * 2.0 + vec2(0.7, 0.3);
-    a *= 0.5;
+    p = r * p * 1.9 + vec2(0.7, 0.3);
+    a *= 0.45;
   }
   return v;
 }
 void main() {
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 p = uv * vec2(u_res.x / u_res.y, 1.0);
-  float t = u_time * 0.05;
+  float t = u_time * 0.04;
   float v = u_voice;
 
-  // Warp the space with two slow fields, then read colour from the warped space.
-  vec2 q = vec2(fbm(p * 1.2 + vec2(t, -t * 0.6)), fbm(p * 1.2 + vec2(-t * 0.8, t * 0.5) + 3.1));
-  vec2 w = p + (1.4 + 0.9 * v) * (q - 0.5);
-  float n1 = fbm(w * 1.0 + vec2(t * 0.4, 0.0));
-  float n2 = fbm(w * 2.2 + vec2(0.0, -t * 0.3) + 5.0);
+  // Warp the space gently with two very slow, very large fields, then read
+  // colour from the warped space. Everything is low frequency on purpose:
+  // the eye should find a gradient, never a pattern.
+  vec2 q = vec2(fbm(p * 0.6 + vec2(t, -t * 0.6)), fbm(p * 0.6 + vec2(-t * 0.8, t * 0.5) + 3.1));
+  vec2 w = p + (0.8 + 0.5 * v) * (q - 0.5);
+  float n1 = fbm(w * 0.55 + vec2(t * 0.3, 0.0));
+  float n2 = fbm(w * 0.95 + vec2(0.0, -t * 0.25) + 5.0);
 
-  // The ribbon's four hues, in the ribbon's order.
+  // The ribbon's hues: violet, magenta, rose. The amber only as a trace.
   vec3 c1 = vec3(0.259, 0.188, 1.000);
   vec3 c2 = vec3(0.647, 0.169, 0.847);
   vec3 c3 = vec3(0.851, 0.165, 0.408);
   vec3 c4 = vec3(0.706, 0.439, 0.059);
-  vec3 col = mix(c1, c2, smoothstep(0.25, 0.65, n1));
-  col = mix(col, c3, smoothstep(0.45, 0.85, n2));
-  col = mix(col, c4, smoothstep(0.55, 0.95, n1 * n2 * 2.2));
+  vec3 col = mix(c1, c2, smoothstep(0.30, 0.70, n1));
+  col = mix(col, c3, smoothstep(0.40, 0.80, n2));
+  col = mix(col, c4, 0.30 * smoothstep(0.78, 1.0, n1 * n2 * 2.2));
   // Pull the hues a step toward grey: printed light, not candy.
-  col = mix(col, vec3(dot(col, vec3(0.30, 0.59, 0.11))), 0.14);
+  col = mix(col, vec3(dot(col, vec3(0.30, 0.59, 0.11))), 0.12);
 
-  // Where the field is lit, and where on the page it is allowed to be: it
-  // gathers behind the letter on the right and pools under the recorder at
-  // the lower left, and stays off the headline.
-  float d = smoothstep(0.30, 0.85, n1 * 0.55 + n2 * 0.55);
-  float page = exp(-pow((uv.x - 0.74) / 0.34, 2.0)) * exp(-pow((uv.y - 0.48) / 0.42, 2.0));
-  float pocket = 0.75 * exp(-pow((uv.x - 0.2) / 0.24, 2.0)) * exp(-pow((uv.y - 0.24) / 0.24, 2.0));
-  float band = max(page, pocket);
-  float top = 1.0 - smoothstep(0.72, 0.97, uv.y);
-  float bottom = smoothstep(0.0, 0.18, uv.y);
-  float alpha = d * band * top * bottom * (0.56 + 0.30 * v);
+  // Presence: a broad base everywhere the mask allows, with only gentle
+  // swells, so the wash reads as even light rather than patches.
+  float d = 0.45 + 0.55 * smoothstep(0.25, 0.85, n1 * 0.5 + n2 * 0.5);
+  // One wide gradient across the hero: lighter at the top left, fuller
+  // toward the letter on the right and the foot of the section.
+  float across = 0.25 + 0.75 * smoothstep(0.0, 1.0, uv.x * 0.7 + (1.0 - uv.y) * 0.5);
+  float top = 1.0 - smoothstep(0.66, 0.97, uv.y);
+  float bottom = smoothstep(0.0, 0.16, uv.y);
+  float alpha = d * across * top * bottom * (0.50 + 0.28 * v);
 
   // Ink on white, lifted so it glows instead of muddying.
   vec3 ink = col * 0.85 + 0.15;
@@ -183,7 +185,7 @@ export function ShaderField({ className, voice }: { className?: string; voice?: 
       gl.uniform1f(uVoice, level);
       // Half-resolution grain is two device pixels on a 1× screen and four on
       // a 2× one; keep the grain fine rather than chunky on phones.
-      gl.uniform1f(uGrain, window.devicePixelRatio >= 2 ? 0.028 : 0.045);
+      gl.uniform1f(uGrain, window.devicePixelRatio >= 2 ? 0.018 : 0.03);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
     const tick = () => {

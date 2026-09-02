@@ -132,7 +132,12 @@ export function Scrollytelling() {
       <section id="werkzeuge" className="scroll-mt-24 px-3 sm:px-4">
         <div className="relative overflow-hidden rounded-3xl bg-[#0e0e10] py-20 text-white sm:py-24">
           <Glow />
-          <h2 className="sr-only">Die Werkzeuge</h2>
+          <div className="relative mx-auto w-full max-w-6xl px-6 sm:px-10">
+            <h2 className="font-display mb-14 max-w-[24ch] text-[1.6rem] leading-[1.1] font-medium text-balance sm:text-[2rem]">
+              Drei Werkzeuge, ein Brief.
+              <span className="text-white/50"> Was Sie sprechen, wird an der richtigen Stelle Text.</span>
+            </h2>
+          </div>
           <div className="relative mx-auto w-full max-w-6xl space-y-24 px-6 sm:px-10">
             {CHAPTERS.map((c, i) => (
               <div key={c.id} className="grid items-center gap-8 lg:grid-cols-12">
@@ -152,9 +157,14 @@ export function Scrollytelling() {
     <section id="werkzeuge" className="scroll-mt-24 px-3 sm:px-4">
       <div ref={ref} className="relative h-[380vh]">
         <div className="sticky top-0 flex min-h-dvh items-center py-4">
-          <div className="relative w-full overflow-hidden rounded-3xl bg-[#0e0e10] py-10 text-white shadow-[0_40px_120px_-40px_rgba(12,12,13,0.5)] sm:py-16 lg:py-20">
+          <div className="relative w-full overflow-hidden rounded-3xl bg-[#0e0e10] py-10 text-white shadow-[0_40px_120px_-40px_rgba(12,12,13,0.5)] sm:py-14 lg:py-16">
             <Glow />
-            <h2 className="sr-only">Die Werkzeuge</h2>
+            <div className="relative mx-auto w-full max-w-6xl px-6 sm:px-10">
+              <h2 className="font-display mb-8 max-w-[24ch] text-[1.6rem] leading-[1.1] font-medium text-balance sm:mb-10 sm:text-[2rem]">
+                Drei Werkzeuge, ein Brief.
+                <span className="text-white/50"> Was Sie sprechen, wird an der richtigen Stelle Text.</span>
+              </h2>
+            </div>
             <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-6 lg:grid-cols-12 lg:gap-6 sm:px-10">
               {/* The chapters, beside a rail that fills as you scroll. */}
               <div className="relative lg:col-span-4">

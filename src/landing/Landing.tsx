@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 
@@ -37,7 +37,6 @@ export function Landing() {
       <Nav />
       <main>
         <Hero />
-        <Statement />
         <Scrollytelling />
         <Bento heading={<SectionHeading title="Die Details, an denen man Sorgfalt erkennt." />} />
         <Vorlagen
@@ -141,7 +140,7 @@ function Hero() {
         <HeroDemo
           lead={
             <>
-              <h1 className="font-display text-[3rem] leading-[1] font-semibold sm:text-[3.8rem] lg:text-[4.5rem]">
+              <h1 className="font-display text-[3rem] leading-[1] font-medium sm:text-[3.8rem] lg:text-[4.6rem]">
                 <span className="block">{first.map((w, i) => word(w, i))}</span>
                 <span className="block">{second.map((w, i) => word(w, i + first.length))}</span>
               </h1>
@@ -178,69 +177,6 @@ function Hero() {
   );
 }
 
-/* ------------------------------------------------------------ statement -- */
-
-const STATEMENT_REST =
-  'Das Diktat wird zur Beurteilung, das Gespräch zu Notizen, die Seite zur Word-Datei. Jeder Satz geht durch Ihre Hände, bevor er im Brief steht.'.split(' ');
-
-/**
- * The statement reads itself in as it scrolls through the middle of the
- * viewport: the grey continuation lights up word by word at reading pace.
- * Driven imperatively from one scroll value; static and fully lit under
- * reduced motion.
- */
-function Statement() {
-  const reduce = useReducedMotion();
-  const ref = useRef<HTMLParagraphElement | null>(null);
-  const words = useRef<Array<HTMLSpanElement | null>>([]);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 88%', 'end 45%'] });
-  // Unlit words are a mid grey that still passes AA on white; lit words are
-  // the foreground. A colour move, not an opacity one, so nothing on the page
-  // is ever too faint to read.
-  const light = (p: number) => {
-    const n = STATEMENT_REST.length;
-    words.current.forEach((el, i) => {
-      if (!el) return;
-      const k = Math.min(1, Math.max(0, p * (n + 2) - i));
-      const c = Math.round(118 + (12 - 118) * k);
-      el.style.color = `rgb(${c}, ${c}, ${c + 1})`;
-    });
-  };
-  useMotionValueEvent(scrollYProgress, 'change', (p) => {
-    if (!reduce) light(p);
-  });
-  useEffect(() => {
-    light(reduce ? 1 : scrollYProgress.get());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce]);
-
-  return (
-    <section className="pt-6 pb-20 sm:pt-16 sm:pb-24">
-      <div className="mx-auto w-full max-w-6xl px-6">
-        <p
-          ref={ref}
-          className="font-display max-w-[34ch] text-[1.6rem] leading-[1.15] font-semibold text-balance sm:text-[2.5rem] sm:leading-[1.12]"
-        >
-          Drei Werkzeuge, ein Brief.{' '}
-          <span>
-            {STATEMENT_REST.map((w, i) => (
-              <span
-                key={i}
-                ref={(el) => {
-                  words.current[i] = el;
-                }}
-                className="transition-colors duration-150"
-              >
-                {w}{' '}
-              </span>
-            ))}
-          </span>
-        </p>
-      </div>
-    </section>
-  );
-}
-
 /* ---------------------------------------------------------------- shared -- */
 
 function Reveal({ children, className }: { children: ReactNode; className?: string }) {
@@ -261,7 +197,7 @@ function Reveal({ children, className }: { children: ReactNode; className?: stri
 function SectionHeading({ title, body }: { title: string; body?: string }) {
   return (
     <Reveal>
-      <h2 className="font-display max-w-[22ch] text-[2.2rem] leading-[1.04] font-semibold text-balance sm:text-[2.8rem]">
+      <h2 className="font-display max-w-[22ch] text-[2.2rem] leading-[1.04] font-medium text-balance sm:text-[2.8rem]">
         {title}
       </h2>
       {body ? <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-pretty text-muted-foreground">{body}</p> : null}
@@ -291,7 +227,7 @@ function Vertrauen() {
     <section className="border-t border-border py-24 sm:py-32">
       <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 lg:grid-cols-12 lg:gap-8">
         <Reveal className="lg:col-span-4">
-          <h2 className="font-display text-[2.2rem] leading-[1.04] font-semibold sm:text-[2.8rem]">Bleibt bei Ihnen.</h2>
+          <h2 className="font-display text-[2.2rem] leading-[1.04] font-medium sm:text-[2.8rem]">Bleibt bei Ihnen.</h2>
           <p className="mt-4 max-w-[30ch] text-lg leading-relaxed text-muted-foreground">
             Drei Grundsätze, die im Werkzeug selbst stecken, nicht in einer Vereinbarung.
           </p>
@@ -318,7 +254,7 @@ function FinalCta() {
         {/* The instrument's reprise sits above the words, never through them. */}
         <LiveRibbon className="pointer-events-none relative -mb-16 h-[16rem] w-full sm:-mb-20 sm:h-[20rem]" />
         <Reveal className="relative mx-auto w-full max-w-6xl px-6 text-center">
-          <h2 className="font-display mx-auto max-w-[16ch] text-[2.4rem] leading-[1] font-semibold text-balance sm:text-[4rem]">
+          <h2 className="font-display mx-auto max-w-[16ch] text-[2.4rem] leading-[1] font-medium text-balance sm:text-[4rem]">
             Weniger Tastatur. Mehr Medizin.
           </h2>
           <p className="mx-auto mt-6 max-w-[44ch] text-lg leading-relaxed text-pretty text-muted-foreground">
