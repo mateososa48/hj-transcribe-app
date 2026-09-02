@@ -30,6 +30,7 @@ uniform vec2 u_res;
 uniform float u_time;
 uniform float u_voice;
 uniform float u_grain;
+uniform float u_edge;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -101,7 +102,9 @@ void main() {
   // toward the letter on the right and the foot of the section.
   float across = 0.3 + 0.7 * smoothstep(0.0, 1.0, uv.x * 0.6 + (1.0 - uv.y) * 0.5);
   float top = 1.0 - smoothstep(0.70, 0.98, uv.y);
-  float bottom = smoothstep(0.0, 0.16, uv.y);
+  // With u_edge the colour runs to the bottom edge of the page instead of
+  // dissolving before it: the closing section ends in light.
+  float bottom = mix(smoothstep(0.0, 0.16, uv.y), 1.0, u_edge);
   float alpha = d * across * top * bottom * (0.56 + 0.26 * v);
 
   // Ink on white, lifted a little so it glows instead of muddying.
@@ -116,7 +119,16 @@ void main() {
 const STILL_TIME = 31.7;
 const SCALE = 0.5;
 
-export function ShaderField({ className, voice }: { className?: string; voice?: () => number }) {
+export function ShaderField({
+  className,
+  voice,
+  toEdge = false,
+}: {
+  className?: string;
+  voice?: () => number;
+  /** Run the colour to the bottom edge instead of dissolving before it. */
+  toEdge?: boolean;
+}) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [fallback, setFallback] = useState(false);
 
@@ -178,6 +190,8 @@ export function ShaderField({ className, voice }: { className?: string; voice?: 
     const uTime = gl.getUniformLocation(program, 'u_time');
     const uVoice = gl.getUniformLocation(program, 'u_voice');
     const uGrain = gl.getUniformLocation(program, 'u_grain');
+    const uEdge = gl.getUniformLocation(program, 'u_edge');
+    gl.uniform1f(uEdge, toEdge ? 1 : 0);
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0;
@@ -273,16 +287,20 @@ export function ShaderField({ className, voice }: { className?: string; voice?: 
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       canvas.remove();
     };
-  }, [voice]);
+  }, [voice, toEdge]);
 
   return (
     <div
       ref={hostRef}
       aria-hidden
       className={cn(
-        // A CSS mask dissolves the canvas itself at both ends, so no shader
-        // value can ever leave a straight edge against the page.
-        'pointer-events-none overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_76%,transparent)]',
+        // A CSS mask dissolves the canvas itself at the top (and, unless it
+        // runs to the edge, at the foot), so no shader value can ever leave a
+        // straight edge against the page.
+        'pointer-events-none overflow-hidden',
+        toEdge
+          ? '[mask-image:linear-gradient(to_bottom,transparent,black_14%)]'
+          : '[mask-image:linear-gradient(to_bottom,transparent,black_10%,black_76%,transparent)]',
         className,
       )}
     >

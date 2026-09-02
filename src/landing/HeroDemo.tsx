@@ -164,10 +164,11 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
           aria-label="So arbeitet der Arzt-Assistent: ein Diktat wird zum Briefabschnitt"
           className="mt-12 select-none lg:mt-14"
         >
-          <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-5 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(217,42,104,0.28)]">
-            <div className="flex items-center gap-4">
-              <LiveRibbon probe={heroVoice} className="h-12 w-40 shrink-0 sm:w-44" />
-              <span className="text-2xl font-semibold tracking-tight tabular-nums">
+          <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-4 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(217,42,104,0.28)] sm:px-5">
+            {/* Sized so the whole window fits a 390px phone with room to spare. */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <LiveRibbon probe={heroVoice} className="h-12 w-28 shrink-0 sm:w-44" />
+              <span className="text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">
                 0:{String(Math.min(59, Math.floor(Math.min(scene.t, T.speakEnd) / 1000))).padStart(2, '0')}
               </span>
               <span

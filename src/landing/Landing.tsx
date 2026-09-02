@@ -6,7 +6,6 @@ import { BrandWave } from '@/components/brand-wave';
 import { cn } from '@/lib/utils';
 import { Bento } from './Bento';
 import { HeroDemo } from './HeroDemo';
-import { LiveRibbon } from './LiveRibbon';
 import { Scrollytelling } from './Scrollytelling';
 import { ShaderField } from './ShaderField';
 import { Vorlagen } from './Vorlagen';
@@ -40,18 +39,16 @@ export function Landing() {
         <Scrollytelling />
         <Bento heading={<SectionHeading title="Die Details, an denen man Sorgfalt erkennt." />} />
         <Vorlagen
-          contact={CONTACT}
           heading={
             <SectionHeading
               title="Ihre Abschnitte. Ihre Briefe."
-              body="Jede Praxis schreibt anders. Legen Sie eigene Berichtsvorlagen an, mit Ihren Abschnitten, Ihrer Reihenfolge und Ihrer Anrede. Jeder neue Brief beginnt genau so, wie Sie ihn schreiben würden."
+              body="Jede Praxis schreibt anders. Legen Sie eigene Berichtsvorlagen an: Abschnitte hinzufügen, umsortieren, benennen. Jeder neue Brief beginnt so, wie Sie ihn schreiben würden. Probieren Sie es hier aus."
             />
           }
         />
         <Vertrauen />
-        <FinalCta />
       </main>
-      <Footer />
+      <Closing />
     </div>
   );
 }
@@ -245,19 +242,22 @@ function Vertrauen() {
   );
 }
 
-/* ------------------------------------------------------------ final cta -- */
+/* -------------------------------------------------------------- closing -- */
 
-function FinalCta() {
+/**
+ * The page ends in light. The closing words and the last key sit on a field
+ * that runs to the bottom edge, and the footer line rests on the colour.
+ */
+function Closing() {
   return (
-    <section className="overflow-hidden pt-10 pb-28 sm:pt-12 sm:pb-40">
-      <div className="relative">
-        {/* The instrument's reprise sits above the words, never through them. */}
-        <LiveRibbon className="pointer-events-none relative -mb-16 h-[16rem] w-full sm:-mb-20 sm:h-[20rem]" />
-        <Reveal className="relative mx-auto w-full max-w-6xl px-6 text-center">
+    <footer className="relative overflow-hidden">
+      <ShaderField toEdge className="absolute inset-0" />
+      <div className="relative mx-auto w-full max-w-6xl px-6 pt-28 pb-8 sm:pt-40">
+        <Reveal className="text-center">
           <h2 className="font-display mx-auto max-w-[16ch] text-[2.4rem] leading-[1] font-medium text-balance sm:text-[4rem]">
             Weniger Tastatur. Mehr Medizin.
           </h2>
-          <p className="mx-auto mt-6 max-w-[44ch] text-lg leading-relaxed text-pretty text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-[44ch] text-lg leading-relaxed text-pretty text-foreground/75">
             Arzt-Assistent wird derzeit mit einer kleinen Gruppe von Ärztinnen und Ärzten erprobt.
             Schreiben Sie uns, wenn Sie dabei sein möchten.
           </p>
@@ -271,20 +271,28 @@ function FinalCta() {
             </a>
           </div>
         </Reveal>
-      </div>
-    </section>
-  );
-}
 
-function Footer() {
-  return (
-    <footer className="border-t border-border py-10">
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-4 px-6 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1.5 font-medium text-foreground">
-          Arzt-Assistent
-          <BrandWave className="h-8 w-10 shrink-0 mix-blend-multiply" />
-        </span>
-        <span className="ms-auto">© {new Date().getFullYear()} Arzt-Assistent. Für Ärztinnen und Ärzte gemacht.</span>
+        <div className="mt-32 flex flex-wrap items-end justify-between gap-x-8 gap-y-6 border-t border-foreground/10 pt-8 text-sm sm:mt-44">
+          <div>
+            <span className="flex items-center gap-1.5 font-medium">
+              Arzt-Assistent
+              <BrandWave className="h-8 w-10 shrink-0 mix-blend-multiply" />
+            </span>
+            <p className="mt-1.5 text-foreground/75">Für Ärztinnen und Ärzte gemacht.</p>
+          </div>
+          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-foreground/75">
+            <a href="#werkzeuge" className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+              Die Werkzeuge
+            </a>
+            <a href="#vorlagen" className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+              Vorlagen
+            </a>
+            <a href={CONTACT} className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+              Kontakt
+            </a>
+          </nav>
+          <p className="text-foreground/75">© {new Date().getFullYear()} Arzt-Assistent</p>
+        </div>
       </div>
     </footer>
   );
