@@ -2,23 +2,29 @@ import { useEffect, useRef, useState } from 'react';
 
 import { WaveEngine } from '@/features/record/wave/engine';
 import { cn } from '@/lib/utils';
-import { createSpeechEnvelope } from './speech';
+import { createSpeechEnvelope, type SpeechFrame } from './speech';
 
 /**
- * The app's actual recording ribbon — the same WebGL shader the product runs —
+ * The app's actual recording ribbon, the same WebGL shader the product runs,
  * mounted on the landing page and fed a synthetic speech envelope instead of a
  * microphone. Nothing here is a video or an export: it is the instrument
  * itself, breathing on the page that sells it.
  *
- * The envelope imitates dictation rather than music: bursts of syllables at a
- * talking cadence, short breaths between phrases, a longer pause at the end of
- * a "sentence". All values are smoothed so the ribbon swells and settles the
- * way it does when someone actually speaks.
+ * By default each ribbon carries its own envelope. Pass `probe` to make it
+ * listen to a shared voice instead (the hero ribbon listens to the demo).
  *
  * Same discipline as the in-app mark: paused offscreen and on hidden tabs,
  * a still frame under reduced motion, absent without WebGL2.
  */
-export function LiveRibbon({ dark = false, className }: { dark?: boolean; className?: string }) {
+export function LiveRibbon({
+  dark = false,
+  probe,
+  className,
+}: {
+  dark?: boolean;
+  probe?: () => SpeechFrame;
+  className?: string;
+}) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [supported, setSupported] = useState(true);
 
@@ -27,12 +33,13 @@ export function LiveRibbon({ dark = false, className }: { dark?: boolean; classN
     if (!host) return;
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const envelope = createSpeechEnvelope();
+    const own = createSpeechEnvelope();
+    const read = probe ?? (() => own(performance.now()));
 
     const engine = new WaveEngine(host, {
       reducedMotion: false,
       dark,
-      probe: () => envelope(performance.now()),
+      probe: read,
     });
 
     if (!engine.ok) {
@@ -76,7 +83,7 @@ export function LiveRibbon({ dark = false, className }: { dark?: boolean; classN
       motionQuery.removeEventListener('change', sync);
       engine.destroy();
     };
-  }, [dark]);
+  }, [dark, probe]);
 
   if (!supported) return null;
 
