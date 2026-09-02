@@ -31,6 +31,7 @@ uniform float u_time;
 uniform float u_voice;
 uniform float u_grain;
 uniform float u_edge;
+uniform float u_strength;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -105,7 +106,7 @@ void main() {
   // With u_edge the colour runs to the bottom edge of the page instead of
   // dissolving before it: the closing section ends in light.
   float bottom = mix(smoothstep(0.0, 0.16, uv.y), 1.0, u_edge);
-  float alpha = d * across * top * bottom * (0.56 + 0.26 * v);
+  float alpha = d * across * top * bottom * (0.56 + 0.26 * v) * u_strength;
 
   // Ink on white, lifted a little so it glows instead of muddying.
   vec3 ink = col * 0.9 + 0.1;
@@ -123,11 +124,14 @@ export function ShaderField({
   className,
   voice,
   toEdge = false,
+  strength = 1,
 }: {
   className?: string;
   voice?: () => number;
   /** Run the colour to the bottom edge instead of dissolving before it. */
   toEdge?: boolean;
+  /** How much of the field's presence to show; 1 is the hero. */
+  strength?: number;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [fallback, setFallback] = useState(false);
@@ -192,6 +196,7 @@ export function ShaderField({
     const uGrain = gl.getUniformLocation(program, 'u_grain');
     const uEdge = gl.getUniformLocation(program, 'u_edge');
     gl.uniform1f(uEdge, toEdge ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_strength'), strength);
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0;
@@ -287,7 +292,7 @@ export function ShaderField({
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       canvas.remove();
     };
-  }, [voice, toEdge]);
+  }, [voice, toEdge, strength]);
 
   return (
     <div

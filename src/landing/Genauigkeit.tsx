@@ -4,6 +4,7 @@ import { Mic } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { LiveRibbon } from './LiveRibbon';
+import { ShaderField } from './ShaderField';
 import { createSpeechEnvelope, type SpeechFrame } from './speech';
 
 /**
@@ -49,6 +50,7 @@ export function Genauigkeit() {
   const hostRef = useRef<HTMLElement | null>(null);
   const frameRef = useRef<SpeechFrame>(SILENCE);
   const probe = useCallback(() => frameRef.current, []);
+  const level = useCallback(() => frameRef.current.level, []);
   const [index, setIndex] = useState(2);
   const [local, setLocal] = useState(0);
   const [held, setHeld] = useState(false);
@@ -182,11 +184,9 @@ export function Genauigkeit() {
             aria-label={`Gesagt: ${shownEntry.said}. Im Brief: ${shownEntry.written}.`}
             className="relative order-1 min-w-0 overflow-hidden rounded-3xl border border-border bg-background px-7 py-7 sm:px-12 sm:py-9 lg:order-2 lg:col-span-9"
           >
-            {/* The hues as light, gathering behind the word. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_70%_at_15%_10%,rgba(66,48,255,0.12),transparent_65%),radial-gradient(55%_65%_at_85%_20%,rgba(165,43,216,0.12),transparent_65%),radial-gradient(70%_60%_at_60%_100%,rgba(217,42,104,0.12),transparent_65%)]"
-            />
+            {/* The same field as the hero and the closing, at lower strength,
+                breathing with the voice on stage. */}
+            <ShaderField voice={level} strength={0.55} className="absolute inset-0" />
 
             <div className="relative">
               {/* Said. */}
@@ -202,7 +202,16 @@ export function Genauigkeit() {
               </p>
 
               {/* Written: the headword. */}
-              <div className={cn('mt-5 min-h-[2.1em] transition-opacity duration-500 sm:mt-6', landed ? 'opacity-100' : 'opacity-35')} lang="de">
+              {/* The size lives on the wrapper so its reserved two lines are measured
+                  in the headword's own em: a wrapping compound noun must never
+                  change the stage's height and shift the page beneath. */}
+              <div
+                className={cn(
+                  'mt-5 min-h-[2.1em] text-[2.2rem] leading-[1.02] transition-opacity duration-500 sm:mt-6 sm:text-[3.2rem] lg:text-[4rem]',
+                  landed ? 'opacity-100' : 'opacity-35',
+                )}
+                lang="de"
+              >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.p
                     key={shownEntry.written}
@@ -210,10 +219,7 @@ export function Genauigkeit() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={reduce ? { opacity: 0 } : { opacity: 0, y: -14 }}
                     transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-                    className={cn(
-                      'font-display text-[2.2rem] leading-[1.02] font-medium tracking-[-0.02em] break-words hyphens-auto sm:text-[3.2rem] lg:text-[4rem]',
-                      hue.text,
-                    )}
+                    className={cn('font-display font-medium tracking-[-0.02em] break-words hyphens-auto', hue.text)}
                   >
                     {gapParts ? (
                       <>
