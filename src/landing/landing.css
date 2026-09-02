@@ -9,13 +9,12 @@
   color: #fff;
 }
 
-/* The display face: Bricolage Grotesque for the headline, the statement and
-   the section titles. Geist stays the UI and body face, as in the app. The
-   optical-size axis follows the font size on its own. */
+/* The display face: Instrument Sans for the headline, the statement and the
+   section titles, at semibold, never heavier. Geist stays the UI and body
+   face, as in the app. */
 .font-display {
-  font-family: 'Bricolage Grotesque Variable', var(--font-sans);
-  font-optical-sizing: auto;
-  letter-spacing: -0.03em;
+  font-family: 'Instrument Sans Variable', var(--font-sans);
+  letter-spacing: -0.025em;
 }
 
 /* A miniature letter, as paper: the document face, a hairline, real shadow. */

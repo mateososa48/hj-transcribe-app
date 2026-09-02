@@ -129,8 +129,8 @@ function Hero() {
         <HeroDemo
           lead={
             <>
-              <h1 className="font-display text-[3rem] leading-[0.98] font-bold sm:text-[3.8rem] lg:text-[4.5rem]">
-                <span className="block text-muted-foreground">{first.map((w, i) => word(w, i))}</span>
+              <h1 className="font-display text-[3rem] leading-[1] font-semibold sm:text-[3.8rem] lg:text-[4.5rem]">
+                <span className="block">{first.map((w, i) => word(w, i))}</span>
                 <span className="block">{second.map((w, i) => word(w, i + first.length))}</span>
               </h1>
               <motion.div
@@ -260,7 +260,7 @@ function FinalCta() {
         {/* The instrument's reprise sits above the words, never through them. */}
         <LiveRibbon className="pointer-events-none relative -mb-20 h-[16rem] w-full sm:-mb-24 sm:h-[20rem]" />
         <Reveal className="relative mx-auto w-full max-w-6xl px-6 text-center">
-          <h2 className="font-display mx-auto max-w-[16ch] text-[2.8rem] leading-[1] font-bold text-balance sm:text-[4rem]">
+          <h2 className="font-display mx-auto max-w-[16ch] text-[2.8rem] leading-[1] font-semibold text-balance sm:text-[4rem]">
             Weniger Tastatur. Mehr Medizin.
           </h2>
           <p className="mx-auto mt-6 max-w-[44ch] text-lg leading-relaxed text-pretty text-muted-foreground">
