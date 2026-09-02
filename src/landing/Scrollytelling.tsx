@@ -265,7 +265,9 @@ function ChapterLayer({ chapter, index, progress }: { chapter: Chapter; index: n
 
 /** The reduced-motion frame: the chapter already moved in, callouts standing. */
 function StaticFrame({ chapter, index }: { chapter: Chapter; index: number }) {
-  const progress = useMotionValue((index + 1) / COUNT - 0.001);
+  // Nine tenths into the chapter: camera settled, callouts standing, before
+  // the point where they would leave for the next tool.
+  const progress = useMotionValue((index + 0.9) / COUNT);
   return (
     <div
       className="relative w-full overflow-hidden rounded-[14px] border border-white/12 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)]"

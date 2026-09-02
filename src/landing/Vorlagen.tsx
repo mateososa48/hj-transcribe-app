@@ -108,7 +108,7 @@ export function Vorlagen({ contact, heading }: { contact: string; heading: React
                       className={cn('hidden h-5 w-0.5 rounded-full transition-colors lg:block', on ? 'bg-foreground' : 'bg-transparent group-hover:bg-border')}
                     />
                     <span className="flex-1">{t.name}</span>
-                    <span className={cn('hidden text-xs tabular-nums lg:block', on ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
+                    <span className="hidden text-xs text-muted-foreground tabular-nums lg:block">
                       {t.sections.length} Abschnitte
                     </span>
                   </button>
@@ -129,8 +129,8 @@ export function Vorlagen({ contact, heading }: { contact: string; heading: React
           <div className="lg:col-span-7">
             <div className="paper-mini mx-auto max-w-xl px-8 py-7 sm:px-10 sm:py-9">
               <div className="font-document text-[0.98rem] leading-[1.8]">
-                <p className="text-foreground/55">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
-                <p className="mb-[0.7em] text-foreground/55">wir berichten über die oben genannte Patientin.</p>
+                <p className="text-foreground/60">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+                <p className="mb-[0.7em] text-foreground/60">wir berichten über die oben genannte Patientin.</p>
                 <AnimatePresence initial={false} mode="popLayout">
                   {template.sections.map((s) => (
                     <motion.div
@@ -150,7 +150,7 @@ export function Vorlagen({ contact, heading }: { contact: string; heading: React
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                <p className="mt-[0.9em] text-foreground/55">Mit freundlichen kollegialen Grüßen</p>
+                <p className="mt-[0.9em] text-foreground/60">Mit freundlichen kollegialen Grüßen</p>
               </div>
             </div>
           </div>

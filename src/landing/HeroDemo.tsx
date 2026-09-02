@@ -228,7 +228,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               <p
                 className={cn(
                   'font-bold underline underline-offset-4 transition-colors duration-300',
-                  scene.charsWritten === 0 ? 'text-foreground/55' : 'text-foreground',
+                  scene.charsWritten === 0 ? 'text-foreground/60' : 'text-foreground',
                 )}
               >
                 Aktuelle Therapie
@@ -254,8 +254,9 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               <div
                 className={cn(
                   // Under the lines on phones, beside them from sm up.
-                  'mt-2 flex w-fit items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 font-sans shadow-lg transition-[opacity,transform] duration-300 sm:absolute sm:top-1/2 sm:-right-8 sm:mt-0 sm:-translate-y-1/2',
-                  scene.job === 'none' ? 'opacity-0 sm:translate-x-2' : 'opacity-100 sm:translate-x-0',
+                  'mt-2 w-fit items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 font-sans shadow-lg transition-[opacity,transform] duration-300 sm:absolute sm:top-1/2 sm:-right-8 sm:mt-0 sm:-translate-y-1/2',
+                  // On phones it takes no room until it has something to say.
+                  scene.job === 'none' ? 'hidden opacity-0 sm:flex sm:translate-x-2' : 'flex opacity-100 sm:translate-x-0',
                 )}
               >
                 {scene.job === 'done' ? (
