@@ -114,11 +114,19 @@ export function Genauigkeit() {
   };
 
   const entry = ENTRIES[index]!;
-  const hue = HUE[entry.kind];
   const words = entry.said.split(' ');
   const shown = reduce ? words.length : Math.round(Math.min(1, local / SAY_MS) * words.length);
   const landed = reduce || local >= LAND_MS;
-  const gapParts = entry.kind === 'gap' ? entry.written.split(' [') : null;
+
+  // The word on stage: the last one that landed. While the next is still
+  // being said, the previous word stays, dimmed, so the stage is never empty.
+  const [staged, setStaged] = useState(index);
+  useEffect(() => {
+    if (landed) setStaged(index);
+  }, [landed, index]);
+  const shownEntry = ENTRIES[staged]!;
+  const hue = HUE[shownEntry.kind];
+  const gapParts = shownEntry.kind === 'gap' ? shownEntry.written.split(' [') : null;
 
   return (
     <section ref={hostRef} id="genauigkeit" className="py-24 sm:py-32">
@@ -161,7 +169,7 @@ export function Genauigkeit() {
           {/* The stage. */}
           <div
             role="img"
-            aria-label={`Gesagt: ${entry.said}. Im Brief: ${entry.written}.`}
+            aria-label={`Gesagt: ${shownEntry.said}. Im Brief: ${shownEntry.written}.`}
             className="relative order-1 min-w-0 overflow-hidden rounded-3xl border border-border bg-background px-7 py-8 sm:px-12 sm:py-10 lg:order-2 lg:col-span-9 lg:min-h-[25rem]"
           >
             {/* The hues as light, gathering behind the word. */}
@@ -184,34 +192,28 @@ export function Genauigkeit() {
               </p>
 
               {/* Written: the headword. */}
-              <div className="mt-6 min-h-[2.1em] sm:mt-8" lang="de">
+              <div className={cn('mt-6 min-h-[2.1em] transition-opacity duration-500 sm:mt-8', landed ? 'opacity-100' : 'opacity-35')} lang="de">
                 <AnimatePresence mode="wait" initial={false}>
-                  {landed ? (
-                    <motion.p
-                      key={entry.written}
-                      initial={reduce ? false : { opacity: 0, y: 22 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={reduce ? { opacity: 0 } : { opacity: 0, y: -14 }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-                      className={cn(
-                        'font-display text-[2.2rem] leading-[1.02] font-medium tracking-[-0.02em] break-words hyphens-auto sm:text-[3.2rem] lg:text-[4rem]',
-                        hue.text,
-                      )}
-                    >
-                      {gapParts ? (
-                        <>
-                          <span className="text-foreground">{gapParts[0]}</span>{' '}
-                          <span className="font-sans text-[0.55em] font-medium tracking-normal">[{gapParts[1]}</span>
-                        </>
-                      ) : (
-                        entry.written
-                      )}
-                    </motion.p>
-                  ) : (
-                    <motion.p key="waiting" className="text-[2.2rem] leading-[1.02] sm:text-[3.2rem] lg:text-[4rem]" aria-hidden>
-                      &nbsp;
-                    </motion.p>
-                  )}
+                  <motion.p
+                    key={shownEntry.written}
+                    initial={reduce ? false : { opacity: 0, y: 22 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reduce ? { opacity: 0 } : { opacity: 0, y: -14 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+                    className={cn(
+                      'font-display text-[2.2rem] leading-[1.02] font-medium tracking-[-0.02em] break-words hyphens-auto sm:text-[3.2rem] lg:text-[4rem]',
+                      hue.text,
+                    )}
+                  >
+                    {gapParts ? (
+                      <>
+                        <span className="text-foreground">{gapParts[0]}</span>{' '}
+                        <span className="font-sans text-[0.55em] font-medium tracking-normal">[{gapParts[1]}</span>
+                      </>
+                    ) : (
+                      shownEntry.written
+                    )}
+                  </motion.p>
                 </AnimatePresence>
               </div>
 
@@ -227,9 +229,9 @@ export function Genauigkeit() {
                   {hue.label}
                 </span>
                 <span
-                  className={cn('max-w-[52ch] text-muted-foreground transition-opacity duration-500', landed ? 'opacity-100' : 'opacity-0')}
+                  className={cn('max-w-[52ch] text-muted-foreground transition-opacity duration-500', landed ? 'opacity-100' : 'opacity-35')}
                 >
-                  {entry.note}
+                  {shownEntry.note}
                 </span>
               </div>
             </div>
