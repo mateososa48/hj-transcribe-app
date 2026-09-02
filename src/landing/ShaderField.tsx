@@ -61,14 +61,15 @@ float fbm(vec2 p) {
 void main() {
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 p = uv * vec2(u_res.x / u_res.y, 1.0);
-  float t = u_time * 0.04;
+  // Fast enough to be seen moving, slow enough never to distract from text.
+  float t = u_time * 0.16;
   float v = u_voice;
 
   // Warp the space gently with two very slow, very large fields, then read
   // colour from the warped space. Everything is low frequency on purpose:
   // the eye should find a gradient, never a pattern.
   vec2 q = vec2(fbm(p * 0.6 + vec2(t, -t * 0.6)), fbm(p * 0.6 + vec2(-t * 0.8, t * 0.5) + 3.1));
-  vec2 w = p + (0.8 + 0.5 * v) * (q - 0.5);
+  vec2 w = p + (1.1 + 0.6 * v) * (q - 0.5);
   float n1 = fbm(w * 0.55 + vec2(t * 0.3, 0.0));
   float n2 = fbm(w * 0.95 + vec2(0.0, -t * 0.25) + 5.0);
   float n3 = fbm(w * 0.75 + vec2(-t * 0.2, t * 0.15) + 9.0);
@@ -81,9 +82,11 @@ void main() {
   vec3 cRose = vec3(0.851, 0.165, 0.408);
   vec3 cPeach = vec3(0.980, 0.520, 0.250);
   // Blue lives high, peach low and right, rose low and left, violet between.
-  float toBlue = smoothstep(0.45, 0.95, uv.y + 0.25 * (n1 - 0.5));
-  float toPeach = smoothstep(0.35, 0.85, (1.0 - uv.y) * 0.6 + uv.x * 0.5 + 0.3 * (n3 - 0.5));
-  float toRose = smoothstep(0.35, 0.85, (1.0 - uv.y) * 0.6 + (1.0 - uv.x) * 0.5 + 0.3 * (n2 - 0.5));
+  // The regions themselves wander: slow sines move their borders so the
+  // colours flow through the hero rather than sitting in place.
+  float toBlue = smoothstep(0.45, 0.95, uv.y + 0.35 * (n1 - 0.5) + 0.07 * sin(t * 0.9));
+  float toPeach = smoothstep(0.35, 0.85, (1.0 - uv.y) * 0.6 + uv.x * 0.5 + 0.4 * (n3 - 0.5) + 0.08 * sin(t * 0.7 + 1.0));
+  float toRose = smoothstep(0.35, 0.85, (1.0 - uv.y) * 0.6 + (1.0 - uv.x) * 0.5 + 0.4 * (n2 - 0.5) + 0.08 * cos(t * 0.8));
   vec3 col = cViolet;
   col = mix(col, cBlue, toBlue);
   col = mix(col, cRose, toRose * (1.0 - toBlue));
