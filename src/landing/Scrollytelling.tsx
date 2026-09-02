@@ -157,10 +157,10 @@ export function Scrollytelling() {
     <section id="werkzeuge" className="scroll-mt-24 px-3 sm:px-4">
       <div ref={ref} className="relative h-[380vh]">
         <div className="sticky top-0 flex min-h-dvh items-center py-4">
-          <div className="relative w-full overflow-hidden rounded-3xl bg-[#0e0e10] py-10 text-white shadow-[0_40px_120px_-40px_rgba(12,12,13,0.5)] sm:py-14 lg:py-16">
+          <div className="relative w-full overflow-hidden rounded-3xl bg-[#0e0e10] py-8 text-white shadow-[0_40px_120px_-40px_rgba(12,12,13,0.5)] sm:py-14 lg:py-16">
             <Glow />
             <div className="relative mx-auto w-full max-w-6xl px-6 sm:px-10">
-              <h2 className="font-display mb-8 max-w-[24ch] text-[1.6rem] leading-[1.1] font-medium text-balance sm:mb-10 sm:text-[2rem]">
+              <h2 className="font-display mb-6 max-w-[24ch] text-[1.45rem] leading-[1.1] font-medium text-balance sm:mb-10 sm:text-[2rem]">
                 Drei Werkzeuge, ein Brief.
                 <span className="text-white/50"> Was Sie sprechen, wird an der richtigen Stelle Text.</span>
               </h2>
@@ -171,7 +171,7 @@ export function Scrollytelling() {
                 <div aria-hidden className="absolute top-1 bottom-1 left-0 w-px bg-white/12">
                   <motion.div className="h-full w-full origin-top bg-white" style={{ scaleY: scrollYProgress }} />
                 </div>
-                <div className="space-y-7 ps-6 lg:space-y-9">
+                <div className="space-y-5 ps-6 sm:space-y-7 lg:space-y-9">
                   {CHAPTERS.map((c, i) => (
                     <ChapterText key={c.id} chapter={c} active={i === active} onSelect={() => jumpTo(i)} />
                   ))}
