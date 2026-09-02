@@ -227,10 +227,12 @@ function ChapterLayer({ chapter, index, progress }: { chapter: Chapter; index: n
     y.set(`${transform(q, [0.3, 0.72], [0, (0.5 - fy) * 100])}%`);
     // One short dissolve just after each boundary, both layers crossing in
     // the same window, so the next tool never ghosts over the current one.
-    const fadeIn = index === 0 ? 1 : transform(p, [start, start + 0.03], [0, 1]);
-    const fadeOut = index === COUNT - 1 ? 1 : transform(p, [end, end + 0.03], [1, 0]);
+    const fadeIn = index === 0 ? 1 : transform(p, [start, start + 0.025], [0, 1]);
+    const fadeOut = index === COUNT - 1 ? 1 : transform(p, [end, end + 0.025], [1, 0]);
     opacity.set(Math.min(fadeIn, fadeOut));
-    const c = transform(q, [0.58, 0.72], [0, 1]);
+    // Callouts arrive once the camera has settled and leave just before the
+    // chapter ends, so the dissolve into the next tool carries no labels.
+    const c = index === COUNT - 1 ? transform(q, [0.58, 0.72], [0, 1]) : transform(q, [0.58, 0.72, 0.94, 1], [0, 1, 1, 0]);
     calloutOpacity.set(c);
     calloutY.set(10 - 10 * c);
   };

@@ -253,8 +253,9 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               {/* The app's real job-chip, filing the dictation. */}
               <div
                 className={cn(
-                  'absolute top-1/2 -right-4 flex -translate-y-1/2 items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 font-sans shadow-lg transition-[opacity,transform] duration-300 sm:-right-8',
-                  scene.job === 'none' ? 'translate-x-2 opacity-0' : 'translate-x-0 opacity-100',
+                  // Under the lines on phones, beside them from sm up.
+                  'mt-2 flex w-fit items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 font-sans shadow-lg transition-[opacity,transform] duration-300 sm:absolute sm:top-1/2 sm:-right-8 sm:mt-0 sm:-translate-y-1/2',
+                  scene.job === 'none' ? 'opacity-0 sm:translate-x-2' : 'opacity-100 sm:translate-x-0',
                 )}
               >
                 {scene.job === 'done' ? (
