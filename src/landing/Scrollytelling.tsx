@@ -43,11 +43,11 @@ interface Callout extends Anchor {
 
 type SceneId = 'diktat' | 'termin' | 'bericht';
 
-/** What does not change with the language: the picture and the camera. */
+/** What does not change with the language: the camera and the anchors. The
+ *  picture itself comes with the words, one capture per language. */
 interface Scene {
   id: SceneId;
   icon: typeof Mic;
-  img: string;
   camera: { x: number; y: number; zoom: number };
   anchors: Anchor[];
 }
@@ -57,6 +57,7 @@ interface Chapter extends Scene {
   title: string;
   body: string;
   alt: string;
+  img: string;
   callouts: Callout[];
 }
 
@@ -64,7 +65,6 @@ const SCENES: Scene[] = [
   {
     id: 'diktat',
     icon: Mic,
-    img: '/landing/diktat.webp',
     camera: { x: 0.6, y: 0.4, zoom: 1.6 },
     anchors: [
       { x: 0.548, y: 0.283, side: 'right' },
@@ -74,7 +74,6 @@ const SCENES: Scene[] = [
   {
     id: 'termin',
     icon: Stethoscope,
-    img: '/landing/transkript.webp',
     // The frame's top edge lands at y - 0.3125; the meta line at 0.176 needs
     // room above it for its callout.
     camera: { x: 0.5, y: 0.455, zoom: 1.6 },
@@ -86,7 +85,6 @@ const SCENES: Scene[] = [
   {
     id: 'bericht',
     icon: FileText,
-    img: '/landing/bericht.webp',
     camera: { x: 0.6, y: 0.345, zoom: 1.45 },
     anchors: [
       { x: 0.681, y: 0.136, side: 'left' },

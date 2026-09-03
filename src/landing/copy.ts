@@ -65,6 +65,7 @@ const de = {
     titleRest: 'Als Diktat, aus der Sprechstunde oder Abschnitt für Abschnitt im Berichtseditor.',
     chapters: {
       diktat: {
+        img: '/landing/diktat.webp',
         tool: 'Diktat',
         title: 'Aus dem Diktat wird die Beurteilung.',
         body: 'Sie erzählen den Fall so, wie Sie ihn einer Kollegin erzählen würden. Der Assistent schreibt daraus die Zusammenfassende Beurteilung in ganzen Sätzen und behält Ihre Reihenfolge und Ihre Formulierungen bei.',
@@ -72,6 +73,7 @@ const de = {
         callouts: ['Aus 20 Sekunden Diktat', 'Nachdiktieren, wenn noch etwas fehlt'],
       },
       termin: {
+        img: '/landing/transkript.webp',
         tool: 'Sprechstunde',
         title: 'Das Gespräch wird mitgeschrieben.',
         body: 'Die Aufnahme läuft, während Sie mit dem Patienten sprechen. Danach liegt das Transkript nach Arzt und Patient getrennt vor, dazu Notizen in Abschnitten. Ein Klick auf ein Wort spielt die Stelle ab.',
@@ -79,6 +81,7 @@ const de = {
         callouts: ['Nach Arzt und Patient getrennt', 'Ein Klick auf ein Wort spielt die Stelle ab'],
       },
       bericht: {
+        img: '/landing/bericht.webp',
         tool: 'Bericht',
         title: 'Der Bericht, Abschnitt für Abschnitt diktiert.',
         body: 'Der Editor zeigt eine A4-Seite mit den Abschnitten Ihrer Vorlage. Jeden Abschnitt diktieren Sie einzeln. Am Ende exportieren Sie eine Word-Datei mit richtigen Überschriften und Tabstopps.',
@@ -245,6 +248,7 @@ const en: Copy = {
     titleRest: 'As a dictation, from the consultation, or section by section in the report editor.',
     chapters: {
       diktat: {
+        img: '/landing/en/diktat.webp',
         tool: 'Dictation',
         title: 'The dictation becomes the assessment.',
         body: 'You describe the case the way you would to a colleague. The assistant writes the summary and assessment from it in full sentences and keeps your order and your wording.',
@@ -252,6 +256,7 @@ const en: Copy = {
         callouts: ['From 20 seconds of dictation', 'Add to it later without rewriting'],
       },
       termin: {
+        img: '/landing/en/transkript.webp',
         tool: 'Consultation',
         title: 'The consultation is transcribed.',
         body: 'The recording runs while you talk with the patient. Afterwards you have the transcript split by doctor and patient, plus notes in sections. Click a word to hear that moment.',
@@ -259,6 +264,7 @@ const en: Copy = {
         callouts: ['Split by doctor and patient', 'Click a word to play that moment'],
       },
       bericht: {
+        img: '/landing/en/bericht.webp',
         tool: 'Report',
         title: 'The report, dictated section by section.',
         body: 'The editor shows an A4 page with the sections from your template. You dictate each section on its own. At the end you export a Word file with proper headings and tab stops.',
