@@ -10,7 +10,16 @@ import { cn } from '@/lib/utils';
  * tech, a still image under reduced motion, absent without WebGL2, and paused
  * whenever it is offscreen or the tab is hidden.
  */
-export function BrandWave({ className, transparent = false }: { className?: string; transparent?: boolean }) {
+export function BrandWave({
+  className,
+  transparent = false,
+  dark = false,
+}: {
+  className?: string;
+  transparent?: boolean;
+  /** Light strands for a dark surface. */
+  dark?: boolean;
+}) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [supported, setSupported] = useState(true);
 
@@ -23,6 +32,7 @@ export function BrandWave({ className, transparent = false }: { className?: stri
       reducedMotion: false,
       mark: true,
       transparent,
+      dark,
       // A HELD pose, not a breathing one. The bands used to swing on slow
       // sines, and because the drift rate is mixed from that same signal the
       // whole figure sped up and slowed down as they moved. Holding them
@@ -76,7 +86,7 @@ export function BrandWave({ className, transparent = false }: { className?: stri
       motionQuery.removeEventListener('change', sync);
       engine.destroy();
     };
-  }, [transparent]);
+  }, [transparent, dark]);
 
   if (!supported) return null;
 

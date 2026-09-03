@@ -220,6 +220,12 @@ void main(){
     vec3 f = clamp(outc / max(uPaper, vec3(1e-3)), 0.0, 1.0);
     float m = min(min(f.r, f.g), f.b);
     outColor = vec4(f - vec3(m), 1.0 - m);
+  } else if (uTransparent > 0.5) {
+    // Dark mode paints light on black. As a layer: the light itself, with an
+    // alpha of its brightest channel, so black stays black and the strands
+    // glow on whatever dark surface is behind them.
+    vec3 l = clamp(outc, 0.0, 1.0);
+    outColor = vec4(l, max(max(l.r, l.g), l.b));
   } else {
     outColor = vec4(outc, 1.0);
   }

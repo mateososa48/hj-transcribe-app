@@ -4,6 +4,7 @@ import { Check, FileText, Play } from 'lucide-react';
 
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { useCopy } from './i18n';
 import { LiveRibbon } from './LiveRibbon';
 import { createSpeechEnvelope, type SpeechFrame } from './speech';
 
@@ -132,13 +133,13 @@ function Card({
 
 /* ------------------------------------------------------ wide: ergänzen ---- */
 
-const ERG_SAID = 'Eine Kontrolle in sechs Monaten wurde vereinbart.'.split(' ');
-const ERG_LINE = 'Eine Kontrolle in 6 Monaten wurde vereinbart.';
 const E = { speakEnd: 2600, press: 2800, busy: 3000, insert: 3900, done: 5300, hold: 8600, total: 9600 };
 const ergSpeaking = (t: number) => t > 300 && t < E.speakEnd;
 
 function TileErgaenzen() {
   const reduce = useReducedMotion();
+  const c = useCopy().bento.add;
+  const ERG_SAID = c.said.split(' ');
   const { t, finished, ref, probe } = useLoopClock(E.total, ergSpeaking);
   const said = finished ? ERG_SAID.length : Math.round(Math.min(1, Math.max(0, (t - 300) / (E.speakEnd - 300))) * ERG_SAID.length);
   const pressed = finished || t >= E.press;
@@ -152,14 +153,14 @@ function TileErgaenzen() {
       wide
       wash="violet"
       stageRef={ref}
-      title="Nachdiktieren, nicht neu diktieren."
-      body="Fällt Ihnen nach dem Diktat noch etwas ein, sprechen Sie es nach. Es wird in den stehenden Text eingearbeitet, an der Stelle, an die es gehört."
+      title={c.title}
+      body={c.body}
     >
       {/* The standing letter, bleeding off the right and the foot. */}
       <div className="paper-mini absolute top-[7.4rem] left-6 w-[26rem] max-w-none px-6 py-5 sm:top-8 sm:left-[40%] sm:w-[30rem]">
         <div className="font-document text-[0.9rem] leading-[1.8]">
-          <p className="font-bold underline underline-offset-2">Zusammenfassende Beurteilung</p>
-          <p>Unter Belastung keine Angina pectoris; die Belastbarkeit ist gut.</p>
+          <p className="font-bold underline underline-offset-2">{c.heading}</p>
+          <p>{c.before}</p>
           <AnimatePresence initial={false}>
             {inserted ? (
               <motion.p
@@ -171,13 +172,14 @@ function TileErgaenzen() {
                 className="overflow-hidden"
               >
                 <span className={cn('-mx-1 rounded-[3px] px-1 transition-colors duration-1000', fresh ? 'bg-[#4230ff]/12' : 'bg-transparent')}>
-                  {ERG_LINE}
+                  {c.line}
                 </span>
               </motion.p>
             ) : null}
           </AnimatePresence>
-          <p>Die Medikation wurde unverändert fortgeführt.</p>
-          <p>Bei erneuten Beschwerden bitten wir um Wiedervorstellung.</p>
+          {c.after.map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
         </div>
       </div>
 
@@ -193,10 +195,10 @@ function TileErgaenzen() {
             )}
           >
             <Check className="size-3" aria-hidden />
-            Fertig
+            <span className="copy">{c.done}</span>
           </span>
         </div>
-        <p className="mt-0.5 self-end pe-0.5 text-[11px] text-muted-foreground">In „Zusammenfassende Beurteilung"</p>
+        <p className="mt-0.5 self-end pe-0.5 text-[11px] text-muted-foreground">{c.target}</p>
       </div>
       <p className="absolute top-[7.6rem] left-6 hidden max-w-[17rem] text-[0.82rem] leading-relaxed text-muted-foreground sm:block">
         {ERG_SAID.map((w, i) => (
@@ -220,7 +222,7 @@ function TileErgaenzen() {
         ) : (
           <Spinner className="size-3.5" />
         )}
-        <span className={cn(job === 'done' && 'font-medium')}>{job === 'done' ? 'Eingearbeitet' : 'Wird eingearbeitet …'}</span>
+        <span className={cn(job === 'done' && 'font-medium')}>{job === 'done' ? c.filed : c.busy}</span>
       </div>
     </Card>
   );
@@ -228,10 +230,11 @@ function TileErgaenzen() {
 
 /* ------------------------------------------------ narrow: follow along ---- */
 
-const FOLLOW_WORDS = 'Der Blutdruck lag heute bei einhundertfünfundvierzig zu neunzig, das EKG war unauffällig.'.split(' ');
 const FOLLOW_MS = 7200;
 
 function TileFollowAlong() {
+  const c = useCopy().bento.follow;
+  const FOLLOW_WORDS = c.words.split(' ');
   const { t, finished, ref } = useLoopClock(FOLLOW_MS + 1400);
   const p = finished ? 0.72 : Math.min(1, t / FOLLOW_MS);
   const lit = Math.round(p * FOLLOW_WORDS.length);
@@ -241,8 +244,8 @@ function TileFollowAlong() {
     <Card
       wash="rose"
       stageRef={ref}
-      title="Die Aufnahme liest mit."
-      body="Beim Abhören läuft die Markierung im Transkript mit. Ein Klick auf ein Wort springt an genau diese Stelle im Ton."
+      title={c.title}
+      body={c.body}
     >
       {/* The mini player and, under it, the words it produced. */}
       <div className="absolute inset-x-6 top-9 rounded-2xl glass-white p-4">
@@ -282,6 +285,7 @@ const SAFE_TOTAL_MS = 16000;
 const safeSpeaking = (t: number) => t > 400 && t < 14000;
 
 function TileUnverlierbar() {
+  const c = useCopy().bento.safe;
   const { t, finished, ref, probe } = useLoopClock(SAFE_TOTAL_MS, safeSpeaking);
   const seconds = finished ? 14 : Math.min(15, Math.floor(t / 1000));
   const saves = Math.floor(seconds / SAVE_EVERY);
@@ -291,8 +295,8 @@ function TileUnverlierbar() {
     <Card
       wash="blue"
       stageRef={ref}
-      title="Nichts geht verloren."
-      body="Die Aufnahme wird alle fünf Sekunden auf Ihrem Rechner gesichert. Absturz, Tab geschlossen, Rechner im Ruhezustand: verloren sind höchstens Sekunden, nie ein Gespräch."
+      title={c.title}
+      body={c.body}
     >
       <div className="absolute inset-x-6 top-9">
         {/* The recording window, running. */}
@@ -301,10 +305,10 @@ function TileUnverlierbar() {
             <LiveRibbon probe={probe} className="h-8 w-24 shrink-0 mix-blend-multiply" />
             <span className="text-base font-semibold tracking-tight tabular-nums">0:{String(seconds).padStart(2, '0')}</span>
           </div>
-          <p className="mt-0.5 self-end pe-0.5 text-[11px] text-muted-foreground">Sprechstunde</p>
+          <p className="mt-0.5 self-end pe-0.5 text-[11px] text-muted-foreground">{c.caption}</p>
         </div>
         {/* The saves, one every five seconds, as they happen. */}
-        <ol className="mt-4 space-y-1.5" aria-label="Sicherungen">
+        <ol className="mt-4 space-y-1.5" aria-label={c.saves}>
           {[1, 2, 3].map((n) => {
             const at = n * SAVE_EVERY;
             const done = saves >= n;
@@ -328,7 +332,7 @@ function TileUnverlierbar() {
                   <Check className="size-2.5" />
                 </span>
                 <span className="tabular-nums">0:{String(at).padStart(2, '0')}</span>
-                <span className="text-muted-foreground">{done ? 'auf dem Rechner gesichert' : 'wird gesichert'}</span>
+                <span className="text-muted-foreground">{done ? c.saved : c.saving}</span>
               </li>
             );
           })}
@@ -344,6 +348,7 @@ const W = { file: 2200, hold: 6400, total: 7200 };
 
 function TileWord() {
   const reduce = useReducedMotion();
+  const c = useCopy().bento.word;
   const { t, finished, ref } = useLoopClock(W.total);
   const filed = finished || (t >= W.file && t < W.hold);
 
@@ -352,17 +357,16 @@ function TileWord() {
       wide
       wash="peach"
       stageRef={ref}
-      title="Landet in Word, wie er gehört."
-      body="Echte Überschriften, echte Tabstopps. Die Dosierungsspalten sitzen auf Tabulatoren, nicht auf Leerzeichen, und überleben jede Bearbeitung in Word."
+      title={c.title}
+      body={c.body}
     >
       {/* The letter, bleeding off the foot. */}
       <div className="paper-mini absolute top-8 left-6 w-[26rem] max-w-[calc(100%-3rem)] px-6 py-5 sm:left-10">
         <div className="font-document text-[0.92rem] leading-[1.85]">
-          <p className="font-bold underline underline-offset-2">Aktuelle Therapie</p>
-          <TabRow name="ASS 100" dose="1-0-0" />
-          <TabRow name="Sevikar 40/5" dose="1-0-0" />
-          <TabRow name="Atorvastatin 40" dose="0-0-1" />
-          <TabRow name="Bisoprolol 2,5" dose="1-0-0" />
+          <p className="font-bold underline underline-offset-2">{c.heading}</p>
+          {c.rows.map(([name, dose], i) => (
+            <TabRow key={i} name={name ?? ''} dose={dose ?? ''} />
+          ))}
         </div>
       </div>
       {/* The file, produced. */}
@@ -380,8 +384,8 @@ function TileWord() {
               <FileText className="size-4" aria-hidden />
             </span>
             <span className="leading-tight">
-              <span className="block text-sm font-medium">Vollmer_Kontrolle.docx</span>
-              <span className="block text-[11px] text-muted-foreground">Word-Datei, mit Überschriften und Tabstopps</span>
+              <span className="block text-sm font-medium">{c.file}</span>
+              <span className="block text-[11px] text-muted-foreground">{c.fileNote}</span>
             </span>
           </motion.div>
         ) : null}
@@ -393,7 +397,7 @@ function TileWord() {
 /** A dosing row on a real tab column: name at the margin, dose at the stop. */
 function TabRow({ name, dose }: { name: string; dose: string }) {
   return (
-    <p className="grid grid-cols-[minmax(0,14ch)_auto] items-baseline">
+    <p className="grid grid-cols-[minmax(0,19ch)_auto] items-baseline">
       <span>{name}</span>
       <span className="relative ps-2 before:absolute before:top-[0.35em] before:bottom-[0.35em] before:left-0 before:w-px before:bg-foreground/15">
         {dose}

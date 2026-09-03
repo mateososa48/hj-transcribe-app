@@ -64,8 +64,8 @@ export interface WaveEngineOptions {
   mark?: boolean;
   /**
    * Paint on a transparent canvas instead of an opaque paper, so the ribbon
-   * can sit on any surface without carrying a white ground with it. Light
-   * mode only; the app's own surfaces keep the opaque default.
+   * can sit on any surface without carrying a white (or black) ground with
+   * it. The app's own surfaces keep the opaque default.
    */
   transparent?: boolean;
 }
@@ -104,7 +104,7 @@ export class WaveEngine {
     this.probe = options.probe;
     this.dark = options.dark ?? false;
     this.mark = options.mark ?? false;
-    this.transparent = (options.transparent ?? false) && !this.dark;
+    this.transparent = options.transparent ?? false;
     this.signal.setProbe(options.probe);
 
     this.canvas = document.createElement('canvas');

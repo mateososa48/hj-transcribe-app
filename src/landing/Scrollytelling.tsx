@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   motion,
   transform,
@@ -11,6 +11,7 @@ import {
 import { FileText, Mic, Stethoscope } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { useCopy } from './i18n';
 
 /**
  * The three tools as one pinned scene with a camera.
@@ -27,80 +28,88 @@ import { cn } from '@/lib/utils';
  * Under reduced motion every chapter stands still at its zoomed framing.
  */
 
-interface Callout {
+interface Anchor {
   /** Anchor, as fractions of the screenshot. */
   x: number;
   y: number;
-  text: string;
   side: 'left' | 'right';
   /** Lift the label off the anchor (px, negative is up); a stem connects them. */
   dy?: number;
 }
 
-interface Chapter {
-  id: string;
+interface Callout extends Anchor {
+  text: string;
+}
+
+type SceneId = 'diktat' | 'termin' | 'bericht';
+
+/** What does not change with the language: the picture and the camera. */
+interface Scene {
+  id: SceneId;
   icon: typeof Mic;
+  img: string;
+  camera: { x: number; y: number; zoom: number };
+  anchors: Anchor[];
+}
+
+interface Chapter extends Scene {
   tool: string;
   title: string;
   body: string;
-  img: string;
   alt: string;
-  camera: { x: number; y: number; zoom: number };
   callouts: Callout[];
 }
 
-const CHAPTERS: Chapter[] = [
+const SCENES: Scene[] = [
   {
     id: 'diktat',
     icon: Mic,
-    tool: 'Diktat',
-    title: 'Frei sprechen. Fertig formuliert.',
-    body: 'Sie sprechen über den Fall wie zu einer Kollegin. Daraus wird die Zusammenfassende Beurteilung: ganze Sätze, Ihre Reihenfolge, Ihre Formulierungen.',
     img: '/landing/diktat.webp',
-    alt: 'Ein Diktat, als fertige Zusammenfassende Beurteilung formuliert',
     camera: { x: 0.6, y: 0.4, zoom: 1.6 },
-    callouts: [
-      { x: 0.548, y: 0.283, text: 'Aus 20 Sekunden Sprechen', side: 'right' },
-      { x: 0.664, y: 0.183, text: 'Nachdiktieren statt neu schreiben', side: 'left' },
+    anchors: [
+      { x: 0.548, y: 0.283, side: 'right' },
+      { x: 0.664, y: 0.183, side: 'left' },
     ],
   },
   {
     id: 'termin',
     icon: Stethoscope,
-    tool: 'Sprechstunde',
-    title: 'Das Gespräch schreibt mit.',
-    body: 'Die Aufnahme läuft mit, während Sie beim Patienten sind. Danach: Transkript nach Sprechern getrennt, Notizen in Abschnitten, jedes Wort anklickbar.',
     img: '/landing/transkript.webp',
-    alt: 'Ein Sprechstunden-Transkript, nach Arzt und Patient getrennt',
     // The frame's top edge lands at y - 0.3125; the meta line at 0.176 needs
     // room above it for its callout.
     camera: { x: 0.5, y: 0.455, zoom: 1.6 },
-    callouts: [
-      { x: 0.384, y: 0.176, text: 'Automatisch nach Sprechern getrennt', side: 'right' },
-      { x: 0.35, y: 0.694, text: 'Ein Klick springt in den Ton', side: 'right' },
+    anchors: [
+      { x: 0.384, y: 0.176, side: 'right' },
+      { x: 0.35, y: 0.694, side: 'right' },
     ],
   },
   {
     id: 'bericht',
     icon: FileText,
-    tool: 'Bericht',
-    title: 'Der Brief als Seite.',
-    body: 'Eine A4-Seite mit Ihren Abschnitten. Jeder lässt sich einzeln diktieren. Am Ende eine Word-Datei mit echten Überschriften und echten Tabstopps.',
     img: '/landing/bericht.webp',
-    alt: 'Der Berichtseditor: eine A4-Seite mit diktierbaren Abschnitten',
     camera: { x: 0.6, y: 0.345, zoom: 1.45 },
-    callouts: [
-      { x: 0.681, y: 0.136, text: 'Jeder Abschnitt einzeln diktiert', side: 'left' },
-      { x: 0.78, y: 0.263, text: '1:14 min Diktat, als Abschnitt eingefügt', side: 'left' },
+    anchors: [
+      { x: 0.681, y: 0.136, side: 'left' },
+      { x: 0.78, y: 0.263, side: 'left' },
     ],
   },
 ];
 
-const COUNT = CHAPTERS.length;
+const COUNT = SCENES.length;
 const ASPECT = 3200 / 1612;
 
 export function Scrollytelling() {
   const reduce = useReducedMotion();
+  const t = useCopy();
+  // The scenes with this language's words on them.
+  const chapters = useMemo<Chapter[]>(
+    () =>
+      SCENES.map((scene) => {
+        const words = t.tools.chapters[scene.id];
+        return { ...scene, ...words, callouts: scene.anchors.map((a, i) => ({ ...a, text: words.callouts[i] ?? '' })) };
+      }),
+    [t],
+  );
   const ref = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
   const [active, setActive] = useState(0);
@@ -132,13 +141,13 @@ export function Scrollytelling() {
       <section id="werkzeuge" className="scroll-mt-24 px-3 sm:px-4">
         <div className="slab-dark relative overflow-hidden rounded-3xl py-20 text-white sm:py-24">
           <div className="relative mx-auto w-full max-w-6xl px-6 sm:px-10">
-            <h2 className="font-display mb-14 max-w-[24ch] text-[1.6rem] leading-[1.1] font-medium text-balance sm:text-[2rem]">
-              Drei Werkzeuge, ein Brief.
-              <span className="text-white/50"> Was Sie sprechen, wird an der richtigen Stelle Text.</span>
+            <h2 className="font-display mb-14 max-w-[30ch] text-[1.6rem] leading-[1.1] font-medium text-balance sm:text-[2rem]">
+              {t.tools.title}
+              <span className="text-white/50"> {t.tools.titleRest}</span>
             </h2>
           </div>
           <div className="relative mx-auto w-full max-w-6xl space-y-24 px-6 sm:px-10">
-            {CHAPTERS.map((c, i) => (
+            {chapters.map((c, i) => (
               <div key={c.id} className="grid items-center gap-8 lg:grid-cols-12">
                 <ChapterText chapter={c} active className="lg:col-span-4" />
                 <div className="lg:col-span-8">
@@ -159,9 +168,9 @@ export function Scrollytelling() {
         <div className="sticky top-[4.25rem] flex min-h-[calc(100dvh-4.25rem)] items-start py-3 sm:top-0 sm:min-h-dvh sm:items-center sm:py-4">
           <div className="slab-dark relative w-full overflow-hidden rounded-3xl py-8 text-white sm:py-14 lg:py-16">
             <div className="relative mx-auto hidden w-full max-w-6xl px-6 sm:block sm:px-10">
-              <h2 className="font-display mb-10 max-w-[24ch] text-[2rem] leading-[1.1] font-medium text-balance">
-                Drei Werkzeuge, ein Brief.
-                <span className="text-white/50"> Was Sie sprechen, wird an der richtigen Stelle Text.</span>
+              <h2 className="font-display mb-10 max-w-[30ch] text-[2rem] leading-[1.1] font-medium text-balance">
+                {t.tools.title}
+                <span className="text-white/50"> {t.tools.titleRest}</span>
               </h2>
             </div>
             <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-6 lg:grid-cols-12 lg:gap-6 sm:px-10">
@@ -171,7 +180,7 @@ export function Scrollytelling() {
                   <motion.div className="h-full w-full origin-top bg-white" style={{ scaleY: scrollYProgress }} />
                 </div>
                 <div className="space-y-5 ps-6 sm:space-y-7 lg:space-y-9">
-                  {CHAPTERS.map((c, i) => (
+                  {chapters.map((c, i) => (
                     <ChapterText key={c.id} chapter={c} active={i === active} onSelect={() => jumpTo(i)} />
                   ))}
                 </div>
@@ -183,7 +192,7 @@ export function Scrollytelling() {
                   className="relative w-full overflow-hidden rounded-[14px] border border-white/12 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] lg:w-[112%]"
                   style={{ aspectRatio: ASPECT }}
                 >
-                  {CHAPTERS.map((c, i) => (
+                  {chapters.map((c, i) => (
                     <ChapterLayer key={c.id} chapter={c} index={i} progress={scrollYProgress} />
                   ))}
                 </div>
@@ -250,9 +259,9 @@ function ChapterLayer({ chapter, index, progress }: { chapter: Chapter; index: n
         className="absolute inset-0 will-change-transform"
       >
         <img src={chapter.img} width={3200} height={1612} alt={chapter.alt} className="block h-full w-full" loading={index === 0 ? 'eager' : 'lazy'} />
-        {chapter.callouts.map((c) => (
+        {chapter.callouts.map((c, i) => (
           <motion.div
-            key={c.text}
+            key={i}
             style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%`, scale: inverse, opacity: calloutOpacity, y: calloutY, transformOrigin: '0 0' }}
             className="absolute hidden sm:block"
           >

@@ -4,6 +4,7 @@ import { Check, Mic } from 'lucide-react';
 
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { useCopy } from './i18n';
 import { LiveRibbon } from './LiveRibbon';
 import { createSpeechEnvelope } from './speech';
 import { heroVoice, publishVoice, SILENCE } from './voice';
@@ -12,21 +13,17 @@ import { heroVoice, publishVoice, SILENCE } from './voice';
  * The hero: the letter is the object.
  *
  * A tall A4 page on the right, set in the document face, dissolving below the
- * fold; the words and the app's own recording window on the left. One rAF
- * clock runs the scene: the recorder hears speech (its ribbon is the app's
- * real one, listening to the same voice the shader field hears), the spoken
- * words arrive as they are recognised, Fertig is pressed, and the section
- * writes itself into the letter where it belongs, filed by the app's job chip.
+ * fold, with the app's recording window laid over its corner. One rAF clock
+ * runs the scene: the recorder hears speech (its ribbon is the app's real
+ * one, listening to the same voice the shader field hears), the spoken words
+ * arrive in a caption strip under the window as they are recognised, Fertig
+ * is pressed, and the section writes itself into the letter where it belongs
+ * while the strip reports where it was filed.
  *
- * The dosing line is the whole product in one beat: "eins null null" is what
- * was SAID, "1-0-0" is what lands in the letter.
+ * The dosing line is the whole product in one beat: what was SAID above, what
+ * lands in the letter below. The words come from the copy file, so the scene
+ * plays in whichever language the page is in.
  */
-
-const SPOKEN_WORDS = 'Aktuelle Therapie: ASS hundert eins null null, Clopidogrel fünfundsiebzig eins null null bis Mai sechsundzwanzig.'.split(' ');
-
-/** The section heading stands in the letter from the start, as the template
- *  put it there; the dictation fills the lines beneath it. */
-const LETTER_LINES = [{ text: 'ASS 100   1-0-0' }, { text: 'Clopidogrel 75  1-0-0 bis 5/26' }];
 
 /** Scene timeline, in ms on the shared clock. */
 const T = {
@@ -52,18 +49,22 @@ interface Scene {
   fade: number;
 }
 
-function sceneAt(t: number): Scene {
+interface Counts {
+  words: number;
+  chars: number;
+}
+
+function sceneAt(t: number, counts: Counts): Scene {
   const speaking = t >= T.speakStart && t < T.speakEnd;
   const speakP = Math.min(1, Math.max(0, (t - T.speakStart) / (T.speakEnd - T.speakStart)));
   const writeP = Math.min(1, Math.max(0, (t - T.writeStart) / (T.writeEnd - T.writeStart)));
-  const totalChars = LETTER_LINES.reduce((n, l) => n + l.text.length, 0);
   return {
     t,
     speaking,
-    spokenCount: Math.round(speakP * SPOKEN_WORDS.length),
+    spokenCount: Math.round(speakP * counts.words),
     pressed: t >= T.press,
     job: t < T.jobStart ? 'none' : t < T.jobDone ? 'busy' : 'done',
-    charsWritten: Math.round(writeP * totalChars),
+    charsWritten: Math.round(writeP * counts.chars),
     // Ease out at the end of the loop and back in at the start, so the wrap
     // from the finished letter to the empty one is a breath, not a pop.
     fade: Math.max(
@@ -73,25 +74,34 @@ function sceneAt(t: number): Scene {
   };
 }
 
-const FINISHED: Scene = {
+const finishedScene = (counts: Counts): Scene => ({
   t: T.hold,
   speaking: false,
-  spokenCount: SPOKEN_WORDS.length,
+  spokenCount: counts.words,
   pressed: true,
   job: 'done',
-  charsWritten: LETTER_LINES.reduce((n, l) => n + l.text.length, 0),
+  charsWritten: counts.chars,
   fade: 0,
-};
+});
 
 export function HeroDemo({ lead }: { lead: ReactNode }) {
   const reduce = useReducedMotion();
-  const [scene, setScene] = useState<Scene>(() => sceneAt(0));
+  const t = useCopy();
+  const words = t.demo.spoken.split(' ');
+  const letterLines = t.demo.letterLines;
+  const counts: Counts = { words: words.length, chars: letterLines.reduce((n, l) => n + l.length, 0) };
+  // The clock reads the counts through a ref, so a language switch changes the
+  // words without restarting the scene.
+  const countsRef = useRef(counts);
+  countsRef.current = counts;
+
+  const [scene, setScene] = useState<Scene>(() => sceneAt(0, counts));
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (motionQuery.matches) {
-      setScene(FINISHED);
+      setScene(finishedScene(countsRef.current));
       publishVoice(SILENCE);
       return;
     }
@@ -103,8 +113,8 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
 
     const tick = () => {
       const now = performance.now();
-      const t = (now - started) % T.total;
-      const s = sceneAt(t);
+      const tt = (now - started) % T.total;
+      const s = sceneAt(tt, countsRef.current);
       setScene((prev) =>
         prev.spokenCount === s.spokenCount &&
         prev.pressed === s.pressed &&
@@ -145,16 +155,23 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
     };
   }, []);
 
-  // Distribute written characters across the letter lines.
-  let remaining = scene.charsWritten;
-  const lines = LETTER_LINES.map((line) => {
-    const shown = Math.max(0, Math.min(line.text.length, remaining));
-    remaining -= shown;
-    return { ...line, shown };
-  });
-  const demoOpacity = 1 - scene.fade * 0.9;
+  // Under reduced motion the finished scene must follow the language too.
+  useEffect(() => {
+    if (reduce) setScene(finishedScene(counts));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduce, t]);
 
+  // Distribute written characters across the letter lines.
+  let remaining = Math.min(scene.charsWritten, counts.chars);
+  const lines = letterLines.map((text) => {
+    const shown = Math.max(0, Math.min(text.length, remaining));
+    remaining -= shown;
+    return { text, shown };
+  });
+  const spokenCount = Math.min(scene.spokenCount, words.length);
+  const demoOpacity = 1 - scene.fade * 0.9;
   const seconds = String(Math.min(59, Math.floor(Math.min(scene.t, T.speakEnd) / 1000))).padStart(2, '0');
+  const L = t.demo.letter;
 
   return (
     <div ref={hostRef} className="grid items-start gap-12 lg:grid-cols-12 lg:gap-10">
@@ -175,16 +192,17 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               {/* The address block only where the page is tall enough to spare it:
                   on a phone the written section must arrive before the fade. */}
               <div className="hidden sm:block">
-                <p>An</p>
-                <p>Dres. med. Weber / Kaufmann</p>
-                <p>Rheinallee 12, 55118 Mainz</p>
+                {L.to.map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
               </div>
-              <p className="sm:mt-[1.4em]">Mainz, 31.08.2026</p>
-              <p className="mt-[1.4em]">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
-              <p className="hidden sm:block">ich darf nachfolgend über die letzten Untersuchungen, Herrn Vollmer betreffend, zusammenfassend berichten.</p>
-              <p className="mt-[1.4em] font-bold underline underline-offset-4">Diagnosen</p>
-              <p>1. Koronare Herzkrankheit, Z. n. PCI/Stent RIVA 03/2026</p>
-              <p>2. Arterielle Hypertonie</p>
+              <p className="sm:mt-[1.4em]">{L.date}</p>
+              <p className="mt-[1.4em]">{L.salutation}</p>
+              <p className="hidden sm:block">{L.intro}</p>
+              <p className="mt-[1.4em] font-bold underline underline-offset-4">{L.diagnosesHeading}</p>
+              {L.diagnoses.map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
 
               {/* The section being written, in the letter's own ink. Its heading
                   waits in the letter, grey until the dictation arrives. */}
@@ -195,11 +213,11 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
                     scene.charsWritten === 0 ? 'text-foreground/60' : 'text-foreground',
                   )}
                 >
-                  Aktuelle Therapie
+                  {t.demo.heading}
                 </p>
                 <div style={{ opacity: demoOpacity }}>
                   {lines.map((line, i) => (
-                    <p key={line.text} className="min-h-[1.75em] whitespace-pre">
+                    <p key={i} className="min-h-[1.75em] whitespace-pre">
                       {line.text.slice(0, line.shown)}
                       {(line.shown > 0 && line.shown < line.text.length) || (i === 0 && scene.charsWritten === 0) ? (
                         <span
@@ -215,9 +233,10 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
                 </div>
               </div>
 
-              <p className="mt-[1.4em] font-bold underline underline-offset-4">Zusammenfassende Beurteilung</p>
-              <p>Herr Vollmer stellte sich zur Verlaufskontrolle vor. Unter Belastung keine Angina pectoris; die Belastbarkeit ist gut.</p>
-              <p>Im EKG bestand ein normaler Sinusrhythmus. Echokardiographisch zeigte sich eine gute globale und regionale linksventrikuläre Funktion.</p>
+              <p className="mt-[1.4em] font-bold underline underline-offset-4">{L.summaryHeading}</p>
+              {L.summary.map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
             </div>
           </div>
         </motion.div>
@@ -242,7 +261,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
               )}
             >
               <Check className="size-3.5" aria-hidden />
-              Fertig
+              <span className="copy">{t.demo.done}</span>
             </span>
           </div>
 
@@ -251,14 +270,14 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
           <div
             className={cn(
               'glass-white w-[16.5rem] max-w-[calc(100vw-3.5rem)] rounded-xl px-3 py-2 text-[0.8rem] leading-snug transition-[opacity,transform] duration-300',
-              scene.spokenCount === 0 && scene.job === 'none' ? 'translate-y-1 opacity-0' : 'translate-y-0',
+              spokenCount === 0 && scene.job === 'none' ? 'translate-y-1 opacity-0' : 'translate-y-0',
             )}
-            style={{ opacity: scene.spokenCount === 0 && scene.job === 'none' ? 0 : demoOpacity }}
+            style={{ opacity: spokenCount === 0 && scene.job === 'none' ? 0 : demoOpacity }}
           >
             {scene.job === 'none' ? (
               <p className="text-foreground/75">
                 <Mic className="me-1.5 inline size-3 -translate-y-px" aria-hidden />
-                {SPOKEN_WORDS.slice(0, scene.spokenCount).map((w, i) => (
+                {words.slice(0, spokenCount).map((w, i) => (
                   <motion.span
                     key={i}
                     initial={reduce ? false : { opacity: 0 }}
@@ -285,7 +304,7 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
                   <Spinner className="size-3.5 shrink-0" />
                 )}
                 <span className={cn('whitespace-nowrap', scene.job === 'done' && 'font-medium')}>
-                  {scene.job === 'done' ? 'In „Aktuelle Therapie" eingefügt' : 'Wird eingefügt …'}
+                  {scene.job === 'done' ? t.demo.filed : t.demo.busy}
                 </span>
               </motion.p>
             )}

@@ -3,6 +3,7 @@ import { useReducedMotion } from 'motion/react';
 import { Plus } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { useCopy } from './i18n';
 import { ShaderField } from './ShaderField';
 
 /**
@@ -23,32 +24,21 @@ interface Template {
   sections: string[];
 }
 
-const TEMPLATES: Template[] = [
-  { name: 'Kardiologischer Arztbrief', sections: ['Diagnosen', 'Anamnese', 'Zusammenfassende Beurteilung', 'Aktuelle Therapie'] },
-  { name: 'Kurzbefund Echo', sections: ['Fragestellung', 'Befund', 'Beurteilung'] },
-  { name: 'Reha-Bericht', sections: ['Diagnosen', 'Verlauf', 'Empfehlung', 'Medikation'] },
-  { name: 'Gutachten', sections: ['Fragestellung', 'Anamnese', 'Befunde', 'Beurteilung'] },
-  { name: 'Überweisung', sections: ['Diagnosen', 'Fragestellung', 'Bisherige Therapie'] },
-  { name: 'Herzkatheter-Bericht', sections: ['Indikation', 'Befund', 'Intervention', 'Empfehlung'] },
-  { name: 'Belastungs-EKG', sections: ['Fragestellung', 'Belastung', 'Befund', 'Beurteilung'] },
-  { name: 'Langzeit-EKG', sections: ['Aufzeichnung', 'Rhythmus', 'Beurteilung'] },
-  { name: 'Entlassbrief', sections: ['Diagnosen', 'Verlauf', 'Medikation bei Entlassung', 'Empfehlung'] },
-];
-
-/** Your own sheet types these, one after another, then starts over. */
-const OWN_SECTIONS = ['Fragestellung', 'Befund', 'Beurteilung', 'Empfehlung'];
+/** Your own sheet types four sections, one after another, then starts over. */
+const OWN_COUNT = 4;
 const OWN_STEP_MS = 1500;
 const OWN_HOLD_MS = 3200;
-const OWN_TOTAL_MS = OWN_SECTIONS.length * OWN_STEP_MS + OWN_HOLD_MS;
+const OWN_TOTAL_MS = OWN_COUNT * OWN_STEP_MS + OWN_HOLD_MS;
 
 export function Vorlagen({ heading }: { heading: ReactNode }) {
   const reduce = useReducedMotion();
+  const copy = useCopy();
   const hostRef = useRef<HTMLElement | null>(null);
   const [t, setT] = useState(0);
 
   useEffect(() => {
     if (reduce) {
-      setT(OWN_SECTIONS.length * OWN_STEP_MS);
+      setT(OWN_COUNT * OWN_STEP_MS);
       return;
     }
     let raf = 0;
@@ -85,7 +75,7 @@ export function Vorlagen({ heading }: { heading: ReactNode }) {
     };
   }, [reduce]);
 
-  const sheets = reduce ? TEMPLATES : [...TEMPLATES, ...TEMPLATES];
+  const sheets = reduce ? copy.templates.list : [...copy.templates.list, ...copy.templates.list];
 
   return (
     <section ref={hostRef} id="vorlagen" className="relative scroll-mt-24 overflow-hidden py-24 sm:py-32">
@@ -103,7 +93,7 @@ export function Vorlagen({ heading }: { heading: ReactNode }) {
       >
         <div className={cn('flex w-max items-start gap-5 py-10 ps-6', !reduce && 'vorlagen-shelf')}>
           {sheets.map((tpl, i) => (
-            <Sheet key={`${tpl.name}-${i}`} template={tpl} raised={i % 2 === 1} />
+            <Sheet key={i} template={tpl} raised={i % 2 === 1} />
           ))}
           <OwnSheet t={t} raised={sheets.length % 2 === 1} />
           {!reduce ? <OwnSheet t={t} raised={(sheets.length + 1) % 2 === 1} ghost /> : null}
@@ -152,6 +142,7 @@ function Page({
   ariaLabel?: string;
   ariaHidden?: boolean;
 }) {
+  const t = useCopy();
   return (
     <article
       aria-hidden={ariaHidden ? true : undefined}
@@ -167,24 +158,24 @@ function Page({
         {/* Letterhead and date. */}
         <div className="flex items-start justify-between gap-4 text-[7px] leading-[1.45] text-foreground/60">
           <div>
-            <p className="font-bold text-foreground/80">Kardiologische Praxis</p>
-            <p>Am Brand 8, 55116 Mainz</p>
+            <p className="font-bold text-foreground/80">{t.templates.letterhead[0]}</p>
+            <p>{t.templates.letterhead[1]}</p>
           </div>
-          <p className="shrink-0">Mainz, 31.08.2026</p>
+          <p className="shrink-0">{t.templates.date}</p>
         </div>
         {/* Address block. */}
         <div className="mt-4 text-[7px] leading-[1.45] text-foreground/70">
-          <p>Dres. med. Weber / Kaufmann</p>
-          <p>Rheinallee 12</p>
-          <p>55118 Mainz</p>
+          {t.templates.recipient.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
         </div>
         {/* Subject: the report type. */}
         <p className="mt-4 text-[8.5px] leading-snug font-bold">{subject}</p>
-        <p className="mt-2">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+        <p className="mt-2">{t.templates.salutation}</p>
         <div className="mt-2 space-y-2">{sections}</div>
         {/* Closing and signature. */}
         <div className="mt-auto pt-3">
-          <p>Mit freundlichen kollegialen Grüßen</p>
+          <p>{t.templates.closing}</p>
           <span className="mt-2 block h-[4px] w-16 rounded-full bg-foreground/35" aria-hidden />
         </div>
       </div>
@@ -193,10 +184,11 @@ function Page({
 }
 
 function Sheet({ template, raised }: { template: Template; raised: boolean }) {
+  const t = useCopy();
   return (
     <Page
       raised={raised}
-      ariaLabel={`Vorlage ${template.name}`}
+      ariaLabel={`${t.templates.template} ${template.name}`}
       subject={template.name}
       sections={template.sections.map((s, i) => (
         <div key={s}>
@@ -209,6 +201,8 @@ function Sheet({ template, raised }: { template: Template; raised: boolean }) {
 }
 
 function OwnSheet({ t, raised, ghost = false }: { t: number; raised: boolean; ghost?: boolean }) {
+  const copy = useCopy();
+  const OWN_SECTIONS = copy.templates.ownSections.slice(0, OWN_COUNT);
   const typedCount = Math.min(OWN_SECTIONS.length, Math.floor(t / OWN_STEP_MS));
   const inProgress = t < OWN_SECTIONS.length * OWN_STEP_MS ? OWN_SECTIONS[typedCount] : null;
   const partial = inProgress ? inProgress.slice(0, Math.round(Math.min(1, (t % OWN_STEP_MS) / (OWN_STEP_MS * 0.7)) * inProgress.length)) : '';
@@ -218,11 +212,11 @@ function OwnSheet({ t, raised, ghost = false }: { t: number; raised: boolean; gh
       own
       raised={raised}
       ariaHidden={ghost}
-      {...(ghost ? {} : { ariaLabel: 'Ihre eigene Vorlage' })}
+      {...(ghost ? {} : { ariaLabel: copy.templates.ownAria })}
       subject={
         <span className="flex items-center gap-1">
           <Plus className="size-2.5 shrink-0" aria-hidden />
-          Eigene Vorlage
+          {copy.templates.own}
         </span>
       }
       sections={

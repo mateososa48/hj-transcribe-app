@@ -3,6 +3,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Mic } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { type Kind } from './copy';
+import { useLang } from './i18n';
 import { LiveRibbon } from './LiveRibbon';
 import { ShaderField } from './ShaderField';
 import { createSpeechEnvelope, type SpeechFrame } from './speech';
@@ -21,24 +23,12 @@ import { createSpeechEnvelope, type SpeechFrame } from './speech';
  * No percentages anywhere. A number that cannot be sourced is not a fact.
  */
 
-type Kind = 'term' | 'value' | 'dose' | 'gap';
-
-const HUE: Record<Kind, { text: string; bg: string; label: string }> = {
-  term: { text: 'text-[#8a22b6]', bg: 'bg-[#a52bd8]', label: 'Fachbegriff' },
-  value: { text: 'text-[#3a2bd9]', bg: 'bg-[#4230ff]', label: 'Messwert' },
-  dose: { text: 'text-[#c4245e]', bg: 'bg-[#d92a68]', label: 'Dosierung' },
-  gap: { text: 'text-[#9a5f0a]', bg: 'bg-[#b4700f]', label: 'Nicht genannt' },
+const HUE: Record<Kind, { text: string; bg: string }> = {
+  term: { text: 'text-[#8a22b6]', bg: 'bg-[#a52bd8]' },
+  value: { text: 'text-[#3a2bd9]', bg: 'bg-[#4230ff]' },
+  dose: { text: 'text-[#c4245e]', bg: 'bg-[#d92a68]' },
+  gap: { text: 'text-[#9a5f0a]', bg: 'bg-[#b4700f]' },
 };
-
-const ENTRIES: Array<{ said: string; written: string; kind: Kind; note: string }> = [
-  { said: 'P C I Stent R I V A', written: 'PCI/Stent RIVA', kind: 'term', note: 'Eingriff und Gefäß, abgekürzt wie im Katheterbericht.' },
-  { said: 'L V E F achtundfünfzig Prozent', written: 'LVEF 58 %', kind: 'value', note: 'Ein Messwert, mit Prozentzeichen und dem Leerzeichen davor.' },
-  { said: 'Trikuspidalklappeninsuffizienz Grad eins', written: 'Trikuspidalklappeninsuffizienz Grad 1', kind: 'term', note: 'Ein Wort. Es bleibt eines.' },
-  { said: 'N T pro B N P', written: 'NT-proBNP', kind: 'term', note: 'Sechs Laute werden ein Laborwert.' },
-  { said: 'einhundertfünfundvierzig zu neunzig', written: '145/90 mmHg', kind: 'value', note: 'Ein Blutdruck, mit seiner Einheit.' },
-  { said: 'Bisoprolol zwei komma fünf, eins null null', written: 'Bisoprolol 2,5   1-0-0', kind: 'dose', note: 'Wirkstoff, Stärke, Einnahmeschema, auf Tabulatoren.' },
-  { said: 'Apixaban weiter wie bisher', written: 'Apixaban [FEHLT: Dosierung]', kind: 'gap', note: 'Keine Dosis genannt, also keine Dosis erfunden. Die Lücke steht im Brief, bis Sie sie füllen.' },
-];
 
 const SAY_MS = 1100;
 const LAND_MS = 1250;
@@ -47,6 +37,9 @@ const SILENCE: SpeechFrame = { low: 0, mid: 0, high: 0, level: 0 };
 
 export function Genauigkeit() {
   const reduce = useReducedMotion();
+  const { lang, copy: t } = useLang();
+  const ENTRIES = t.accuracy.entries;
+  const count = ENTRIES.length;
   const hostRef = useRef<HTMLElement | null>(null);
   const frameRef = useRef<SpeechFrame>(SILENCE);
   const probe = useCallback(() => frameRef.current, []);
@@ -75,7 +68,7 @@ export function Genauigkeit() {
         // Reset the clock in the same render as the index, so the new entry
         // never reads as already landed for a frame.
         setLocal(0);
-        setIndex((i) => (i + 1) % ENTRIES.length);
+        setIndex((i) => (i + 1) % count);
       }
       frameRef.current = envelope(now, t < SAY_MS);
       const step = Math.floor(t / 50);
@@ -110,7 +103,7 @@ export function Genauigkeit() {
     };
     // The clock restarts when the reader takes over (held) so the chosen
     // entry plays from its first sound.
-  }, [reduce, held, index]);
+  }, [reduce, held, index, count]);
 
   const choose = (i: number) => {
     setHeld(true);
@@ -118,7 +111,7 @@ export function Genauigkeit() {
     setLocal(0);
   };
 
-  const entry = ENTRIES[index]!;
+  const entry = ENTRIES[index % count]!;
   const words = entry.said.split(' ');
   const shown = reduce ? words.length : Math.round(Math.min(1, local / SAY_MS) * words.length);
   const landed = reduce || local >= LAND_MS;
@@ -129,31 +122,28 @@ export function Genauigkeit() {
   useEffect(() => {
     if (landed) setStaged(index);
   }, [landed, index]);
-  const shownEntry = ENTRIES[staged]!;
+  const shownEntry = ENTRIES[staged % count]!;
   const hue = HUE[shownEntry.kind];
   const gapParts = shownEntry.kind === 'gap' ? shownEntry.written.split(' [') : null;
 
   return (
     <section ref={hostRef} id="genauigkeit" className="py-24 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-6">
-        <h2 className="font-display max-w-[14ch] text-[2.2rem] leading-[1.04] font-medium text-balance sm:text-[2.8rem]">
-          Spricht Kardiologie.
+        <h2 className="font-display max-w-[24ch] text-[2.2rem] leading-[1.04] font-medium text-balance sm:text-[2.8rem]">
+          {t.accuracy.title}
         </h2>
-        <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-pretty text-muted-foreground">
-          Fachbegriffe, Abkürzungen, Wirkstoffe, Dosierungen: Der Assistent kennt die Sprache der Praxis und schreibt
-          sie so, wie sie im Brief stehen muss.
-        </p>
+        <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-pretty text-muted-foreground">{t.accuracy.body}</p>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-12 lg:gap-8">
           {/* The lexicon: one line, one marker that slides to the current word. */}
           <ol
             className="order-2 grid grid-cols-2 gap-x-6 gap-y-0.5 lg:order-1 lg:col-span-3 lg:block lg:space-y-0 lg:border-l lg:border-border"
-            aria-label="Beispiele"
+            aria-label={t.accuracy.examples}
           >
             {ENTRIES.map((e, i) => {
               const on = i === index;
               return (
-                <li key={e.written} className="relative">
+                <li key={i} className="relative">
                   {on ? (
                     <motion.span
                       layoutId="lexicon-marker"
@@ -171,7 +161,7 @@ export function Genauigkeit() {
                       on ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                     )}
                   >
-                    {e.written.replace(' [FEHLT: Dosierung]', ' …')}
+                    {e.written.replace(/ \[.*\]$/, ' …')}
                   </button>
                 </li>
               );
@@ -181,7 +171,7 @@ export function Genauigkeit() {
           {/* The stage. */}
           <div
             role="img"
-            aria-label={`Gesagt: ${shownEntry.said}. Im Brief: ${shownEntry.written}.`}
+            aria-label={t.accuracy.stage(shownEntry.said, shownEntry.written)}
             className="relative order-1 min-w-0 overflow-hidden rounded-3xl border border-border bg-background px-7 py-7 sm:px-12 sm:py-9 lg:order-2 lg:col-span-9"
           >
             {/* The same field as the hero and the closing, at lower strength,
@@ -210,7 +200,7 @@ export function Genauigkeit() {
                   'mt-5 min-h-[2.1em] text-[2.2rem] leading-[1.02] transition-opacity duration-500 sm:mt-6 sm:text-[3.2rem] lg:text-[4rem]',
                   landed ? 'opacity-100' : 'opacity-35',
                 )}
-                lang="de"
+                lang={lang}
               >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.p
@@ -240,7 +230,7 @@ export function Genauigkeit() {
 
               {/* Kind and note. */}
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
-                <span className={cn('font-semibold', hue.text)}>{hue.label}</span>
+                <span className={cn('font-semibold', hue.text)}>{t.accuracy.kinds[shownEntry.kind]}</span>
                 <span
                   className={cn('max-w-[52ch] text-muted-foreground transition-opacity duration-500', landed ? 'opacity-100' : 'opacity-35')}
                 >
@@ -253,11 +243,7 @@ export function Genauigkeit() {
 
         {/* Three principles. */}
         <dl className="mt-12 grid gap-8 border-t border-border pt-8 sm:grid-cols-3 sm:gap-10">
-          {[
-            { t: 'Begriffe bleiben Begriffe.', d: 'Zusammengesetzte Wörter bleiben ganz, Abkürzungen werden Abkürzungen, Gefäße behalten ihre Namen.' },
-            { t: 'Zahlen werden Werte.', d: 'Gesprochene Drücke, Frequenzen und Dosierungen stehen als 145/90, als 72/min und als 2,5 im Brief.' },
-            { t: 'Lücke statt Erfindung.', d: 'Was nicht gesagt wurde, steht nicht im Brief. Fehlt etwas, steht dort eine Markierung, nie eine Vermutung.' },
-          ].map((x) => (
+          {t.accuracy.principles.map((x) => (
             <div key={x.t} className="max-w-[40ch]">
               <dt className="font-semibold">{x.t}</dt>
               <dd className="mt-2 leading-relaxed text-muted-foreground">{x.d}</dd>
