@@ -3,15 +3,13 @@ import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion
 
 import { BrandWave } from '@/components/brand-wave';
 import { cn } from '@/lib/utils';
-import type { Lang } from './copy';
 import { useLang } from './i18n';
 
 /**
  * The header.
  *
  * Resting on the hero it is a transparent row on the page's own grid: the
- * language switch and the wordmark on the content's left edge, the key on its
- * right edge. Once the page moves it gathers into a narrower pill of white
+ * wordmark on the content's left edge, the key on its right edge. Once the page moves it gathers into a narrower pill of white
  * glass and stays on screen. The mark is painted on a transparent canvas, so
  * it never carries a white ground onto whatever is behind the header. One
  * highlight slides between the section links, following the pointer, and
@@ -22,11 +20,10 @@ import { useLang } from './i18n';
  */
 
 const SECTIONS = ['werkzeuge', 'vorlagen'] as const;
-const LANGS: Lang[] = ['de', 'en'];
 
 export function Nav({ contact }: { contact: string }) {
   const reduce = useReducedMotion();
-  const { lang, copy, setLang } = useLang();
+  const { copy } = useLang();
   const [scrolled, setScrolled] = useState(() => window.scrollY > 24);
   const [hover, setHover] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -76,71 +73,25 @@ export function Nav({ contact }: { contact: string }) {
       <div
         className={cn(
           // At rest the row is the content column itself (max-w-6xl, px-6), so
-          // the switch and the key sit on the hero's own text edges. Once
+          // the wordmark and the key sit on the hero's own text edges. Once
           // moving it gathers into a narrower pill: height 64 → 56, key 44,
           // so the key's inset from the pill's right edge (padding + 1px
           // border) equals its inset from the top and bottom: 6px.
           'mx-auto flex items-center gap-1 rounded-full border transition-[max-width,width,height,background-color,border-color,box-shadow,padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
           scrolled
-            ? 'h-14 w-[calc(100%-2rem)] max-w-[52rem] ps-[calc(0.375rem-1px)] pe-[calc(0.375rem-1px)]'
+            ? 'h-14 w-[calc(100%-2rem)] max-w-[52rem] ps-5 pe-[calc(0.375rem-1px)]'
             : 'h-16 w-full max-w-6xl border-transparent bg-transparent px-[calc(1.5rem-1px)]',
           scrolled && (dark ? 'nav-glass-dark border-white/10 text-white' : 'nav-glass border-white/80'),
         )}
       >
-        {/* The language switch: two labels, one thumb that slides between them. */}
-        <div
-          role="group"
-          aria-label={copy.nav.language}
-          data-lang-toggle
-          className={cn(
-            'flex h-8 shrink-0 items-center rounded-full p-0.5 transition-[background-color,box-shadow] duration-300 sm:h-9 sm:p-1',
-            dark
-              ? 'bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_0_1px_rgba(255,255,255,0.1)]'
-              : 'bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,1),0_0_0_1px_rgba(12,12,13,0.08)]',
-          )}
-        >
-          {LANGS.map((l) => {
-            const on = l === lang;
-            return (
-              <button
-                key={l}
-                type="button"
-                lang={l}
-                aria-pressed={on}
-                onClick={() => setLang(l)}
-                className={cn(
-                  'relative h-7 cursor-pointer rounded-full px-2 text-xs font-semibold tracking-wide uppercase transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-2.5',
-                  on
-                    ? dark
-                      ? 'text-foreground'
-                      : 'text-white'
-                    : dark
-                      ? 'text-white/60 hover:text-white'
-                      : 'text-foreground/60 hover:text-foreground',
-                )}
-              >
-                {on ? (
-                  <motion.span
-                    layoutId="lang-thumb"
-                    aria-hidden
-                    className={cn('absolute inset-0 rounded-full', dark ? 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.3)]' : 'btn-liquid-dark')}
-                    transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 36 }}
-                  />
-                ) : null}
-                <span className="relative">{l}</span>
-              </button>
-            );
-          })}
-        </div>
-
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })}
           aria-label={copy.nav.toTop}
-          className="ms-2 flex cursor-pointer items-center gap-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:ms-3"
+          className="flex cursor-pointer items-center gap-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
           <span className="text-[15px] font-semibold tracking-tight whitespace-nowrap transition-colors duration-300 sm:text-[1.05rem]">Arzt-Assistent</span>
-          <BrandWave transparent dark={dark} className="hidden h-10 w-12 shrink-0 sm:block" />
+          <BrandWave transparent dark={dark} className="h-10 w-12 shrink-0" />
         </button>
 
         <nav aria-label={copy.nav.sections} onMouseLeave={() => setHover(null)} className="ms-auto flex items-center gap-0.5">

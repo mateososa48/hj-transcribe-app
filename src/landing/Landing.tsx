@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Bento } from './Bento';
 import { Genauigkeit } from './Genauigkeit';
 import { HeroDemo } from './HeroDemo';
+import { LangToggle } from './LangToggle';
 import { Nav } from './Nav';
 import { Scrollytelling } from './Scrollytelling';
 import { ShaderField } from './ShaderField';
@@ -38,6 +39,7 @@ export function Landing() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <Nav contact={CONTACT} />
+      <LangToggle />
       <main>
         <Hero />
         <Scrollytelling />
@@ -186,7 +188,7 @@ function Closing() {
   return (
     <footer className="relative overflow-hidden">
       <ShaderField toEdge className="absolute inset-0" />
-      <div className="relative mx-auto w-full max-w-6xl px-6 pt-28 pb-8 sm:pt-40">
+      <div className="relative mx-auto w-full max-w-6xl px-6 pt-28 pb-16 sm:pt-40">
         <Reveal className="text-center">
           <h2 className="font-display mx-auto max-w-[16ch] text-[2.4rem] leading-[1] font-medium text-balance sm:text-[4rem]">
             {t.closing.title}
