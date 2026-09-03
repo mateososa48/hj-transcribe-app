@@ -104,7 +104,11 @@ export function Scrollytelling() {
     () =>
       SCENES.map((scene) => {
         const words = t.tools.chapters[scene.id];
-        return { ...scene, ...words, callouts: scene.anchors.map((a, i) => ({ ...a, text: words.callouts[i] ?? '' })) };
+        return {
+          ...scene,
+          ...words,
+          callouts: scene.anchors.map((a, i) => ({ ...a, ...(words.calloutAt[i] ?? {}), text: words.callouts[i] ?? '' })),
+        };
       }),
     [t],
   );

@@ -71,6 +71,7 @@ const de = {
         body: 'Sie erzählen den Fall so, wie Sie ihn einer Kollegin erzählen würden. Der Assistent schreibt daraus die Zusammenfassende Beurteilung in ganzen Sätzen und behält Ihre Reihenfolge und Ihre Formulierungen bei.',
         alt: 'Ein Diktat, als fertige Zusammenfassende Beurteilung formuliert',
         callouts: ['Aus 20 Sekunden Diktat', 'Nachdiktieren, wenn noch etwas fehlt'],
+        calloutAt: [] as Array<{ x?: number; y?: number }>,
       },
       termin: {
         img: '/landing/transkript.webp',
@@ -79,6 +80,7 @@ const de = {
         body: 'Die Aufnahme läuft, während Sie mit dem Patienten sprechen. Danach liegt das Transkript nach Arzt und Patient getrennt vor, dazu Notizen in Abschnitten. Ein Klick auf ein Wort spielt die Stelle ab.',
         alt: 'Ein Sprechstunden-Transkript, nach Arzt und Patient getrennt',
         callouts: ['Nach Arzt und Patient getrennt', 'Ein Klick auf ein Wort spielt die Stelle ab'],
+        calloutAt: [] as Array<{ x?: number; y?: number }>,
       },
       bericht: {
         img: '/landing/bericht.webp',
@@ -87,6 +89,7 @@ const de = {
         body: 'Der Editor zeigt eine A4-Seite mit den Abschnitten Ihrer Vorlage. Jeden Abschnitt diktieren Sie einzeln. Am Ende exportieren Sie eine Word-Datei mit richtigen Überschriften und Tabstopps.',
         alt: 'Der Berichtseditor: eine A4-Seite mit diktierbaren Abschnitten',
         callouts: ['Jeder Abschnitt einzeln diktiert', '1:14 min Diktat, als Abschnitt eingefügt'],
+        calloutAt: [] as Array<{ x?: number; y?: number }>,
       },
     },
   },
@@ -254,6 +257,7 @@ const en: Copy = {
         body: 'You describe the case the way you would to a colleague. The assistant writes the summary and assessment from it in full sentences and keeps your order and your wording.',
         alt: 'A dictation, written up as a finished summary and assessment',
         callouts: ['From 20 seconds of dictation', 'Add to it later without rewriting'],
+        calloutAt: [{}, { x: 0.68 }],
       },
       termin: {
         img: '/landing/en/transkript.webp',
@@ -262,6 +266,7 @@ const en: Copy = {
         body: 'The recording runs while you talk with the patient. Afterwards you have the transcript split by doctor and patient, plus notes in sections. Click a word to hear that moment.',
         alt: 'A consultation transcript, split by doctor and patient',
         callouts: ['Split by doctor and patient', 'Click a word to play that moment'],
+        calloutAt: [],
       },
       bericht: {
         img: '/landing/en/bericht.webp',
@@ -270,6 +275,7 @@ const en: Copy = {
         body: 'The editor shows an A4 page with the sections from your template. You dictate each section on its own. At the end you export a Word file with proper headings and tab stops.',
         alt: 'The report editor: an A4 page with sections that can be dictated',
         callouts: ['Each section dictated on its own', '1:14 min dictation, inserted as a section'],
+        calloutAt: [{ x: 0.745 }],
       },
     },
   },
