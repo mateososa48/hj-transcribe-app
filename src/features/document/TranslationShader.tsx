@@ -35,6 +35,7 @@ out vec4 outColor;
 uniform vec2 u_res;
 uniform float u_time;
 uniform float u_grain;
+uniform float u_strength;
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -94,7 +95,7 @@ void main() {
   // Presence with real swells, so the page has weather rather than a tint.
   // Kept low all the same: this lies over his writing, and the writing wins.
   float d = 0.30 + 0.70 * smoothstep(0.14, 0.86, n1);
-  float alpha = d * 0.19;
+  float alpha = clamp(d * 0.19 * u_strength, 0.0, 0.85);
 
   vec3 ink = col * 0.9 + 0.1;
   vec3 outc = mix(vec3(1.0), ink, alpha);
@@ -108,22 +109,40 @@ const SCALE = 0.5;
 /** Beyond this the canvas gains nothing and costs memory on a long letter. */
 const MAX_PX = 1400;
 
-export function TranslationShader({ className }: { className?: string }) {
+export function TranslationShader({
+  className,
+  active = true,
+  strength = 1,
+}: {
+  className?: string;
+  /**
+   * Whether the light is on. The canvas keeps drawing through the fade out,
+   * so it leaves the way it arrived instead of being cut.
+   */
+  active?: boolean;
+  /** Multiplies the field's presence. The ring runs far bolder than the page. */
+  strength?: number;
+}) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [failed, setFailed] = useState(false);
+  /**
+   * False for one frame after mounting, so the host has a 0 to transition
+   * FROM. Without it the element arrives already opaque and the light snaps
+   * on, however long the transition says it is.
+   */
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
     const canvas = document.createElement('canvas');
-    // Arrives as light does: a fade rather than a pop the moment he presses.
-    canvas.style.cssText =
-      'position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 700ms ease-out';
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
     host.appendChild(canvas);
-    requestAnimationFrame(() => {
-      canvas.style.opacity = '1';
-    });
 
     const gl = canvas.getContext('webgl2', {
       alpha: false,
@@ -170,6 +189,7 @@ export function TranslationShader({ className }: { className?: string }) {
     const uRes = gl.getUniformLocation(program, 'u_res');
     const uTime = gl.getUniformLocation(program, 'u_time');
     const uGrain = gl.getUniformLocation(program, 'u_grain');
+    gl.uniform1f(gl.getUniformLocation(program, 'u_strength'), strength);
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0;
@@ -255,7 +275,7 @@ export function TranslationShader({ className }: { className?: string }) {
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       canvas.remove();
     };
-  }, []);
+  }, [strength]);
 
   if (failed) return null;
 
@@ -267,6 +287,8 @@ export function TranslationShader({ className }: { className?: string }) {
         // Multiply is what lets it lie on the writing: white passes through,
         // only the colour lands.
         'pointer-events-none absolute inset-0 overflow-hidden [border-radius:inherit] [mix-blend-mode:multiply]',
+        'transition-opacity duration-[700ms] ease-in-out motion-reduce:transition-none',
+        active && entered ? 'opacity-100' : 'opacity-0',
         className,
       )}
     />

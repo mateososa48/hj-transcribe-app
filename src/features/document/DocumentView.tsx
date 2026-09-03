@@ -323,6 +323,10 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
         } else {
           toast.success(`Die ${language.endonym}-Fassung liegt als eigener Bericht vor.`);
         }
+        // Let the light leave the old page before the new one arrives: the
+        // whole run should read as one movement, not as a cut on the last frame.
+        setTranslating(null);
+        await new Promise((resolve) => setTimeout(resolve, 640));
         openDocument(outcome.document.id);
       } catch (error) {
         toast.error(

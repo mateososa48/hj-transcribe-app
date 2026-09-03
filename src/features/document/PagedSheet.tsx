@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Editor } from '@tiptap/react';
 
+import { cn } from '@/lib/utils';
 import { applyPagePushes, collectAtoms, type PagePush } from './pagination';
 import { TranslationShader } from './TranslationShader';
 
@@ -31,6 +32,21 @@ export function PagedSheet({
   children: ReactNode;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
+  /**
+   * The light outlives `busy` by its own fade. Unmounting the shader the
+   * instant the answer lands would cut the colour off mid-breath; this keeps
+   * it drawing until it has faded out, then takes it away.
+   */
+  const [lit, setLit] = useState(busy);
+  useEffect(() => {
+    if (busy) {
+      setLit(true);
+      return;
+    }
+    const timer = setTimeout(() => setLit(false), 850);
+    return () => clearTimeout(timer);
+  }, [busy]);
+
   /** Whether page pushes are currently applied, so we clear only when needed. */
   const pushedRef = useRef(false);
   const [pageHeight, setPageHeight] = useState(0);
@@ -137,7 +153,10 @@ export function PagedSheet({
       <div
         ref={sheetRef}
         style={pageHeight ? { minHeight: `${pages * pageHeight}px` } : undefined}
-        className="relative mx-auto flex w-full max-w-[52rem] flex-col rounded-[3px] border border-border/80 bg-card px-8 py-10 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_12px_32px_-16px_rgba(0,0,0,0.22)] transition-[min-height] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:px-20 sm:py-16"
+        className={cn(
+          'relative mx-auto flex w-full max-w-[52rem] flex-col rounded-[3px] border border-border/80 bg-card px-8 py-10 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_12px_32px_-16px_rgba(0,0,0,0.22)] transition-[min-height] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:px-20 sm:py-16',
+          busy && 'sheet-skeleton',
+        )}
       >
         {breaks.map((top, i) => (
           <div
@@ -154,9 +173,18 @@ export function PagedSheet({
           </div>
         ))}
         {children}
-        {/* Over the writing, never in place of it: he can keep reading while
-            the translation is made. */}
-        {busy ? <TranslationShader className="z-20" /> : null}
+        {lit ? (
+          <>
+            {/* The field over the page, and the same field again as a bolder
+                ring on its edge — one language of light, twice. */}
+            <TranslationShader active={busy} className="z-20" />
+            <TranslationShader
+              active={busy}
+              strength={6.5}
+              className="shader-ring z-20 -inset-[5px] rounded-[7px]"
+            />
+          </>
+        ) : null}
       </div>
     </div>
   );

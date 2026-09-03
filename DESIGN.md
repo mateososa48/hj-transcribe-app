@@ -416,13 +416,32 @@ warped fbm walking a rose → violet → amber ramp (the ribbon's own hues, the
 amber lit to peach because raw amber turns to sand on white), drifting at
 `u_time * 0.045` — slow enough that you never catch it moving and it has
 changed when you look back. It composites with `mix-blend-multiply`, so white
-passes through and only the colour lands: the writing stays legible the whole
-time. Half resolution, paused offscreen and on hidden tabs, one still frame
-under reduced motion, and nothing at all without WebGL2 (the spinner in the key
-is what says it is working; this is atmosphere). The first attempt was a CSS
-band and is gone: on a two-page letter a travelling band reads as a wash, and
-it was a special effect rather than the instrument the rest of the app is
-made of.
+passes through and only the colour lands. Half resolution, paused offscreen and
+on hidden tabs, one still frame under reduced motion, and nothing at all
+without WebGL2 (the spinner in the key is what says it is working; this is
+atmosphere). The first attempt was a CSS band and is gone: on a two-page letter
+a travelling band reads as a wash, and it was a special effect rather than the
+instrument the rest of the app is made of.
+
+The same shader runs a second time as a RING on the page's edge, at strength
+6.5 and masked down to a 5px band (`.shader-ring`: two mask layers, the inner
+one inset and excluded, so no padding is needed and the canvas still fills the
+element). One language of light, twice, and the bolder one says plainly that
+the page is busy.
+
+And the letter itself goes to placeholder bars. Every block keeps its own
+geometry — the bars are drawn in a `::after` over it, so the page does not
+reflow by a pixel and the pagination is never recomputed; the words fade out of
+their lines as the bars fade in. Headings become one short bar, an empty line
+none. The editor turns non-interactive while it runs, which reverses the
+earlier rule that he could keep reading during a translation: a page that
+plainly cannot be read is also a page he will not type into by accident.
+
+Everything moves together and in both directions: 700ms ease-in-out on the two
+shader layers, 520ms on the text and the bars. The shader mounts one frame at
+zero so it has something to fade FROM, the sheet keeps it mounted 850ms after
+`busy` clears so it can fade OUT, and the new letter waits 640ms before opening
+so the whole run reads as one movement rather than a cut on the last frame.
 
 Each letter remembers what language it is written in (`DocumentRecord.language`,
 absent meaning German), and the menu never offers the language the letter is

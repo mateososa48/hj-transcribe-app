@@ -722,3 +722,110 @@ h1, h2, h3 {
 @media (prefers-reduced-motion: reduce) {
   .lock-shake { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   A Bericht being translated.
+
+   The whole sheet changes state together and every part of it transitions:
+   the writing recedes into placeholder bars, a bolder ring of the same light
+   traces the page edge, and the field itself fades up over the paper. Nothing
+   snaps — arriving and leaving take the same 600ms, so pressing the key and
+   the answer landing both read as one movement.
+--------------------------------------------------------------------------- */
+
+/* The ring: the same shader, far bolder, masked down to the page's edge.
+   Two masks, the inner one inset by the thickness and excluded, leaves only
+   the band — no padding, so the canvas still fills the whole element. */
+.shader-ring {
+  --ring: 5px;
+  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-size:
+    100% 100%,
+    calc(100% - var(--ring) * 2) calc(100% - var(--ring) * 2);
+  mask-size:
+    100% 100%,
+    calc(100% - var(--ring) * 2) calc(100% - var(--ring) * 2);
+  -webkit-mask-position: 0 0, var(--ring) var(--ring);
+  mask-position: 0 0, var(--ring) var(--ring);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* The writing, as placeholder bars.
+   Every block keeps its own geometry — the bars are drawn in a pseudo-element
+   over it, so the page does not reflow by a single pixel when the state turns
+   and the pagination never has to be recomputed. The letter's text simply
+   fades out of its own lines and the bars fade into them.
+
+   This deliberately reverses the earlier rule that he could keep reading while
+   the translation ran: he asked for the page to go to bars, and a page that
+   plainly cannot be read is also a page he will not try to edit mid-run. */
+.tiptap :is(p, h1, h2, h3, li) {
+  transition:
+    color 520ms ease-in-out,
+    opacity 520ms ease-in-out;
+}
+.tiptap :is(h1, h2, h3) {
+  position: relative;
+}
+.tiptap :is(p, h1, h2, h3)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 3px;
+  transition: opacity 520ms ease-in-out;
+  /* One bar per line box, sitting where the words sit: the line-height is
+     1.8em, and the bar occupies the middle of it. */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 0.36em,
+    rgba(12, 12, 13, 0.085) 0.36em 1.36em,
+    transparent 1.36em 1.8em
+  );
+}
+/* A heading is one short bar, the way a heading is one short line. */
+.tiptap :is(h1, h2, h3)::after {
+  background-image: linear-gradient(rgba(12, 12, 13, 0.11), rgba(12, 12, 13, 0.11));
+  background-repeat: no-repeat;
+  background-size: 38% 1.05em;
+  background-position: 0 0.1em;
+}
+.tiptap h1::after {
+  background-size: 46% 1.5em;
+}
+/* An empty line has nothing to stand in for. */
+.tiptap p:has(> br:only-child)::after {
+  display: none;
+}
+
+.sheet-skeleton .tiptap {
+  /* A letter that cannot be read is not a letter to be typed into. */
+  pointer-events: none;
+  caret-color: transparent;
+  user-select: none;
+}
+.sheet-skeleton .tiptap :is(p, h1, h2, h3, li) {
+  color: transparent;
+}
+.sheet-skeleton .tiptap :is(p, h1, h2, h3)::after {
+  opacity: 1;
+}
+.sheet-skeleton .tiptap li::marker {
+  color: transparent;
+}
+/* The invitations are controls, not writing: they leave rather than turn
+   into bars. */
+.sheet-skeleton .tiptap .section-invite {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tiptap :is(p, h1, h2, h3, li),
+  .tiptap :is(p, h1, h2, h3)::after {
+    transition: none;
+  }
+}
