@@ -182,7 +182,7 @@ function TileErgaenzen() {
       </div>
 
       {/* The app's recording window, over the letter's edge. */}
-      <div className="absolute top-6 left-6 flex w-fit max-w-[calc(100%-3rem)] flex-col rounded-2xl glass-panel px-3.5 py-2.5 sm:top-10">
+      <div className="absolute top-6 left-6 flex w-fit max-w-[calc(100%-3rem)] flex-col rounded-2xl glass-white px-3.5 py-2.5 sm:top-10">
         <div className="flex items-center gap-3">
           <LiveRibbon probe={probe} className="h-8 w-24 shrink-0 mix-blend-multiply" />
           <span className="text-base font-semibold tracking-tight tabular-nums">0:{String(seconds).padStart(2, '0')}</span>
@@ -245,7 +245,7 @@ function TileFollowAlong() {
       body="Beim Abhören läuft die Markierung im Transkript mit. Ein Klick auf ein Wort springt an genau diese Stelle im Ton."
     >
       {/* The mini player and, under it, the words it produced. */}
-      <div className="absolute inset-x-6 top-9 rounded-2xl glass-panel p-4">
+      <div className="absolute inset-x-6 top-9 rounded-2xl glass-white p-4">
         <div className="flex items-center gap-3">
           <span className="grid size-6 shrink-0 place-items-center" aria-hidden>
             <Play className="size-4 fill-current" />
@@ -296,7 +296,7 @@ function TileUnverlierbar() {
     >
       <div className="absolute inset-x-6 top-9">
         {/* The recording window, running. */}
-        <div className="flex w-fit max-w-full flex-col rounded-2xl glass-panel px-3.5 py-2.5">
+        <div className="flex w-fit max-w-full flex-col rounded-2xl glass-white px-3.5 py-2.5">
           <div className="flex items-center gap-3">
             <LiveRibbon probe={probe} className="h-8 w-24 shrink-0 mix-blend-multiply" />
             <span className="text-base font-semibold tracking-tight tabular-nums">0:{String(seconds).padStart(2, '0')}</span>
