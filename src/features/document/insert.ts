@@ -10,6 +10,8 @@ export interface TiptapNode {
   attrs?: Record<string, unknown>;
   content?: TiptapNode[];
   text?: string;
+  /** Bold, italic and the rest. Opaque here: nothing in this file reads them. */
+  marks?: unknown[];
 }
 
 const text = (t: string): TiptapNode => ({ type: 'text', text: t });

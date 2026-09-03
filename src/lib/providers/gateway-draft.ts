@@ -16,6 +16,12 @@ import {
   buildGespraechUserPrompt,
   parseGespraech,
 } from '../../../prompts/gespraech.ts';
+import {
+  buildUebersetzungSystemPrompt,
+  buildUebersetzungUserPrompt,
+  parseUebersetzung,
+  UEBERSETZUNG_PROMPT_VERSION,
+} from '../../../prompts/uebersetzung.ts';
 import type {
   AbschnittRequest,
   AbschnittResponse,
@@ -24,6 +30,8 @@ import type {
   DraftProvider,
   GespraechRequest,
   GespraechResponse,
+  UebersetzungRequest,
+  UebersetzungResponse,
 } from './draft-types.ts';
 import { chatCompletion } from './openai-compatible.ts';
 
@@ -141,6 +149,31 @@ export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL
         wellFormed,
         model: result.model,
         promptVersion: GESPRAECH_PROMPT_VERSION,
+        latencyMs: Date.now() - started,
+        ...(result.usage ? { usage: result.usage } : {}),
+      };
+    },
+
+    async translateBericht(request: UebersetzungRequest): Promise<UebersetzungResponse> {
+      const started = Date.now();
+      const result = await chatCompletion({
+        endpoint: ENDPOINT,
+        apiKey,
+        model,
+        providerId: 'gateway',
+        system: buildUebersetzungSystemPrompt(request.language),
+        user: buildUebersetzungUserPrompt(request.segments),
+        // A whole letter comes back; the helper's default would truncate it.
+        maxTokens: 32_000,
+        ...(request.signal ? { signal: request.signal } : {}),
+      });
+
+      const { segments, wellFormed } = parseUebersetzung(result.raw, request.segments.length);
+      return {
+        segments,
+        wellFormed,
+        model: result.model,
+        promptVersion: UEBERSETZUNG_PROMPT_VERSION,
         latencyMs: Date.now() - started,
         ...(result.usage ? { usage: result.usage } : {}),
       };

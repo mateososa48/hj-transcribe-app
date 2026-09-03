@@ -387,6 +387,35 @@ now a three-node file tree (Diktate/Termine/Berichte): house grid-rows
 animation, guide line via SidebarMenuSub, per-row stagger, inert collapsed
 branches; the VISIBLE_LIMIT/"Alle anzeigen" mechanism is gone.
 
+**Übersetzen (2026-09-03).** A finished Arztbrief in another language, as a
+SECOND Bericht: the original is read and never written. The key sits in the
+document header beside Löschen, not in the instrument row — both act on the
+letter as a whole, while the stripe is for the keys that change the text under
+his cursor (and the stripe already overflows below ~1280px without help). Five
+languages, German label left and endonym right (`prompts/uebersetzung.ts`).
+
+The letter is translated SEGMENT BY SEGMENT, not rewritten. `translate.ts`
+lifts one segment per block that carries text — a heading, a paragraph, the
+paragraph inside a bullet — and the document's structure never reaches the
+model, so headings, lists and the literal tabs the Medikation columns stand on
+cannot be lost. A block, not a text node: a sentence split by a bold run is
+three nodes and one thought, and translating fragments returns fragments. The
+cost is that a mark INSIDE a sentence does not survive into the copy (the block
+keeps the marks of its first run), paid once in a copy and never on his own
+letter. The response is read BY INDEX (`<ueb i="n">`), and a segment the model
+dropped keeps its German rather than sliding every following line up by one —
+in a letter whose Medikation rows are positional that is a hazard, not a
+blemish. A run with any German left says so in the toast.
+
+Model: the existing browser-direct Anthropic adapter (`claude-opus-5`,
+`translateBericht`, 32k output budget because a whole letter comes back). NOT
+the gateway — a translated Arztbrief is the most identifying text in the app,
+and SPEC constraint 1 forbids the proxy hop for it. While it runs, the sheet
+carries `.bericht-sweep`: a 340px band of the ribbon's own rose, violet and
+amber travelling down the page under `mix-blend-multiply`, fixed height rather
+than a share of the sheet so a five-page letter still reads as a band and not a
+slow tint. The writing stays legible underneath throughout.
+
 ## 11. The landing page (2026-09-01)
 
 A second Vite entry, `landing.html` → `src/landing/main.tsx`, built alongside the app (`vite.config.ts` `rollupOptions.input`). It shares `index.css` (tokens, `btn-liquid-dark`, Geist, the document face) and adds only `src/landing/landing.css` (paper minis, framed screenshots, selection colour).

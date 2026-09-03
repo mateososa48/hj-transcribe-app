@@ -722,3 +722,81 @@ h1, h2, h3 {
 @media (prefers-reduced-motion: reduce) {
   .lock-shake { animation: none; }
 }
+
+/* The letter being translated.
+
+   A band of the ribbon's own light travels down the sheet while the model
+   works: rose, violet and amber, the three hues the instrument already paints
+   with, laid on the paper with multiply so it reads as light passing over a
+   page rather than a panel dropped on top of it. The writing stays legible
+   underneath the whole time — he can keep reading his letter while its
+   translation is being made.
+
+   The band is a fixed 340px tall, not a share of the sheet: a Bericht may be
+   one page or five, and a proportional band on a long letter stops reading as
+   a band at all and becomes a slow tint over everything. It travels the full
+   height whatever that height is, because the element it lives in is the
+   sheet and the transform is a share of THAT.
+
+   Under reduced motion the band stands still at a low tint: the sheet is
+   still visibly busy, nothing moves. */
+@keyframes bericht-sweep {
+  from { transform: translateY(-340px); }
+  to { transform: translateY(100%); }
+}
+.bericht-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+.bericht-sweep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 56, 133, 0) 0,
+    rgba(255, 56, 133, 0.11) 95px,
+    rgba(189, 43, 245, 0.15) 185px,
+    rgba(255, 168, 56, 0.12) 275px,
+    rgba(255, 168, 56, 0) 330px,
+    rgba(255, 168, 56, 0) 100%
+  );
+  animation: bericht-sweep 3200ms cubic-bezier(0.42, 0, 0.58, 1) infinite;
+}
+/* The leading edge: a thin rule so the band has a direction, one hair ahead
+   of the colour it pulls behind it. */
+.bericht-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(189, 43, 245, 0) 0,
+    rgba(189, 43, 245, 0) 322px,
+    rgba(189, 43, 245, 0.3) 331px,
+    rgba(189, 43, 245, 0) 340px,
+    rgba(189, 43, 245, 0) 100%
+  );
+  animation: bericht-sweep 3200ms cubic-bezier(0.42, 0, 0.58, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bericht-sweep::before,
+  .bericht-sweep::after {
+    animation: none;
+  }
+  .bericht-sweep::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 56, 133, 0.06),
+      rgba(189, 43, 245, 0.07),
+      rgba(255, 168, 56, 0.06)
+    );
+  }
+  .bericht-sweep::after {
+    display: none;
+  }
+}

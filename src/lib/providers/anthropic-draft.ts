@@ -19,6 +19,12 @@ import {
   parseGespraech,
 } from '../../../prompts/gespraech.ts';
 import {
+  buildUebersetzungSystemPrompt,
+  buildUebersetzungUserPrompt,
+  parseUebersetzung,
+  UEBERSETZUNG_PROMPT_VERSION,
+} from '../../../prompts/uebersetzung.ts';
+import {
   DraftError,
   type AbschnittRequest,
   type AbschnittResponse,
@@ -27,6 +33,8 @@ import {
   type DraftProvider,
   type GespraechRequest,
   type GespraechResponse,
+  type UebersetzungRequest,
+  type UebersetzungResponse,
 } from './draft-types.ts';
 
 /**
@@ -54,15 +62,22 @@ const MODEL = 'claude-opus-5';
  */
 const MAX_TOKENS = 8_000;
 
+/**
+ * A translation returns the entire letter, plus one wrapper per segment. Two
+ * A4 pages of German cardiology run well past the drafting budget once the
+ * blocks are counted, and a truncated letter is worse than none.
+ */
+const TRANSLATION_MAX_TOKENS = 32_000;
+
 export function createAnthropicDraft(apiKey: string): DraftProvider {
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
 
-  /** Both features share the call shape; only the prompts differ. */
-  async function call(system: string, user: string, signal?: AbortSignal) {
+  /** Every feature shares the call shape; only the prompts differ. */
+  async function call(system: string, user: string, signal?: AbortSignal, maxTokens = MAX_TOKENS) {
     const message = await client.messages.create(
       {
         model: MODEL,
-        max_tokens: MAX_TOKENS,
+        max_tokens: maxTokens,
         // Cache the rules block: byte-identical on every request, and the large
         // half of the prompt. The patient's transcript goes in `messages`,
         // after the breakpoint, so it never invalidates the cache.
@@ -176,6 +191,32 @@ export function createAnthropicDraft(apiKey: string): DraftProvider {
           wellFormed,
           model: result.model,
           promptVersion: GESPRAECH_PROMPT_VERSION,
+          latencyMs: Date.now() - started,
+          usage: result.usage,
+        };
+      } catch (error) {
+        fail(error);
+      }
+    },
+
+    async translateBericht(request: UebersetzungRequest): Promise<UebersetzungResponse> {
+      const started = Date.now();
+      try {
+        const result = await call(
+          buildUebersetzungSystemPrompt(request.language),
+          buildUebersetzungUserPrompt(request.segments),
+          request.signal,
+          // A whole letter comes back, wrapped one block per segment. The
+          // drafting budget is sized for one section and would truncate a
+          // long Bericht mid-sentence.
+          TRANSLATION_MAX_TOKENS,
+        );
+        const { segments, wellFormed } = parseUebersetzung(result.raw, request.segments.length);
+        return {
+          segments,
+          wellFormed,
+          model: result.model,
+          promptVersion: UEBERSETZUNG_PROMPT_VERSION,
           latencyMs: Date.now() - started,
           usage: result.usage,
         };

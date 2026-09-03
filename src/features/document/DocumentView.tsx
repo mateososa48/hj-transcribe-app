@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { EditorContent, useEditor, type Content, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { FontSize, TextStyle } from '@tiptap/extension-text-style';
-import { Trash2 } from 'lucide-react';
+import { Languages, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -17,11 +17,21 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EditableTitle } from '@/components/editable-title';
 import { Spinner } from '@/components/ui/spinner';
 import { db, newId, type DocumentRecord } from '@/lib/db';
 import { deleteDocument, discardIfUntouched, saveDocument } from '@/lib/documents';
 import { useAppStore } from '@/store/app-store';
+import { translateDocument } from '@/lib/uebersetzung';
+import { TRANSLATION_LANGUAGES, type TranslationLanguage } from '../../../prompts/uebersetzung';
 import { RecorderPopup } from '@/features/record/RecorderPopup';
 import { DictationJobList, useDictationJobs } from '@/features/record/dictation-jobs';
 import { appendToDocument } from '@/lib/documents';
@@ -81,6 +91,7 @@ export function DocumentView({ documentId }: { documentId: string }) {
 
 function LoadedDocument({ record }: { record: DocumentRecord }) {
   const goHome = useAppStore((s) => s.goHome);
+  const openDocument = useAppStore((s) => s.openDocument);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const [title, setTitle] = useState(record.title);
   /** The unmount flush runs from a stale closure; this is always current. */
@@ -90,6 +101,8 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   /** The one open recording window — one microphone, one recording at a time. */
   const [dictating, setDictating] = useState<DictateTarget | null>(null);
   const [importing, setImporting] = useState(false);
+  /** The language this letter is being translated into, or null. */
+  const [translating, setTranslating] = useState<TranslationLanguage | null>(null);
   const [ergVersion, setErgVersion] = useState(0);
   /** Dictations still being written up. Any number, each with its own target. */
   const jobs = useDictationJobs();
@@ -278,6 +291,49 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
     setDictating(target);
   };
 
+  /**
+   * The letter in another language, as a second letter.
+   *
+   * The pending autosave is flushed first: the translation must be of what is
+   * on the screen, not of what the debounce last managed to write. This letter
+   * is only ever read — the translation is a new Bericht, and opening it is
+   * what tells him it worked.
+   */
+  const translate = (language: TranslationLanguage) => {
+    if (translating || !editor) return;
+    setTranslating(language);
+
+    void (async () => {
+      try {
+        if (saveTimer.current) {
+          clearTimeout(saveTimer.current);
+          saveTimer.current = null;
+        }
+        await saveDocument(record.id, { content: editor.getJSON() });
+
+        const outcome = await translateDocument(record.id, language);
+        touchSessions();
+
+        if (outcome.untranslated > 0) {
+          toast.warning(
+            `Übersetzt, bis auf ${outcome.untranslated} von ${outcome.total} Absätzen — diese stehen weiterhin auf Deutsch im Text.`,
+          );
+        } else {
+          toast.success(`Die ${language.endonym}-Fassung liegt als eigener Bericht vor.`);
+        }
+        openDocument(outcome.document.id);
+      } catch (error) {
+        toast.error(
+          error instanceof Error && error.message
+            ? error.message
+            : 'Die Übersetzung konnte nicht erstellt werden.',
+        );
+      } finally {
+        setTranslating(null);
+      }
+    })();
+  };
+
   // The invitations live inside the editor extension; this is how they reach
   // the current handler without the extension being re-created.
   inviteRef.current = (title: string) => openDictation({ kind: 'section', title });
@@ -358,6 +414,40 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
           className="min-w-0 flex-1"
           inputClassName="h-11 rounded-lg border-transparent bg-transparent px-2 text-2xl font-semibold tracking-tight shadow-none transition-[background-color,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-border/60 hover:bg-muted/40 focus-visible:border-border focus-visible:bg-background md:text-2xl"
         />
+        {/* Translating makes a SECOND letter, the way Löschen acts on the
+            letter as a whole — neither belongs in the instrument row, which is
+            for the keys that change the text under his cursor. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                className="text-muted-foreground"
+                disabled={translating !== null}
+                title={translating ? `Wird ins ${translating.label}e übersetzt` : 'Übersetzen'}
+              >
+                <span className="grid size-4 place-items-center">
+                  {translating ? <Spinner /> : <Languages aria-hidden />}
+                </span>
+                {translating ? translating.endonym : 'Übersetzen'}
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="min-w-64">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Kopie in welcher Sprache?</DropdownMenuLabel>
+              {TRANSLATION_LANGUAGES.map((language) => (
+                <DropdownMenuItem key={language.code} onClick={() => translate(language)}>
+                  <span className="flex w-full items-baseline justify-between gap-6">
+                    {language.label}
+                    <span className="text-xs text-muted-foreground">{language.endonym}</span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <AlertDialog>
             <AlertDialogTrigger
               render={
@@ -413,7 +503,7 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
             side at every window width — centring the sheet alone piled the
             leftover space on the rail's side, where it grew with the window. */}
         <div className="mx-auto flex w-full max-w-[74rem]">
-        <PagedSheet editor={editor}>
+        <PagedSheet editor={editor} busy={translating !== null}>
           <EditorContent editor={editor} className="flex flex-1 flex-col" />
         </PagedSheet>
         <DictationRail documentId={record.id} version={ergVersion} />

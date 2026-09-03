@@ -1,4 +1,5 @@
 import type { BeurteilungExample } from '../../../prompts/examples/dev/index.ts';
+import type { TranslationLanguage } from '../../../prompts/uebersetzung.ts';
 
 /**
  * Drafting provider contract — one method per feature.
@@ -25,6 +26,13 @@ export interface GespraechRequest {
   /** Speaker-prefixed lines ("Arzt: …"), or plain text without diarization. */
   transcript: string;
   glossary: string[];
+  signal?: AbortSignal;
+}
+
+export interface UebersetzungRequest {
+  /** Every run of text in the letter, in reading order. */
+  segments: string[];
+  language: TranslationLanguage;
   signal?: AbortSignal;
 }
 
@@ -67,6 +75,17 @@ export interface GespraechResponse extends DraftMeta {
   labels: Record<string, string>;
 }
 
+/**
+ * The translated letter, segment for segment.
+ *
+ * Same length and order as the request. A null is a segment the model did not
+ * return; the caller keeps the German there rather than letting the rest of
+ * the letter slide up by one.
+ */
+export interface UebersetzungResponse extends DraftMeta {
+  segments: (string | null)[];
+}
+
 export interface DraftProvider {
   readonly id: DraftProviderId;
   readonly label: string;
@@ -74,6 +93,7 @@ export interface DraftProvider {
   draftBeurteilung(request: BeurteilungRequest): Promise<BeurteilungResponse>;
   draftAbschnitt(request: AbschnittRequest): Promise<AbschnittResponse>;
   draftGespraech(request: GespraechRequest): Promise<GespraechResponse>;
+  translateBericht(request: UebersetzungRequest): Promise<UebersetzungResponse>;
 }
 
 /** `model` is only meaningful for multi-model providers (the gateway). */

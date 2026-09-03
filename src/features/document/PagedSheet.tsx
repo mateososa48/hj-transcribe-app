@@ -20,10 +20,13 @@ const A4_RATIO = 1.4142; // height ÷ width
 
 export function PagedSheet({
   editor,
+  busy = false,
   children,
 }: {
   /** Measured on every edit — a sheet must lose a page as readily as gain one. */
   editor: Editor | null;
+  /** Something is being made from this letter: the sheet carries the light. */
+  busy?: boolean;
   children: ReactNode;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -150,6 +153,9 @@ export function PagedSheet({
           </div>
         ))}
         {children}
+        {/* Over the writing, never in place of it: he can keep reading while
+            the translation is made. */}
+        {busy ? <span aria-hidden className="bericht-sweep z-20" /> : null}
       </div>
     </div>
   );
