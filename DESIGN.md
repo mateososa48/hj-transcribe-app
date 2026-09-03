@@ -412,10 +412,11 @@ Model: the existing browser-direct Anthropic adapter (`claude-opus-5`,
 the gateway — a translated Arztbrief is the most identifying text in the app,
 and SPEC constraint 1 forbids the proxy hop for it. While it runs, the sheet
 carries `TranslationShader`: a WebGL2 fragment shader over the page, domain-
-warped fbm walking a rose → violet → amber ramp (the ribbon's own hues, the
-amber lit to peach because raw amber turns to sand on white), drifting at
-`u_time * 0.045` — slow enough that you never catch it moving and it has
-changed when you look back. It composites with `mix-blend-multiply`, so white
+warped fbm walking a ramp through the ribbon's own four hues — blue, violet,
+rose, amber, the exact constants `features/record/wave/shaders.ts` paints the
+instrument from. It morphs AND travels: a slow unequal ellipse under the sample
+point walks the whole field around the sheet, so the colour moves across the
+page rather than changing where it stands. It composites with `mix-blend-multiply`, so white
 passes through and only the colour lands. Half resolution, paused offscreen and
 on hidden tabs, one still frame under reduced motion, and nothing at all
 without WebGL2 (the spinner in the key is what says it is working; this is
@@ -429,11 +430,19 @@ one inset and excluded, so no padding is needed and the canvas still fills the
 element). One language of light, twice, and the bolder one says plainly that
 the page is busy.
 
-And the letter itself goes to placeholder bars. Every block keeps its own
-geometry — the bars are drawn in a `::after` over it, so the page does not
-reflow by a pixel and the pagination is never recomputed; the words fade out of
-their lines as the bars fade in. Headings become one short bar, an empty line
-none. The editor turns non-interactive while it runs, which reverses the
+And the letter itself goes to placeholder PILLS that keep refreshing. Every
+block keeps its own geometry — they are drawn in pseudo-elements over it, so
+the page does not reflow by a pixel and the pagination is never recomputed; the
+words fade out of their lines as the pills fade in. Headings become one short
+pill, an empty line none. Rounded ends need a shape a gradient cannot round, so
+each line is three layers (a cap at each end, a body between) tiled down the
+block at the line rhythm; the cap is anchored to its tile's right EDGE rather
+than a percentage, because a percentage inside a gradient resolves against the
+tile and a heading's cap landed at 38% of 38%. The pill colour is opaque: two
+translucent greys compound where cap meets body and left a darker dot at every
+end. `::before` carries the pills and `::after` a white shimmer sweeping across
+them every 1.9s — white, so it is invisible on the paper between the lines and
+only washes through the pills, which is the refreshing look. The editor turns non-interactive while it runs, which reverses the
 earlier rule that he could keep reading during a translation: a page that
 plainly cannot be read is also a page he will not type into by accident.
 

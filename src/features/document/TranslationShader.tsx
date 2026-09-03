@@ -72,23 +72,34 @@ void main() {
 
   // Slow. The whole point of it: the page should look alive when he glances
   // back at it, never busy while he is reading.
-  float t = u_time * 0.045;
+  float t = u_time * 0.075;
+
+  // The field TRAVELS as well as morphs. Warping alone changes the colours in
+  // place, which reads as a page that shimmers rather than one the light moves
+  // across; a slow ellipse under the sample point walks the whole field around
+  // the sheet, and the two periods are deliberately unequal so it never
+  // retraces the same loop.
+  p += vec2(sin(t * 0.52), cos(t * 0.37)) * 0.85;
 
   vec2 q = vec2(fbm(p * 0.7 + vec2(t, -t * 0.6)), fbm(p * 0.7 + vec2(-t * 0.8, t * 0.5) + 3.1));
   vec2 w = p + 1.25 * (q - 0.5);
   float n1 = fbm(w * 0.6 + vec2(t * 0.3, 0.0));
 
-  // Three of the ribbon's hues, the amber lit to peach — raw amber turns to
-  // sand on white. One warped field walks a ramp through all three, and a
-  // slow global drift walks the whole page along it, so rose, violet and
-  // amber are each somewhere on the sheet and none of them stays put.
-  vec3 cRose = vec3(1.000, 0.220, 0.520);
-  vec3 cViolet = vec3(0.741, 0.169, 0.961);
-  vec3 cPeach = vec3(1.000, 0.660, 0.300);
+  // The ribbon's palette, exactly as the instrument defines it in
+  // features/record/wave/shaders.ts — blue, violet, rose, amber. One warped
+  // field walks the ramp through all four and a slow global drift walks the
+  // whole page along it, so every hue is somewhere on the sheet and none of
+  // them stays put.
+  vec3 cBlue = vec3(0.26, 0.18, 1.00);
+  vec3 cViolet = vec3(0.74, 0.17, 0.96);
+  vec3 cRose = vec3(1.00, 0.22, 0.52);
+  vec3 cAmber = vec3(1.00, 0.66, 0.22);
   float h = fbm(w * 0.85 + vec2(t * 0.25, -t * 0.2) + 5.0);
   h = smoothstep(0.18, 0.82, h) + 0.20 * sin(t * 0.55);
-  h = clamp(h, 0.0, 1.0);
-  vec3 col = h < 0.5 ? mix(cRose, cViolet, h * 2.0) : mix(cViolet, cPeach, (h - 0.5) * 2.0);
+  h = clamp(h, 0.0, 1.0) * 3.0;
+  vec3 col = mix(cBlue, cViolet, clamp(h, 0.0, 1.0));
+  col = mix(col, cRose, clamp(h - 1.0, 0.0, 1.0));
+  col = mix(col, cAmber, clamp(h - 2.0, 0.0, 1.0));
   // A step toward grey, a small one: printed light, not candy.
   col = mix(col, vec3(dot(col, vec3(0.30, 0.59, 0.11))), 0.06);
 

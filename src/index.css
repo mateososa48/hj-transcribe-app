@@ -754,15 +754,35 @@ h1, h2, h3 {
   mask-composite: exclude;
 }
 
-/* The writing, as placeholder bars.
-   Every block keeps its own geometry — the bars are drawn in a pseudo-element
+/* The writing, as placeholder pills that keep refreshing.
+
+   Every block keeps its own geometry — the pills are drawn in a pseudo-element
    over it, so the page does not reflow by a single pixel when the state turns
    and the pagination never has to be recomputed. The letter's text simply
-   fades out of its own lines and the bars fade into them.
+   fades out of its own lines and the pills fade into them.
+
+   A pill, not a bar: rounded ends need a shape CSS gradients cannot round, so
+   each line is drawn as three layers — a cap at each end and a body between
+   them — tiled down the block at the line rhythm. `--bar-w` is what a heading
+   changes to become one short pill instead of a column of full ones.
+
+   ::before carries the pills and ::after the shimmer, in that order, because
+   ::after paints last and the light has to travel OVER the pills. The shimmer
+   is white: on the paper between the lines it is invisible, and on the pills
+   it washes through, which is exactly the refreshing look.
 
    This deliberately reverses the earlier rule that he could keep reading while
    the translation ran: he asked for the page to go to bars, and a page that
    plainly cannot be read is also a page he will not try to edit mid-run. */
+@keyframes skeleton-shimmer {
+  from {
+    background-position: -55% 0;
+  }
+  to {
+    background-position: 155% 0;
+  }
+}
+
 .tiptap :is(p, h1, h2, h3, li) {
   transition:
     color 520ms ease-in-out,
@@ -771,34 +791,85 @@ h1, h2, h3 {
 .tiptap :is(h1, h2, h3) {
   position: relative;
 }
+.tiptap :is(p, h1, h2, h3)::before,
 .tiptap :is(p, h1, h2, h3)::after {
   content: '';
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  border-radius: 3px;
   transition: opacity 520ms ease-in-out;
-  /* One bar per line box, sitting where the words sit: the line-height is
-     1.8em, and the bar occupies the middle of it. */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 0.36em,
-    rgba(12, 12, 13, 0.085) 0.36em 1.36em,
-    transparent 1.36em 1.8em
-  );
 }
-/* A heading is one short bar, the way a heading is one short line. */
-.tiptap :is(h1, h2, h3)::after {
-  background-image: linear-gradient(rgba(12, 12, 13, 0.11), rgba(12, 12, 13, 0.11));
+/* The pills. */
+.tiptap :is(p, h1, h2, h3)::before {
+  z-index: 0;
+  /* Opaque on purpose. The cap and the body layers overlap where they meet,
+     and two translucent greys compound there into a visible darker dot at
+     every pill end; one opaque grey paints the same colour twice and the
+     seam disappears. The shader above still tints it. */
+  --bar: #e7e7ea;
+  --bar-w: 100%;
+  --row: 1.8em;
+  --bar-h: 1em;
+  --r: 0.5em;
+  --top: 0.4em;
+  background-image:
+    radial-gradient(circle var(--r) at var(--r) calc(var(--top) + var(--r)), var(--bar) 100%, transparent 100%),
+    /* Anchored to the tile's RIGHT edge, not to a percentage: a percentage
+       inside a gradient resolves against the tile, which is itself a
+       percentage of the block, so a heading's cap landed at 38% of 38%. */
+    radial-gradient(
+      circle var(--r) at right var(--r) top calc(var(--top) + var(--r)),
+      var(--bar) 100%,
+      transparent 100%
+    ),
+    linear-gradient(
+      transparent var(--top),
+      var(--bar) var(--top) calc(var(--top) + var(--bar-h)),
+      transparent calc(var(--top) + var(--bar-h))
+    );
+  background-size:
+    var(--bar-w) var(--row),
+    var(--bar-w) var(--row),
+    calc(var(--bar-w) - var(--r) * 2) var(--row);
+  background-position:
+    0 0,
+    0 0,
+    var(--r) 0;
+  background-repeat: repeat-y;
+}
+/* A heading is one short pill, the way a heading is one short line. */
+.tiptap :is(h1, h2, h3)::before {
+  --bar-w: 38%;
+  --row: 1.35em;
+  --bar-h: 1.05em;
+  --r: 0.525em;
+  --top: 0.15em;
   background-repeat: no-repeat;
-  background-size: 38% 1.05em;
-  background-position: 0 0.1em;
 }
-.tiptap h1::after {
-  background-size: 46% 1.5em;
+.tiptap h1::before {
+  --bar-w: 46%;
+  --row: 1.9em;
+  --bar-h: 1.5em;
+  --r: 0.75em;
+  --top: 0.2em;
+}
+/* The light that keeps passing over them. White, so it only shows where the
+   pills are and never on the paper between the lines. */
+.tiptap :is(p, h1, h2, h3)::after {
+  z-index: 1;
+  background-image: linear-gradient(
+    100deg,
+    transparent 18%,
+    rgba(255, 255, 255, 0.9) 50%,
+    transparent 82%
+  );
+  background-size: 55% 100%;
+  background-repeat: no-repeat;
+  background-position: -55% 0;
 }
 /* An empty line has nothing to stand in for. */
+.tiptap p:has(> br:only-child)::before,
 .tiptap p:has(> br:only-child)::after {
   display: none;
 }
@@ -812,20 +883,30 @@ h1, h2, h3 {
 .sheet-skeleton .tiptap :is(p, h1, h2, h3, li) {
   color: transparent;
 }
+.sheet-skeleton .tiptap :is(p, h1, h2, h3)::before,
 .sheet-skeleton .tiptap :is(p, h1, h2, h3)::after {
   opacity: 1;
+}
+.sheet-skeleton .tiptap :is(p, h1, h2, h3)::after {
+  animation: skeleton-shimmer 1900ms linear infinite;
 }
 .sheet-skeleton .tiptap li::marker {
   color: transparent;
 }
 /* The invitations are controls, not writing: they leave rather than turn
-   into bars. */
+   into pills. */
 .sheet-skeleton .tiptap .section-invite {
   opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   .tiptap :is(p, h1, h2, h3, li),
+  .tiptap :is(p, h1, h2, h3)::before,
   .tiptap :is(p, h1, h2, h3)::after {
     transition: none;
+  }
+  /* No travelling light; the pills alone say the page is busy. */
+  .sheet-skeleton .tiptap :is(p, h1, h2, h3)::after {
+    animation: none;
+    opacity: 0;
   }
 }
