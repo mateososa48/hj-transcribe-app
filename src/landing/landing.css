@@ -54,6 +54,24 @@
     0 40px 120px -40px rgba(12, 12, 13, 0.5);
 }
 
+/* The header pill once the page moves: the same lens as the hero's light
+   key (btn-liquid), stretched to a bar. Translucent white over the page,
+   never grey: a lit top edge, light held inside, a hairline, a soft drop. */
+.nav-glass {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22));
+  -webkit-backdrop-filter: blur(14px) saturate(1.7);
+  backdrop-filter: blur(14px) saturate(1.7);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(12, 12, 13, 0.08),
+    inset 1px 0 1px rgba(255, 255, 255, 0.6),
+    inset -1px 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 18px rgba(255, 255, 255, 0.26),
+    0 0 0 1px rgba(12, 12, 13, 0.07),
+    0 2px 5px rgba(12, 12, 13, 0.07),
+    0 14px 32px -14px rgba(12, 12, 13, 0.2);
+}
+
 /* White glass for the objects inside the bento cards: white, not the
    sidebar's grey, with the same lit top edge, a hairline and real weight, and
    a little blur so the wash behind it shows through the corners. */

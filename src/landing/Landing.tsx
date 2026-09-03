@@ -224,7 +224,7 @@ function Closing() {
           <div>
             <span className="flex items-center gap-1.5 font-medium">
               Arzt-Assistent
-              <BrandWave className="h-8 w-10 shrink-0 mix-blend-multiply" />
+              <BrandWave transparent className="h-8 w-10 shrink-0" />
             </span>
             <p className="mt-1.5 text-foreground/75">Für Ärztinnen und Ärzte gemacht.</p>
           </div>

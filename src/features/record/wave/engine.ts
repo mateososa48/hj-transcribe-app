@@ -62,6 +62,12 @@ export interface WaveEngineOptions {
    * water surface. The instrument keeps its own look.
    */
   mark?: boolean;
+  /**
+   * Paint on a transparent canvas instead of an opaque paper, so the ribbon
+   * can sit on any surface without carrying a white ground with it. Light
+   * mode only; the app's own surfaces keep the opaque default.
+   */
+  transparent?: boolean;
 }
 
 export class WaveEngine {
@@ -90,6 +96,7 @@ export class WaveEngine {
   private readonly probe: BandProbe;
   private readonly dark: boolean;
   private readonly mark: boolean;
+  private readonly transparent: boolean;
 
   constructor(host: HTMLElement, options: WaveEngineOptions) {
     this.host = host;
@@ -97,6 +104,7 @@ export class WaveEngine {
     this.probe = options.probe;
     this.dark = options.dark ?? false;
     this.mark = options.mark ?? false;
+    this.transparent = (options.transparent ?? false) && !this.dark;
     this.signal.setProbe(options.probe);
 
     this.canvas = document.createElement('canvas');
@@ -105,7 +113,8 @@ export class WaveEngine {
 
     const gl = this.canvas.getContext('webgl2', {
       antialias: false,
-      alpha: false,
+      alpha: this.transparent,
+      premultipliedAlpha: true,
       powerPreference: 'low-power',
     });
     if (!gl) return;
@@ -129,6 +138,7 @@ export class WaveEngine {
       'uPaper',
       'uDark',
       'uMark',
+      'uTransparent',
     ]) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
@@ -267,6 +277,7 @@ export class WaveEngine {
     gl.uniform1f(this.u.uWake!, this.wake);
     gl.uniform1f(this.u.uWakeLag!, this.wakeLag);
     gl.uniform1f(this.u.uMark!, this.mark ? 1 : 0);
+    gl.uniform1f(this.u.uTransparent!, this.transparent ? 1 : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 

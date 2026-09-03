@@ -154,131 +154,144 @@ export function HeroDemo({ lead }: { lead: ReactNode }) {
   });
   const demoOpacity = 1 - scene.fade * 0.9;
 
+  const seconds = String(Math.min(59, Math.floor(Math.min(scene.t, T.speakEnd) / 1000))).padStart(2, '0');
+
   return (
     <div ref={hostRef} className="grid items-start gap-12 lg:grid-cols-12 lg:gap-10">
-      {/* The words, then the voice: the app's own recording window. */}
-      <div className="lg:col-span-6">
-        {lead}
-        <div
-          role="img"
-          aria-label="So arbeitet der Arzt-Assistent: ein Diktat wird zum Briefabschnitt"
-          className="mt-12 select-none lg:mt-14"
+      <div className="lg:col-span-6 lg:self-center lg:pb-12">{lead}</div>
+
+      {/* The letter, with the app's recording window laid over its corner. */}
+      <div className="relative lg:col-span-6">
+        {/* The page, laid on the desk, dissolving below the fold. */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 48, rotateX: 9 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ delay: 0.35, type: 'spring', stiffness: 170, damping: 26 }}
+          style={{ transformPerspective: 1400, transformOrigin: '50% 0%' }}
+          className="relative h-[38rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_78%,transparent_100%)] sm:h-[36rem] sm:[mask-image:linear-gradient(to_bottom,black_64%,transparent_96%)] lg:h-[42rem]"
         >
-          <div className="flex w-fit max-w-full flex-col rounded-2xl border border-border bg-card px-4 py-3.5 shadow-[0_1px_2px_rgba(12,12,13,0.06),0_28px_64px_-28px_rgba(217,42,104,0.28)] sm:px-5">
-            {/* Sized so the whole window fits a 390px phone with room to spare. */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <LiveRibbon probe={heroVoice} className="h-12 w-28 shrink-0 sm:w-44" />
-              <span className="text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">
-                0:{String(Math.min(59, Math.floor(Math.min(scene.t, T.speakEnd) / 1000))).padStart(2, '0')}
-              </span>
-              <span
-                className={cn(
-                  'btn-liquid-dark flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-medium text-white transition-transform duration-150',
-                  scene.pressed && !reduce && 'scale-[0.96]',
-                )}
-              >
-                <Check className="size-4" aria-hidden />
-                Fertig
-              </span>
-            </div>
-            <p className="mt-1 self-end pe-1 text-xs text-muted-foreground">In „Aktuelle Therapie"</p>
-          </div>
+          <div className="rounded-[6px] border border-border bg-white px-8 pt-32 pb-9 shadow-[0_1px_2px_rgba(12,12,13,0.05),0_40px_90px_-30px_rgba(66,48,255,0.22)] sm:px-12 sm:pt-12 sm:pb-12">
+            <div className="font-document text-[0.95rem] leading-[1.75] text-foreground/75 sm:text-[1.02rem]">
+              {/* The address block only where the page is tall enough to spare it:
+                  on a phone the written section must arrive before the fade. */}
+              <div className="hidden sm:block">
+                <p>An</p>
+                <p>Dres. med. Weber / Kaufmann</p>
+                <p>Rheinallee 12, 55118 Mainz</p>
+              </div>
+              <p className="sm:mt-[1.4em]">Mainz, 31.08.2026</p>
+              <p className="mt-[1.4em]">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+              <p className="hidden sm:block">ich darf nachfolgend über die letzten Untersuchungen, Herrn Vollmer betreffend, zusammenfassend berichten.</p>
+              <p className="mt-[1.4em] font-bold underline underline-offset-4">Diagnosen</p>
+              <p>1. Koronare Herzkrankheit, Z. n. PCI/Stent RIVA 03/2026</p>
+              <p>2. Arterielle Hypertonie</p>
 
-          {/* What was heard, streaming in as it is recognised. */}
-          <p className="mt-5 min-h-[4.5rem] max-w-[36ch] text-[0.95rem] leading-relaxed text-muted-foreground" style={{ opacity: demoOpacity }}>
-            <Mic className="me-1.5 inline size-3.5 -translate-y-px" aria-hidden />
-            {SPOKEN_WORDS.map((w, i) => (
-              <span
-                key={i}
-                className={cn('transition-opacity duration-200', i < scene.spokenCount ? 'opacity-100' : 'opacity-0')}
-              >
-                {w}{' '}
-              </span>
-            ))}
-          </p>
-        </div>
-      </div>
-
-      {/* The letter: a page, laid on the desk, dissolving below the fold. */}
-      <motion.div
-        initial={reduce ? false : { opacity: 0, y: 48, rotateX: 9 }}
-        animate={{ opacity: 1, y: 0, rotateX: 0 }}
-        transition={{ delay: 0.35, type: 'spring', stiffness: 170, damping: 26 }}
-        style={{ transformPerspective: 1400, transformOrigin: '50% 0%' }}
-        className="relative h-[34rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_78%,transparent_100%)] sm:h-[36rem] sm:[mask-image:linear-gradient(to_bottom,black_64%,transparent_96%)] lg:col-span-6 lg:h-[42rem]"
-      >
-        <div className="rounded-[6px] border border-border bg-white px-8 py-9 shadow-[0_1px_2px_rgba(12,12,13,0.05),0_40px_90px_-30px_rgba(66,48,255,0.22)] sm:px-12 sm:py-12">
-          <div className="font-document text-[0.95rem] leading-[1.75] text-foreground/75 sm:text-[1.02rem]">
-            <p className="text-end">Mainz, 31.08.2026</p>
-            {/* The address block only where the page is tall enough to spare it:
-                on a phone the written section must arrive before the fade. */}
-            <div className="hidden sm:block">
-              <p className="mt-[1.4em]">An</p>
-              <p>Dres. med. Weber / Kaufmann</p>
-              <p>Rheinallee 12, 55118 Mainz</p>
-            </div>
-            <p className="mt-[1.4em]">Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
-            <p className="hidden sm:block">ich darf nachfolgend über die letzten Untersuchungen, Herrn Vollmer betreffend, zusammenfassend berichten.</p>
-            <p className="mt-[1.4em] font-bold underline underline-offset-4">Diagnosen</p>
-            <p>1. Koronare Herzkrankheit, Z. n. PCI/Stent RIVA 03/2026</p>
-            <p>2. Arterielle Hypertonie</p>
-
-            {/* The section being written, in the letter's own ink. Its heading
-                waits in the letter, grey until the dictation arrives. */}
-            <div className="relative mt-[1.4em] text-foreground">
-              <p
-                className={cn(
-                  'font-bold underline underline-offset-4 transition-colors duration-300',
-                  scene.charsWritten === 0 ? 'text-foreground/60' : 'text-foreground',
-                )}
-              >
-                Aktuelle Therapie
-              </p>
-              <div style={{ opacity: demoOpacity }}>
-                {lines.map((line, i) => (
-                  <p key={line.text} className="min-h-[1.75em] whitespace-pre">
-                    {line.text.slice(0, line.shown)}
-                    {(line.shown > 0 && line.shown < line.text.length) || (i === 0 && scene.charsWritten === 0) ? (
-                      <span
-                        className={cn(
-                          '-mb-0.5 inline-block h-[1.1em] w-[2px] translate-y-1 bg-foreground/70',
-                          scene.charsWritten === 0 && !reduce && 'animate-pulse',
-                        )}
-                        aria-hidden
-                      />
-                    ) : null}
-                  </p>
-                ))}
+              {/* The section being written, in the letter's own ink. Its heading
+                  waits in the letter, grey until the dictation arrives. */}
+              <div className="mt-[1.4em] text-foreground">
+                <p
+                  className={cn(
+                    'font-bold underline underline-offset-4 transition-colors duration-300',
+                    scene.charsWritten === 0 ? 'text-foreground/60' : 'text-foreground',
+                  )}
+                >
+                  Aktuelle Therapie
+                </p>
+                <div style={{ opacity: demoOpacity }}>
+                  {lines.map((line, i) => (
+                    <p key={line.text} className="min-h-[1.75em] whitespace-pre">
+                      {line.text.slice(0, line.shown)}
+                      {(line.shown > 0 && line.shown < line.text.length) || (i === 0 && scene.charsWritten === 0) ? (
+                        <span
+                          className={cn(
+                            '-mb-0.5 inline-block h-[1.1em] w-[2px] translate-y-1 bg-foreground/70',
+                            scene.charsWritten === 0 && !reduce && 'animate-pulse',
+                          )}
+                          aria-hidden
+                        />
+                      ) : null}
+                    </p>
+                  ))}
+                </div>
               </div>
 
-              {/* The app's real job-chip, filing the dictation. */}
-              <div
-                className={cn(
-                  // Under the lines on phones, beside them from sm up.
-                  'mt-2 w-fit items-center gap-2.5 rounded-xl border border-border bg-card py-2 ps-3 pe-3.5 font-sans shadow-lg transition-[opacity,transform] duration-300 sm:absolute sm:top-1/2 sm:-right-8 sm:mt-0 sm:-translate-y-1/2',
-                  // On phones it takes no room until it has something to say.
-                  scene.job === 'none' ? 'hidden opacity-0 sm:flex sm:translate-x-2' : 'flex opacity-100 sm:translate-x-0',
-                )}
+              <p className="mt-[1.4em] font-bold underline underline-offset-4">Zusammenfassende Beurteilung</p>
+              <p>Herr Vollmer stellte sich zur Verlaufskontrolle vor. Unter Belastung keine Angina pectoris; die Belastbarkeit ist gut.</p>
+              <p>Im EKG bestand ein normaler Sinusrhythmus. Echokardiographisch zeigte sich eine gute globale und regionale linksventrikuläre Funktion.</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* The app's recording window, over the corner of the page, and under
+            it what the window hears: the words as they are recognised, then
+            where they were filed. Decorative; the letter carries the meaning. */}
+        <motion.div
+          aria-hidden
+          initial={reduce ? false : { opacity: 0, y: 10, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.8, type: 'spring', stiffness: 220, damping: 26 }}
+          className="absolute -top-4 right-4 flex flex-col items-end gap-2 select-none sm:-top-5 sm:-right-5"
+        >
+          <div className="glass-white flex items-center gap-2.5 rounded-2xl py-2 ps-2.5 pe-2">
+            <LiveRibbon probe={heroVoice} className="h-9 w-24 shrink-0 sm:w-28" />
+            <span className="text-[15px] font-semibold tracking-tight tabular-nums">0:{seconds}</span>
+            <span
+              className={cn(
+                'btn-liquid-dark flex h-8 items-center gap-1 rounded-full ps-2.5 pe-3 text-[13px] font-medium text-white transition-transform duration-150',
+                scene.pressed && !reduce && 'scale-[0.96]',
+              )}
+            >
+              <Check className="size-3.5" aria-hidden />
+              Fertig
+            </span>
+          </div>
+
+          {/* The strip appears with the first word and grows as the words
+              arrive, the way live captions do; nothing else moves. */}
+          <div
+            className={cn(
+              'glass-white w-[16.5rem] max-w-[calc(100vw-3.5rem)] rounded-xl px-3 py-2 text-[0.8rem] leading-snug transition-[opacity,transform] duration-300',
+              scene.spokenCount === 0 && scene.job === 'none' ? 'translate-y-1 opacity-0' : 'translate-y-0',
+            )}
+            style={{ opacity: scene.spokenCount === 0 && scene.job === 'none' ? 0 : demoOpacity }}
+          >
+            {scene.job === 'none' ? (
+              <p className="text-foreground/75">
+                <Mic className="me-1.5 inline size-3 -translate-y-px" aria-hidden />
+                {SPOKEN_WORDS.slice(0, scene.spokenCount).map((w, i) => (
+                  <motion.span
+                    key={i}
+                    initial={reduce ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {w}{' '}
+                  </motion.span>
+                ))}
+              </p>
+            ) : (
+              <motion.p
+                key={scene.job}
+                initial={reduce ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.25 }}
+                className="flex items-center gap-2"
               >
                 {scene.job === 'done' ? (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-background">
-                    <Check className="size-3.5" aria-hidden />
+                  <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                    <Check className="size-3" aria-hidden />
                   </span>
                 ) : (
-                  <Spinner className="size-4" />
+                  <Spinner className="size-3.5 shrink-0" />
                 )}
-                <span className={cn('text-sm whitespace-nowrap', scene.job === 'done' && 'font-medium')}>
-                  {scene.job === 'done' ? 'In „Aktuelle Therapie" eingefügt' : '„Aktuelle Therapie" wird geschrieben …'}
+                <span className={cn('whitespace-nowrap', scene.job === 'done' && 'font-medium')}>
+                  {scene.job === 'done' ? 'In „Aktuelle Therapie" eingefügt' : 'Wird eingefügt …'}
                 </span>
-              </div>
-            </div>
-
-            <p className="mt-[1.4em] font-bold underline underline-offset-4">Zusammenfassende Beurteilung</p>
-            <p>Herr Vollmer stellte sich zur Verlaufskontrolle vor. Unter Belastung keine Angina pectoris; die Belastbarkeit ist gut.</p>
-            <p>Im EKG bestand ein normaler Sinusrhythmus. Echokardiographisch zeigte sich eine gute globale und regionale linksventrikuläre Funktion.</p>
+              </motion.p>
+            )}
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

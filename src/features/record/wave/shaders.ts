@@ -37,6 +37,9 @@ uniform float uMark;
 
 uniform vec3  uPaper;
 uniform float uDark;
+/** 1: emit a premultiplied transparent layer that composites like the
+ *  subtractive light-mode ink on any backdrop, instead of an opaque paper. */
+uniform float uTransparent;
 
 out vec4 outColor;
 
@@ -210,5 +213,14 @@ void main(){
   float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
   outc += (n - 0.5) / 255.0 * (1.0 - uMark);
 
-  outColor = vec4(outc, 1.0);
+  if (uTransparent > 0.5 && uDark < 0.5) {
+    // Light mode paints paper * f. As a layer: keep the chroma of f above a
+    // darkness alpha, so on white it composites to exactly f and on a tinted
+    // backdrop to very nearly backdrop * f. No opaque ground, no box.
+    vec3 f = clamp(outc / max(uPaper, vec3(1e-3)), 0.0, 1.0);
+    float m = min(min(f.r, f.g), f.b);
+    outColor = vec4(f - vec3(m), 1.0 - m);
+  } else {
+    outColor = vec4(outc, 1.0);
+  }
 }`;
