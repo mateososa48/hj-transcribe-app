@@ -193,6 +193,13 @@ export interface DocumentRecord {
   title: string;
   /** TipTap JSON document. */
   content: unknown;
+  /**
+   * Which language this letter is written in, as a TRANSLATION_LANGUAGES code.
+   * Absent on every letter he wrote himself, which means German — only a
+   * translation ever sets it, and it is what keeps the menu from offering the
+   * language the letter is already in.
+   */
+  language?: string;
   /** Snapshot taken before the last programmatic insert (dictation/import). */
   previousContent?: unknown;
   createdAt: number;

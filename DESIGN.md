@@ -411,10 +411,24 @@ Model: the existing browser-direct Anthropic adapter (`claude-opus-5`,
 `translateBericht`, 32k output budget because a whole letter comes back). NOT
 the gateway — a translated Arztbrief is the most identifying text in the app,
 and SPEC constraint 1 forbids the proxy hop for it. While it runs, the sheet
-carries `.bericht-sweep`: a 340px band of the ribbon's own rose, violet and
-amber travelling down the page under `mix-blend-multiply`, fixed height rather
-than a share of the sheet so a five-page letter still reads as a band and not a
-slow tint. The writing stays legible underneath throughout.
+carries `TranslationShader`: a WebGL2 fragment shader over the page, domain-
+warped fbm walking a rose → violet → amber ramp (the ribbon's own hues, the
+amber lit to peach because raw amber turns to sand on white), drifting at
+`u_time * 0.045` — slow enough that you never catch it moving and it has
+changed when you look back. It composites with `mix-blend-multiply`, so white
+passes through and only the colour lands: the writing stays legible the whole
+time. Half resolution, paused offscreen and on hidden tabs, one still frame
+under reduced motion, and nothing at all without WebGL2 (the spinner in the key
+is what says it is working; this is atmosphere). The first attempt was a CSS
+band and is gone: on a two-page letter a travelling band reads as a wash, and
+it was a special effect rather than the instrument the rest of the app is
+made of.
+
+Each letter remembers what language it is written in (`DocumentRecord.language`,
+absent meaning German), and the menu never offers the language the letter is
+already in. German is in the list too, so an English copy can be turned back,
+and the title's endonym is REPLACED rather than stacked — never
+"Bericht (English) (Deutsch)".
 
 ## 11. The landing page (2026-09-01)
 

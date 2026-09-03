@@ -104,10 +104,18 @@ export function untranslatedCount(translated: (string | null)[]): number {
 }
 
 /**
- * The copy's name. His own title with the language after it, so the two sit
+ * The copy's name: his own title with the language after it, so the two sit
  * together in the list and are told apart at a glance.
+ *
+ * A letter that is already a translation has its endonym REPLACED, not
+ * extended — turning the English copy back into German must not produce
+ * "Bericht (English) (Deutsch)".
  */
-export function translatedTitle(title: string, endonym: string): string {
-  const base = title.trim() || 'Bericht';
+export function translatedTitle(title: string, endonym: string, knownEndonyms: readonly string[]): string {
+  let base = title.trim() || 'Bericht';
+  const suffix = /\s*\(([^()]+)\)\s*$/.exec(base);
+  if (suffix && knownEndonyms.includes(suffix[1]!.trim())) {
+    base = base.slice(0, suffix.index).trim() || 'Bericht';
+  }
   return `${base} (${endonym})`;
 }

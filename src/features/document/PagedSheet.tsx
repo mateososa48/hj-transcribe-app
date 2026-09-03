@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Editor } from '@tiptap/react';
 
 import { applyPagePushes, collectAtoms, type PagePush } from './pagination';
+import { TranslationShader } from './TranslationShader';
 
 /**
  * The sheet on the desk.
@@ -155,7 +156,7 @@ export function PagedSheet({
         {children}
         {/* Over the writing, never in place of it: he can keep reading while
             the translation is made. */}
-        {busy ? <span aria-hidden className="bericht-sweep z-20" /> : null}
+        {busy ? <TranslationShader className="z-20" /> : null}
       </div>
     </div>
   );

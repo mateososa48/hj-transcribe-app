@@ -20,6 +20,7 @@ export const UEB_TAG = 'ueb';
 
 /** The languages the letter can be turned into. */
 export const TRANSLATION_LANGUAGES = [
+  { code: 'de', label: 'Deutsch', name: 'German', endonym: 'Deutsch' },
   { code: 'en', label: 'Englisch', name: 'English', endonym: 'English' },
   { code: 'fr', label: 'Französisch', name: 'French', endonym: 'Français' },
   { code: 'it', label: 'Italienisch', name: 'Italian', endonym: 'Italiano' },
@@ -36,7 +37,7 @@ export function findLanguage(code: string): TranslationLanguage | undefined {
 
 /** Stable half — rules and contract. Carries the cache breakpoint. */
 export function buildUebersetzungSystemPrompt(language: TranslationLanguage): string {
-  return `Sie übersetzen den Arztbrief eines deutschen Kardiologen ins ${language.label}e.
+  return `Sie übersetzen den Arztbrief eines deutschen Kardiologen ins ${language.label === 'Deutsch' ? 'Deutsche' : `${language.label}e`}.
 
 Der Brief ist bereits geschrieben und vom Arzt freigegeben. Ihre Aufgabe ist
 allein die Übersetzung — nicht das Umschreiben, nicht das Kürzen, nicht das
@@ -60,7 +61,9 @@ Unverändert übernehmen — Zeichen für Zeichen:
   ohne den Tag oder den Monat zu verändern (10/25 bleibt 10/25).
 - Wirkstoffnamen und Präparatenamen: ASS, Clopidogrel, Bisoprolol, Sevikar,
   Rosuvastatin. Ein Wirkstoff heißt in jeder Sprache gleich. Wo das Englische
-  einen anderen INN führt, verwenden Sie den dortigen: aus ASS wird aspirin.
+  einen anderen INN führt, verwenden Sie den dortigen: aus ASS wird Aspirin.
+  Die Groß- und Kleinschreibung des Originals bleibt: steht der Wirkstoff am
+  Zeilenanfang groß, steht er auch übersetzt groß.
 - Einnahmeschemata wie 1-0-0 oder 0-0-1.
 - Tabulatorzeichen und Leerzeichenfolgen: sie tragen die Spalten der
   Medikationstabelle. Was zwischen zwei Wörtern steht, bleibt stehen.

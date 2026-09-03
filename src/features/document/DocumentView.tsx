@@ -103,6 +103,8 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
   const [importing, setImporting] = useState(false);
   /** The language this letter is being translated into, or null. */
   const [translating, setTranslating] = useState<TranslationLanguage | null>(null);
+  /** What this letter is written in. Absent on his own letters: German. */
+  const documentLanguage = record.language ?? 'de';
   const [ergVersion, setErgVersion] = useState(0);
   /** Dictations still being written up. Any number, each with its own target. */
   const jobs = useDictationJobs();
@@ -356,6 +358,9 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
         if (pos === null) insertPositions.current.delete(SCAFFOLD_KEY);
         else insertPositions.current.set(SCAFFOLD_KEY, pos);
       },
+      /** Hold the page in its translating state, to look at the light. */
+      showTranslating: (code: string | null) =>
+        setTranslating(code ? (TRANSLATION_LANGUAGES.find((l) => l.code === code) ?? null) : null),
     };
     (window as unknown as Record<string, unknown>).__berichtTest = scaffold;
     return () => {
@@ -436,7 +441,7 @@ function LoadedDocument({ record }: { record: DocumentRecord }) {
           <DropdownMenuContent align="end" className="min-w-64">
             <DropdownMenuGroup>
               <DropdownMenuLabel>Kopie in welcher Sprache?</DropdownMenuLabel>
-              {TRANSLATION_LANGUAGES.map((language) => (
+              {TRANSLATION_LANGUAGES.filter((l) => l.code !== documentLanguage).map((language) => (
                 <DropdownMenuItem key={language.code} onClick={() => translate(language)}>
                   <span className="flex w-full items-baseline justify-between gap-6">
                     {language.label}

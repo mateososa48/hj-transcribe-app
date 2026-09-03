@@ -7,7 +7,7 @@ import {
 import { db, newId, type DocumentRecord } from '@/lib/db.ts';
 import { resolveDraftProvider } from '@/lib/generate.ts';
 import { DraftError } from '@/lib/providers/index.ts';
-import type { TranslationLanguage } from '../../prompts/uebersetzung.ts';
+import { TRANSLATION_LANGUAGES, type TranslationLanguage } from '../../prompts/uebersetzung.ts';
 
 /**
  * Translating a Bericht into a second Bericht.
@@ -56,8 +56,13 @@ export async function translateDocument(
   const now = Date.now();
   const record: DocumentRecord = {
     id: newId(),
-    title: translatedTitle(source.title, language.endonym),
+    title: translatedTitle(
+      source.title,
+      language.endonym,
+      TRANSLATION_LANGUAGES.map((l) => l.endonym),
+    ),
     content,
+    language: language.code,
     createdAt: now,
     updatedAt: now,
   };

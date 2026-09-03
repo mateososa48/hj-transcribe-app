@@ -127,15 +127,35 @@ test('an index outside the letter is ignored rather than trusted', () => {
   assert.deepEqual(segments, ['one', null]);
 });
 
+const ENDONYMS = TRANSLATION_LANGUAGES.map((l) => l.endonym);
+
 test('the copy is named after the original, in the language it is written in', () => {
-  assert.equal(translatedTitle('Bericht Vollmer, Kontrolle', 'English'), 'Bericht Vollmer, Kontrolle (English)');
-  assert.equal(translatedTitle('  ', 'Türkçe'), 'Bericht (Türkçe)');
+  assert.equal(
+    translatedTitle('Bericht Vollmer, Kontrolle', 'English', ENDONYMS),
+    'Bericht Vollmer, Kontrolle (English)',
+  );
+  assert.equal(translatedTitle('  ', 'Türkçe', ENDONYMS), 'Bericht (Türkçe)');
 });
 
-test('the five offered languages each carry a label and an endonym', () => {
-  assert.equal(TRANSLATION_LANGUAGES.length, 5);
+test('translating a translation replaces the language in the name, never stacks it', () => {
+  assert.equal(
+    translatedTitle('Bericht Vollmer, Kontrolle (English)', 'Deutsch', ENDONYMS),
+    'Bericht Vollmer, Kontrolle (Deutsch)',
+  );
+  // A bracket that is not a language is his own writing and stays.
+  assert.equal(
+    translatedTitle('Bericht Vollmer (Kontrolle)', 'English', ENDONYMS),
+    'Bericht Vollmer (Kontrolle) (English)',
+  );
+});
+
+test('German is offered too, so a translation can be turned back', () => {
+  assert.ok(TRANSLATION_LANGUAGES.some((l) => l.code === 'de'));
   for (const language of TRANSLATION_LANGUAGES) {
     assert.ok(language.label.length > 0, language.code);
     assert.ok(language.endonym.length > 0, language.code);
   }
+  // Every code appears once: the menu filters on it.
+  const codes = TRANSLATION_LANGUAGES.map((l) => l.code);
+  assert.equal(new Set(codes).size, codes.length);
 });
