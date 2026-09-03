@@ -21,6 +21,7 @@ export function BrandWave({
   dark?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
+  const engineRef = useRef<WaveEngine | null>(null);
   const [supported, setSupported] = useState(true);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export function BrandWave({
       setSupported(false);
       return;
     }
+    engineRef.current = engine;
 
     let visible = true;
     let onscreen = true;
@@ -85,8 +87,19 @@ export function BrandWave({
       document.removeEventListener('visibilitychange', onVisibility);
       motionQuery.removeEventListener('change', sync);
       engine.destroy();
+      engineRef.current = null;
     };
-  }, [transparent, dark]);
+    // `dark` is applied live below; it must not rebuild the canvas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transparent]);
+
+  // The surface under the mark changed: ease the strands over, in place.
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    engine.setDark(dark);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) engine.renderStill();
+  }, [dark]);
 
   if (!supported) return null;
 

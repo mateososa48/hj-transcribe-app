@@ -72,19 +72,16 @@
     0 14px 32px -14px rgba(12, 12, 13, 0.2);
 }
 
-/* The same pill while it travels over the dark slab: the black keys' charcoal
-   as glass, lit along the top, the slab blurred behind it. */
-.nav-glass-dark {
-  background: linear-gradient(to bottom, rgba(44, 44, 46, 0.72), rgba(18, 18, 19, 0.66));
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
+/* The same pill while it travels over the dark slab: a layer of the black
+   keys' charcoal that fades in over the white glass (the blur stays on the
+   pill beneath it), lit along the top, a faint ring so it keeps an edge. */
+.nav-glass-dark-layer {
+  background: linear-gradient(to bottom, rgba(44, 44, 46, 0.84), rgba(18, 18, 19, 0.8));
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.2),
     inset 0 -1px 1px rgba(0, 0, 0, 0.35),
     inset 0 0 18px rgba(255, 255, 255, 0.04),
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 2px 5px rgba(0, 0, 0, 0.3),
-    0 14px 32px -14px rgba(0, 0, 0, 0.6);
+    0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 /* White glass for the objects inside the bento cards: white, not the

@@ -94,7 +94,9 @@ export class WaveEngine {
   private reducedMotion: boolean;
 
   private readonly probe: BandProbe;
-  private readonly dark: boolean;
+  private dark: boolean;
+  /** Where the surface is between paper (0) and black (1); eases toward `dark`. */
+  private darkMix: number;
   private readonly mark: boolean;
   private readonly transparent: boolean;
 
@@ -103,6 +105,7 @@ export class WaveEngine {
     this.reducedMotion = options.reducedMotion;
     this.probe = options.probe;
     this.dark = options.dark ?? false;
+    this.darkMix = this.dark ? 1 : 0;
     this.mark = options.mark ?? false;
     this.transparent = options.transparent ?? false;
     this.signal.setProbe(options.probe);
@@ -197,16 +200,22 @@ export class WaveEngine {
   private pushPalette(): void {
     const gl = this.gl;
     if (!gl) return;
-    if (this.dark) {
-      gl.uniform3fv(this.u.uPaper!, [0, 0, 0]);
-      gl.uniform1f(this.u.uDark!, 1);
-      return;
-    }
-    // Light mode composites subtractively onto the page's own surface, so it
-    // has to know the exact paper colour it is drawing on.
-    const paper = surfaceBehind(this.host);
+    // The ink composites subtractively onto the page's own surface, so it has
+    // to know the exact paper colour it is drawing on. An opaque dark panel
+    // never shows ink, so black keeps its output exactly as before.
+    const paper = this.dark && !this.transparent ? [0, 0, 0] : surfaceBehind(this.host);
     gl.uniform3fv(this.u.uPaper!, paper);
-    gl.uniform1f(this.u.uDark!, 0);
+    gl.uniform1f(this.u.uDark!, this.darkMix);
+  }
+
+  /**
+   * Move the mark to a dark or a light surface. The change eases over a few
+   * hundred milliseconds inside the shader instead of remounting the canvas,
+   * so nothing flashes while a header crosses onto a dark slab.
+   */
+  setDark(dark: boolean): void {
+    this.dark = dark;
+    this.refreshPalette();
   }
 
   refreshPalette(): void {
@@ -266,7 +275,13 @@ export class WaveEngine {
     this.wake += (target - this.wake) * Math.min(1, dt * rate);
     this.wakeLag += (this.wake - this.wakeLag) * Math.min(1, dt * 5);
 
+    // The surface crossing: ~250ms from paper to black or back.
+    const darkTarget = this.dark ? 1 : 0;
+    this.darkMix += (darkTarget - this.darkMix) * Math.min(1, dt * 10);
+    if (Math.abs(darkTarget - this.darkMix) < 0.004) this.darkMix = darkTarget;
+
     gl.useProgram(this.prog);
+    gl.uniform1f(this.u.uDark!, this.darkMix);
     gl.uniform2f(this.u.uRes!, this.canvas.width, this.canvas.height);
     gl.uniform1f(this.u.uTime!, this.clock);
     gl.uniform1f(this.u.uLow!, b.low);
@@ -284,6 +299,7 @@ export class WaveEngine {
   /** True once nothing is left to animate toward. */
   private settled(): boolean {
     return (
+      this.darkMix === (this.dark ? 1 : 0) &&
       Math.abs(this.presence - this.presenceTarget) < 0.002 &&
       Math.abs(this.wake - WaveEngine.STILL_WAKE) < 0.002 &&
       Math.abs(this.wakeLag - WaveEngine.STILL_WAKE) < 0.002
@@ -292,6 +308,7 @@ export class WaveEngine {
 
   /** One composed frame, so the panel is never empty before the loop starts. */
   renderStill(): void {
+    this.darkMix = this.dark ? 1 : 0;
     this.presence = this.presenceTarget;
     this.wake = WaveEngine.STILL_WAKE;
     this.wakeLag = WaveEngine.STILL_WAKE;

@@ -191,17 +191,14 @@ void main(){
   edge = mix(edge, smoothstep(1.08, 0.30, abs(yScreen)), uMark);
   col *= edge * ends * uPresence;
 
-  vec3 outc;
-  if (uDark > 0.5) {
-    outc = col;
-  } else {
-    float dens = 1.0 - exp(-max(max(col.r, col.g), col.b) * 5.6);
-
-    vec3 hue = col / max(max(max(col.r, col.g), col.b), 1e-6);
-
-    outc = uPaper * (1.0 - dens * (1.0 - hue * 0.55));
-    outc = clamp(outc, 0.0, 1.0);
-  }
+  // Both readings of the same strands: ink on paper, and light on black.
+  // uDark mixes between them continuously, so a surface that turns dark
+  // under the mark can carry it across without a cut.
+  float dens = 1.0 - exp(-max(max(col.r, col.g), col.b) * 5.6);
+  vec3 hue = col / max(max(max(col.r, col.g), col.b), 1e-6);
+  vec3 inkC = clamp(uPaper * (1.0 - dens * (1.0 - hue * 0.55)), 0.0, 1.0);
+  vec3 lightC = col;
+  vec3 outc = mix(inkC, lightC, uDark);
 
   float g = hash21(gl_FragCoord.xy * 0.75 + fract(uTime) * 91.7);
 
@@ -213,19 +210,19 @@ void main(){
   float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
   outc += (n - 0.5) / 255.0 * (1.0 - uMark);
 
-  if (uTransparent > 0.5 && uDark < 0.5) {
-    // Light mode paints paper * f. As a layer: keep the chroma of f above a
+  if (uTransparent > 0.5) {
+    // As a layer, premultiplied. The ink: keep the chroma of f above a
     // darkness alpha, so on white it composites to exactly f and on a tinted
-    // backdrop to very nearly backdrop * f. No opaque ground, no box.
-    vec3 f = clamp(outc / max(uPaper, vec3(1e-3)), 0.0, 1.0);
+    // backdrop to very nearly backdrop * f. The light: itself, with an alpha
+    // of its brightest channel, so black stays black and the strands glow on
+    // whatever dark surface is behind them. Mixed by uDark like the opaque
+    // path, so the mark crosses from one surface to the other smoothly.
+    vec3 f = clamp(inkC / max(uPaper, vec3(1e-3)), 0.0, 1.0);
     float m = min(min(f.r, f.g), f.b);
-    outColor = vec4(f - vec3(m), 1.0 - m);
-  } else if (uTransparent > 0.5) {
-    // Dark mode paints light on black. As a layer: the light itself, with an
-    // alpha of its brightest channel, so black stays black and the strands
-    // glow on whatever dark surface is behind them.
-    vec3 l = clamp(outc, 0.0, 1.0);
-    outColor = vec4(l, max(max(l.r, l.g), l.b));
+    vec4 inkLayer = vec4(f - vec3(m), 1.0 - m);
+    vec3 l = clamp(lightC, 0.0, 1.0);
+    vec4 lightLayer = vec4(l, max(max(l.r, l.g), l.b));
+    outColor = mix(inkLayer, lightLayer, uDark);
   } else {
     outColor = vec4(outc, 1.0);
   }
