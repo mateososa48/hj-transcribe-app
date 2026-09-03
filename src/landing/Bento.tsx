@@ -209,7 +209,7 @@ function TileErgaenzen() {
       {/* The job chip, filing the addition. */}
       <div
         className={cn(
-          'absolute top-[13.6rem] left-6 flex items-center gap-2 rounded-lg border border-border bg-card py-1.5 ps-2.5 pe-3 text-xs shadow-md transition-[opacity,transform] duration-300 sm:top-[11.2rem]',
+          'absolute top-[11.2rem] left-6 hidden items-center gap-2 rounded-lg border border-border bg-card py-1.5 ps-2.5 pe-3 text-xs shadow-md transition-[opacity,transform] duration-300 sm:flex',
           job === 'none' ? 'translate-y-1 opacity-0' : 'translate-y-0 opacity-100',
         )}
       >
