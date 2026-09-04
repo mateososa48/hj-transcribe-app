@@ -20,7 +20,8 @@ Say this, then press **Termin aufnehmen** and let it run:
 Two voices if anyone is with you. Alone: drop your pitch for the patient and
 speak a little slower. Leave half a second between turns.
 
-**Runtime read at normal pace: about 3½ minutes.**
+**Runtime: about 3 to 3½ minutes** read at consultation pace, with a beat
+between turns. Measured: 317 spoken words over 38 turns.
 
 ---
 
@@ -60,8 +61,28 @@ Sie ein zweites Kissen?
 
 **Patient:** Ein zweites Kissen, seit ungefähr vier Wochen.
 
-**Arzt:** Gut. Dann schauen wir auf die heutigen Befunde. Der Blutdruck war
-einhundertfünfzig zu fünfundachtzig, der Puls achtundachtzig pro Minute. Das
+**Arzt:** Rauchen Sie noch?
+
+**Patient:** Aufgehört. Vor sechs Jahren. Vorher dreißig Jahre lang eine
+Schachtel am Tag.
+
+**Arzt:** Und Alkohol?
+
+**Patient:** Ein Bier am Abend, manchmal zwei am Wochenende.
+
+**Arzt:** Bewegen Sie sich regelmäßig?
+
+**Patient:** Ich gehe mit dem Hund, zweimal am Tag eine halbe Stunde. Aber
+langsamer als früher.
+
+**Arzt:** Das ist gut, machen Sie das weiter. Gibt es in der Familie
+Herzerkrankungen?
+
+**Patient:** Mein Vater hatte einen Infarkt, mit dreiundsechzig. Und mein
+Bruder nimmt Tabletten für den Blutdruck.
+
+**Arzt:** Gut zu wissen. Dann schauen wir auf die heutigen Befunde. Der
+Blutdruck war einhundertfünfzig zu fünfundachtzig, der Puls achtundachtzig pro Minute. Das
 EKG zeigt einen normalen Sinusrhythmus, keine Zeichen einer Ischämie.
 
 **Patient:** Und das Herz selbst?
@@ -132,6 +153,7 @@ Vier Dinge, in dieser Reihenfolge. Nicht mehr.
 
 ## Wenn die Zeit knapp wird
 
-Kürze in dieser Reihenfolge: die Beinödeme und das Gewicht (vier Turns), dann
-die Rückfrage zur Mitralklappe. Die Medikamentenliste mit der fehlenden
+Kürze in dieser Reihenfolge: erst Rauchen, Alkohol und Familie (acht Turns,
+das ist rund eine Minute), dann die Beinödeme und das Gewicht, dann die
+Rückfrage zur Mitralklappe. Die Medikamentenliste mit der fehlenden
 Torasemid-Dosis bleibt auf jeden Fall drin — das ist die Pointe.
