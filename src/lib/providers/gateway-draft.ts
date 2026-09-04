@@ -61,8 +61,10 @@ const ENDPOINT = 'https://ai-gateway.vercel.sh/v1/chat/completions';
  * describes the MODEL's own residency — the gateway hop is US regardless.
  */
 export const GATEWAY_MODELS = [
-  { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', euCapable: false },
   { id: 'openai/gpt-5.6-terra-fast', label: 'GPT-5.6 Terra (fast)', euCapable: false },
+  { id: 'openai/gpt-5.6-terra', label: 'GPT-5.6 Terra', euCapable: false },
+  { id: 'openai/gpt-5.6-luna-fast', label: 'GPT-5.6 Luna (fast)', euCapable: false },
+  { id: 'openai/gpt-5.6-luna', label: 'GPT-5.6 Luna', euCapable: false },
   { id: 'anthropic/claude-opus-5', label: 'Claude Opus 5', euCapable: false },
   { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5', euCapable: false },
   { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', euCapable: false },
@@ -70,11 +72,19 @@ export const GATEWAY_MODELS = [
 ] as const;
 
 /**
- * Verified present in the gateway's own model list on 2026-08-17 — the id is
- * `gpt-5.6-terra`, not `terra-5.6`, and a wrong id fails as an opaque runtime
- * error rather than a build error.
+ * All four ids re-verified against the gateway's own model list on 2026-09-04.
+ * The order is `gpt-5.6-terra`, not `terra-5.6`; a wrong id fails as an opaque
+ * runtime error rather than a build error, so check before changing this.
+ *
+ * The default is the `-fast` variant. Measured the same day on the real
+ * Abschnitt prompt (7,895-character system prompt, two runs each), best of:
+ * terra 2.3 s, terra-fast 2.2 s, luna 1.8 s, luna-fast 1.2 s. All four
+ * returned well-formed German of the same length. The spread between models is
+ * smaller than the spread between runs of one model, so this is not a
+ * measured win over terra so much as a free one — and Luna is unproven on the
+ * medical prompts, which is why it is offered but not the default.
  */
-export const DEFAULT_GATEWAY_MODEL = 'openai/gpt-5.6-terra';
+export const DEFAULT_GATEWAY_MODEL = 'openai/gpt-5.6-terra-fast';
 
 export function createGatewayDraft(apiKey: string, model = DEFAULT_GATEWAY_MODEL): DraftProvider {
   return {

@@ -79,15 +79,25 @@ export function createAssemblyAI(apiKey: string): TranscriptionProvider {
       );
       const created = (await createRes.json()) as TranscriptResponse;
 
-      // Poll. A full consultation is a real job: allow up to 15 min, check
-      // every 3 s. Universal typically finishes a 20-min file well under a
-      // minute, so the deadline is a hang-guard, not the expectation.
+      // Poll, close together at first and then backing off.
+      //
+      // A fixed three-second interval costs a short dictation about a second
+      // and a half of standing still: Universal finishes twenty seconds of
+      // speech in roughly four, and nobody asks until six. The schedule below
+      // notices that at about five, and still settles to one request every
+      // three seconds for a long consultation, where the extra requests would
+      // be pointless. Measured 2026-09-04: 20.3 s of German audio, 4.5 s to
+      // transcribe.
+      //
+      // The 15-minute deadline is a hang-guard, not an expectation.
+      const POLL_STEPS_MS = [400, 600, 900, 1300, 2000];
+      const POLL_MAX_MS = 3_000;
       const deadline = Date.now() + 15 * 60_000;
-      for (;;) {
+      for (let attempt = 0; ; attempt++) {
         if (Date.now() > deadline) {
           throw new ProviderError(ID, undefined, 'assemblyai-eu: polling timed out after 15 min');
         }
-        await new Promise((r) => setTimeout(r, 3_000));
+        await new Promise((r) => setTimeout(r, POLL_STEPS_MS[attempt] ?? POLL_MAX_MS));
 
         const pollRes = await assertOk(
           await fetch(`${BASE}/v2/transcript/${created.id}`, {
