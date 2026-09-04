@@ -8,7 +8,9 @@ import {
   BERICHT_TEMPLATE_SECTIONS,
   bulletsToTiptap,
   canonicalSectionTitle,
+  isEmptyBody,
   isTemplateBody,
+  leererBerichtDoc,
   sectionToTiptap,
 } from '../src/features/document/insert.ts';
 
@@ -96,6 +98,32 @@ test('the Kopf carries only wording that never changes', () => {
 
 test('isTemplateBody recognises a Bericht nobody has written in', () => {
   assert.equal(isTemplateBody(templateDoc()), true);
+});
+
+/**
+ * The other shape a new Bericht can be born with. discardIfUntouched clears
+ * an abandoned one away by asking these two questions, so a blank page that
+ * stopped counting as blank would quietly start littering his Berichte list.
+ */
+test('the blank page is one empty paragraph — the caret has somewhere to go', () => {
+  const doc = leererBerichtDoc();
+  assert.equal(doc.content.length, 1);
+  assert.equal(doc.content[0]?.type, 'paragraph');
+  assert.equal(doc.content[0]?.content, undefined);
+});
+
+test('isEmptyBody recognises the blank page, and only while it is still blank', () => {
+  assert.equal(isEmptyBody(leererBerichtDoc()), true);
+  // Extra empty lines are still nothing written.
+  assert.equal(isEmptyBody({ type: 'doc', content: [{ type: 'paragraph' }, { type: 'paragraph' }] }), true);
+  // One word of his, and it is his.
+  assert.equal(
+    isEmptyBody({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Mainz,' }] }] }),
+    false,
+  );
+  // The two shapes never answer for each other.
+  assert.equal(isEmptyBody(templateDoc()), false);
+  assert.equal(isTemplateBody(leererBerichtDoc()), false);
 });
 
 test('isTemplateBody survives the attributes the editor adds on load', () => {

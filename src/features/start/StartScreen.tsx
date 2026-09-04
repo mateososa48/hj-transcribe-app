@@ -19,7 +19,8 @@ import { findRecoverableSessions, recoverSession } from '@/lib/session/recording
 import { useRecordingState } from '@/features/record/useRecording';
 import { pipeline } from '@/lib/transcription/pipeline';
 import type { Session } from '@/lib/db';
-import { createDocument, documentRowTitle } from '@/lib/documents';
+import { documentRowTitle } from '@/lib/documents';
+import { NewBerichtDialog } from '@/features/document/NewBerichtDialog';
 import { deleteSession } from '@/lib/generate';
 import {
   compactDayTime,
@@ -50,6 +51,8 @@ export function StartScreen() {
   const openDocument = useAppStore((s) => s.openDocument);
   const touchSessions = useAppStore((s) => s.touchSessions);
   const [recoverable, setRecoverable] = useState<Session[]>([]);
+  // "Bericht erstellen" asks how to start before it makes anything.
+  const [choosingStart, setChoosingStart] = useState(false);
   // A recording in progress looks exactly like a crashed one in the database.
   const live = useRecordingState();
   const { sessions } = useSessions(12);
@@ -178,12 +181,7 @@ export function StartScreen() {
             icon={FilePen}
             title="Bericht erstellen"
             hint="Der Brief als Seite."
-            onRun={() => {
-              void createDocument().then((doc) => {
-                touchSessions();
-                openDocument(doc.id);
-              });
-            }}
+            onRun={() => setChoosingStart(true)}
           />
         </div>
       </section>
@@ -225,6 +223,8 @@ export function StartScreen() {
       <p className="text-sm text-muted-foreground">
         Alles bleibt auf diesem Computer — kein Server, kein Konto.
       </p>
+
+      <NewBerichtDialog open={choosingStart} onOpenChange={setChoosingStart} />
     </div>
   );
 }

@@ -183,6 +183,18 @@ export function berichtTemplateDoc(): { type: 'doc'; content: TiptapNode[] } {
   return { type: 'doc', content };
 }
 
+/**
+ * A Bericht started from a blank page: one empty paragraph and nothing else.
+ *
+ * The template is right for the letters he writes most, but not for the note
+ * that is three lines long — there the Kopf and four headings are four things
+ * to delete before he can start. TipTap wants a paragraph to put the caret
+ * in, so "empty" is one empty paragraph rather than no content at all.
+ */
+export function leererBerichtDoc(): { type: 'doc'; content: TiptapNode[] } {
+  return { type: 'doc', content: [paragraph()] };
+}
+
 interface Block {
   type: string;
   text: string;
@@ -233,4 +245,15 @@ export function isTemplateBody(doc: unknown): boolean {
   return actual.every(
     (block, i) => block.type === expected[i]!.type && block.text === expected[i]!.text,
   );
+}
+
+/**
+ * True when nothing has been written in a Bericht at all — the shape one
+ * started from a blank page still has. isTemplateBody's counterpart: an
+ * abandoned blank letter is every bit as disposable as an abandoned templated
+ * one, and without this it would be the only kind that piled up in the list.
+ */
+export function isEmptyBody(doc: unknown): boolean {
+  const blocks = writtenBlocks(doc);
+  return blocks !== null && blocks.length === 0;
 }
