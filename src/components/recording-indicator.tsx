@@ -11,10 +11,14 @@ export function RecordingIndicator() {
   const view = useAppStore((s) => s.view);
   const startRecording = useAppStore((s) => s.startRecording);
   const { stop, stopping } = useStopRecording();
+  const paused = recording.status === 'paused';
   const elapsed = useElapsed(
     recording.startedAt,
     recording.status === 'recording',
-    recording.endedAt,
+    // Freeze at the pause, not at endedAt — the strip's clock must agree with
+    // the recorder screen's to the second.
+    recording.pausedAt ?? recording.endedAt,
+    recording.pausedMs,
   );
 
   if (!isRecordingVisible(recording.status)) return null;
@@ -26,6 +30,7 @@ export function RecordingIndicator() {
     <RecordingIndicatorBar
       elapsed={elapsed}
       stopping={stopping}
+      paused={paused}
       onOpen={() => startRecording(recording.kind ?? 'beurteilung')}
       onStop={() => void stop()}
     />

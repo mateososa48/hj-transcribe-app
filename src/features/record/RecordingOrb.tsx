@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export type OrbState = 'idle' | 'recording' | 'warning' | 'error';
+export type OrbState = 'idle' | 'recording' | 'paused' | 'warning' | 'error';
 
 export interface RecordingOrbProps {
   /** 0..1 live input level. */
@@ -46,6 +46,7 @@ export function RecordingOrb({ level, state, className }: RecordingOrbProps) {
           state === 'error' && 'border-destructive/40',
           state === 'warning' && 'border-destructive/50',
           state === 'recording' && 'border-foreground/25',
+          state === 'paused' && 'border-foreground/20',
           state === 'idle' && 'border-border',
         )}
         style={{

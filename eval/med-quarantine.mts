@@ -103,6 +103,62 @@ g.forEach((med, i) => {
     console.log(`drop   run${i + 1} ✗ ${missing.length ? `missing ${missing.length}` : ''}${invented ? ' Atorvastatin present' : ''}`);
   }
 });
-console.log(`medication lists wrong: ${broken}/${N}`);
+console.log(`medication lists wrong: ${broken}/${N}\n`);
 
-if (asserted > 0 || broken > 0) process.exitCode = 1;
+// 3. A garbled DOSE must not cost the drug its NAME.
+//
+// From HJ's dictation of 2026-09-04. He dictates without units, so the
+// recogniser returned "ASS 101/0/0" — "ASS 100 1-0-0" with the strength and
+// the first slot run together — and "Tebonin ... 1/0/0, 1/0/1" with two
+// contradictory schemes. Rule 3 could not reach Präparat + Stärke and dropped
+// both drugs entirely. ASS is an antiplatelet in a post-endarterectomy
+// patient; its silent absence from a letter is the worst outcome here.
+//
+// Rule 3 now separates the two cases: an unclear PRÄPARAT still vanishes, but
+// an unclear DOSE only costs the number. So both directions are checked —
+// the name must survive, and no dose may be invented for it.
+const unklar = readFileSync('eval/probe/C-dosis-unklar.txt', 'utf8');
+const NAME_MUST_SURVIVE = [/\bASS\b/i, /\bTebonin\b/i];
+
+/**
+ * Read the ASS entry only, stopping at the list separator.
+ *
+ * Scanning a fixed window after "ASS" is wrong: the medication list is written
+ * inline ("... ASS, Pantoprazol 40 1-0-0, ..."), so a window swallows the NEXT
+ * drug's scheme and reports an invention that never happened. That false
+ * positive fired 4/4 on the first run of this check.
+ */
+function assEntry(text: string): string {
+  return text.match(/\bASS\b[^,.;\n]*/i)?.[0] ?? '';
+}
+
+/** The source said "101/0/0". Echoing it is fine; a scheme or 100 is a guess. */
+function inventsDose(entry: string): boolean {
+  return /\d\s*-\s*\d/.test(entry) || /\b100\b/.test(entry);
+}
+
+let lost = 0;
+let guessed = 0;
+const c = await Promise.all(
+  Array.from({ length: N }, () =>
+    ask(beurtSystem, buildUserPrompt({ transcript: unklar })).then(
+      (r) => parseBeurteilung(r).text,
+    ),
+  ),
+);
+c.forEach((text, i) => {
+  const missing = NAME_MUST_SURVIVE.filter((re) => !re.test(text));
+  const entry = assEntry(text);
+  if (missing.length) {
+    lost++;
+    console.log(`name   run${i + 1} ✗ dropped ${missing.length} drug name(s)`);
+  }
+  if (inventsDose(entry)) {
+    guessed++;
+    console.log(`dose   run${i + 1} ✗ invented a dose: "${entry.trim()}"`);
+  }
+});
+console.log(`drug names lost to an unclear dose: ${lost}/${N}`);
+console.log(`doses invented for an unclear drug: ${guessed}/${N}`);
+
+if (asserted > 0 || broken > 0 || lost > 0 || guessed > 0) process.exitCode = 1;

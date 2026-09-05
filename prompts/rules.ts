@@ -20,7 +20,7 @@
  * omission with the transcript in reach", which is the meeting-notes model.
  */
 
-export const PROMPT_VERSION = '2026-08-24.3';
+export const PROMPT_VERSION = '2026-09-04.2';
 
 /**
  * The non-negotiable rules. Ordered by consequence: the first three are the
@@ -47,12 +47,20 @@ export const CORE_RULES = `GRUNDREGELN — diese gelten ausnahmslos und haben Vo
    Ein Einnahmeschema hat drei Angaben ("1-0-0"). Ist nur ein Teil erkennbar,
    schreiben Sie Präparat und Stärke und lassen das Schema weg — ergänzen Sie
    den fehlenden Wert NICHT, auch nicht, wenn er sich aufdrängt.
-   Lässt sich eine Medikationsangabe auch nach allen Korrekturen im Gespräch
-   nicht in die Form Präparat + Stärke bringen, erscheint sie NIRGENDS im
-   Text: nicht als Listenzeile, nicht im Fließtext, nicht als Bericht ("es
-   wurde ... verordnet"), nicht mit Einschränkung ("laut Patient"). Sie
-   entfällt ersatzlos — das Transkript daneben zeigt sie dem Arzt.
-   Das gilt für die GANZE Angabe, sobald ein Teil von ihr wirr ist: ein
+   Ist der PRÄPARATENAME eindeutig, aber Stärke oder Schema unklar, entfällt
+   NUR das Unklare. Das Präparat bleibt stehen, ohne die Zahl, die nicht
+   sicher ist. Eine Zeile "ASS" ohne Dosierung ist erkennbar unvollständig und
+   fällt dem Arzt beim Lesen auf; ein ganz fehlendes ASS fällt niemandem auf.
+   Die unvollständige Zeile ist das kleinere Risiko.
+   Für eine solche Zeile schreiben Sie NIEMALS ein Einnahmeschema — weder ein
+   plausibles noch eines, das Sie aus der unklaren Zahl herauslesen. Aus
+   "ASS 101/0/0" wird "ASS", niemals "ASS 1-0-0" und niemals "ASS 100".
+   Nur der Name; die Stärke nur, wenn sie für sich sicher ist.
+   Ersatzlos entfällt eine Angabe nur, wenn schon das PRÄPARAT unklar ist.
+   Dann erscheint sie NIRGENDS im Text: nicht als Listenzeile, nicht im
+   Fließtext, nicht als Bericht ("es wurde ... verordnet"), nicht mit
+   Einschränkung ("laut Patient") — das Transkript daneben zeigt sie dem Arzt.
+   Das gilt für die GANZE Angabe, sobald sie inhaltlich unsinnig ist: ein
    unsinniges Intervall ("alle zwei Stunden, jeden Tag"), ein Nicht-Medikament
    als Präparat ("Cholesterin geben"), eine erkennbar nicht ernst gemeinte
    Verordnung. Aus einer solchen Passage wird KEIN einzelnes Medikament

@@ -14,6 +14,7 @@ import { test } from 'node:test';
 import {
   repairCombinationDoses,
   repairDosingSchemes,
+  repairDrugDosing,
   repairPressureUnits,
   repairTranscript,
 } from '../src/lib/transcription/repair.ts';
@@ -115,4 +116,83 @@ test('the full pipeline repairs a realistic transcript', () => {
 test('repairs are idempotent', () => {
   const once = repairTranscript('Bisoprolol 5 mg 100, Druck 38 mm Quecksilbersäule');
   assert.equal(repairTranscript(once), once);
+});
+
+// ------------------------------------------- drug-anchored dosing schemes ----
+//
+// Regression set from HJ's own dictation of 2026-09-04. He dictates a
+// medication list WITHOUT units — "Valsartan 160 1-0-0", never "160 Milligramm"
+// — so the unit-anchored repair above never sees it. The recogniser returned
+// the schemes slash-separated, rule 3 could not bring the lines into
+// Präparat + Stärke form, and ASS and Tebonin were dropped from the letter.
+
+test('normalises a scheme fused to the strength by a slash', () => {
+  assert.equal(repairDrugDosing('Valsartan 160/1/0/0'), 'Valsartan 160 1-0-0');
+  assert.equal(repairDrugDosing('Valsartan 80/0/0/1'), 'Valsartan 80 0-0-1');
+});
+
+test('normalises a scheme separated from the strength by a space', () => {
+  assert.equal(repairDrugDosing('Pantoprazol 40 1/0/0'), 'Pantoprazol 40 1-0-0');
+  assert.equal(repairDrugDosing('Rosuvastatin 40 0/0/1'), 'Rosuvastatin 40 0-0-1');
+});
+
+test('normalises a scheme with no strength at all', () => {
+  assert.equal(repairDrugDosing('ASS 1/0/0'), 'ASS 1-0-0');
+});
+
+test('normalises a four-slot scheme with a night dose', () => {
+  assert.equal(repairDrugDosing('Torasemid 10 1/0/0/1'), 'Torasemid 10 1-0-0-1');
+});
+
+test('normalises a half dose', () => {
+  assert.equal(repairDrugDosing('Bisoprolol 2,5 0,5/0/0'), 'Bisoprolol 2,5 0,5-0-0');
+});
+
+test('reaches a drug name qualified by a second word', () => {
+  assert.equal(
+    repairDrugDosing('Tebonin Konzentrat 240 1/0/0'),
+    'Tebonin Konzentrat 240 1-0-0',
+  );
+});
+
+// ------------------------------------------------ and never guesses a dose ---
+
+test('leaves an ambiguous fused strength exactly as dictated', () => {
+  // "ASS 101/0/0" is "ASS 100 1-0-0" with the strength and the first slot run
+  // together. Repairing it means choosing 100, which is inventing a dose — the
+  // one thing this pipeline must never do. It stays wrong and visible.
+  assert.equal(repairDrugDosing('ASS 101/0/0'), 'ASS 101/0/0');
+});
+
+test('drug-anchored repair leaves clinical numbers alone', () => {
+  const samples = [
+    'Blutdruck 172/80 mmHg',
+    'Sauerstoffsättigung 97%',
+    'MRT vom 02.09.26',
+    'EF 55%, Aorta 3,6 cm',
+    'QT korrigiert 434 Millisekunden',
+    'PQ 166 Millisekunden',
+  ];
+  for (const sample of samples) {
+    assert.equal(repairDrugDosing(sample), sample, sample);
+  }
+});
+
+test('drug-anchored repair is idempotent', () => {
+  const once = repairDrugDosing('Valsartan 160/1/0/0 und Pantoprazol 40 1/0/0');
+  assert.equal(repairDrugDosing(once), once);
+});
+
+test('the full pipeline repairs HJ 2026-09-04 medication list', () => {
+  const input =
+    'Aktuelle Medikation: Valsartan 160/1/0/0, Valsartan 80/0/0/1. ASS 101/0/0, ' +
+    'Pantoprazol 40 1/0/0, Tamsulosin 04 1/0/0, Rosuvastatin 40 0/0/1.';
+  const out = repairTranscript(input);
+  assert.match(out, /Valsartan 160 1-0-0/);
+  assert.match(out, /Valsartan 80 0-0-1/);
+  assert.match(out, /Pantoprazol 40 1-0-0/);
+  assert.match(out, /Rosuvastatin 40 0-0-1/);
+  // Untouched, on purpose.
+  assert.match(out, /ASS 101\/0\/0/);
+  assert.equal(repairTranscript(out), out);
 });

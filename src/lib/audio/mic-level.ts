@@ -159,6 +159,19 @@ export class MicLevelMonitor {
     };
   }
 
+  /**
+   * Forget how long the room has been quiet, without touching the levels.
+   *
+   * Needed when a recording resumes from a pause. The monitor keeps listening
+   * while paused — the microphone is still held — so a minute of deliberate
+   * silence accumulates in `silentSince`, and the dead-input watch would fire
+   * "no sound for over 15 seconds" the instant recording resumed. The silence
+   * was real; treating it as a fault is what would be wrong.
+   */
+  resetSilence(): void {
+    this.silentSince = null;
+  }
+
   snapshot(): MicLevelSnapshot {
     const silentForMs = this.silentSince === null ? 0 : performance.now() - this.silentSince;
     return {

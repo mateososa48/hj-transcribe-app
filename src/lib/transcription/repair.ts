@@ -1,3 +1,5 @@
+import { DRUG_NAMES } from './keyterms.ts';
+
 /**
  * Deterministic repairs applied to a raw transcript before it is stored.
  *
@@ -59,7 +61,87 @@ export function repairCombinationDoses(text: string): string {
   return text.replace(/\b(\d{1,4})-(\d{1,4})(\s*(?:mg|µg|mcg|g)\b)/gi, '$1/$2$3');
 }
 
-/** All repairs, in order. Safe to run more than once. */
+/**
+ * Dosing schemes anchored on the DRUG NAME rather than on a unit.
+ *
+ * `repairDosingSchemes` above needs a unit in front of the scheme, and says so
+ * deliberately: in "ASS 100" the 100 is a strength, and without that anchor the
+ * rule would fire on ordinary numbers. But a cardiologist dictating a
+ * medication list rarely says the unit — "Valsartan 160 1-0-0", not "Valsartan
+ * 160 Milligramm 1-0-0" — so the whole list falls outside it. The recogniser
+ * then returns the scheme slash-separated, prompt rule 3 cannot bring the line
+ * into Präparat + Stärke form, and it drops the drug entirely. On 2026-09-04
+ * that removed ASS and Tebonin from a post-endarterectomy letter.
+ *
+ * The drug name is the only other reliable anchor in the sentence, so this
+ * uses it. It normalises ONLY shapes with a single reading:
+ *
+ *   Valsartan 160/1/0/0     -> Valsartan 160 1-0-0    (strength, then 3 slots)
+ *   Pantoprazol 40 1/0/0    -> Pantoprazol 40 1-0-0   (strength, space, slots)
+ *   ASS 1/0/0               -> ASS 1-0-0              (slots only)
+ *
+ * A dose slot is at most one digit plus an optional half ("0", "1", "0,5"), so
+ * a three-digit leading number cannot be one. That is what keeps the ambiguous
+ * case out: "ASS 101/0/0" — where 101 is 100 and the first slot fused — has two
+ * readings and is left exactly as dictated. Guessing 100 would be inventing a
+ * dose, which is the one thing this pipeline must never do.
+ */
+const DOSE_SLOT = String.raw`\d(?:[.,]\d)?`;
+const STRENGTH = String.raw`\d{1,4}(?:[.,]\d{1,2})?`;
+/** Up to two words between the name and the numbers: "Tebonin Konzentrat 240". */
+const QUALIFIER = String.raw`(?:\s+[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß-]*){0,2}`;
+
+function escapeForRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Longest first, so "L-Thyroxin" is not shadowed by a shorter entry. */
+const DRUG_ALTERNATION = [...DRUG_NAMES]
+  .sort((a, b) => b.length - a.length)
+  .map(escapeForRegex)
+  .join('|');
+
+const SCHEME_PATTERNS: RegExp[] = [
+  // Strength fused into the run: "160/1/0/0" (and a four-slot variant).
+  new RegExp(
+    `\\b((?:${DRUG_ALTERNATION})${QUALIFIER})\\s+(${STRENGTH})/(${DOSE_SLOT})/(${DOSE_SLOT})/(${DOSE_SLOT})(/(${DOSE_SLOT}))?(?![\\w/-])`,
+    'gi',
+  ),
+  // Strength separated: "40 1/0/0".
+  new RegExp(
+    `\\b((?:${DRUG_ALTERNATION})${QUALIFIER})\\s+(${STRENGTH})\\s+(${DOSE_SLOT})/(${DOSE_SLOT})/(${DOSE_SLOT})(/(${DOSE_SLOT}))?(?![\\w/-])`,
+    'gi',
+  ),
+  // No strength at all: "ASS 1/0/0".
+  new RegExp(
+    `\\b((?:${DRUG_ALTERNATION})${QUALIFIER})\\s+()(${DOSE_SLOT})/(${DOSE_SLOT})/(${DOSE_SLOT})(/(${DOSE_SLOT}))?(?![\\w/-])`,
+    'gi',
+  ),
+];
+
+export function repairDrugDosing(text: string): string {
+  let out = text;
+  for (const pattern of SCHEME_PATTERNS) {
+    out = out.replace(
+      pattern,
+      (_match, name: string, strength: string, a: string, b: string, c: string, _g6, d?: string) => {
+        const scheme = [a, b, c, ...(d ? [d] : [])].join('-');
+        return `${name}${strength ? ` ${strength}` : ''} ${scheme}`;
+      },
+    );
+  }
+  return out;
+}
+
+/**
+ * All repairs, in order. Safe to run more than once.
+ *
+ * Drug-anchored dosing runs FIRST: it turns "Valsartan 160/1/0/0" into
+ * "Valsartan 160 1-0-0", and the later unit-anchored rules then see a shape
+ * they already understand instead of a slash run.
+ */
 export function repairTranscript(text: string): string {
-  return repairCombinationDoses(repairPressureUnits(repairDosingSchemes(text)));
+  return repairCombinationDoses(
+    repairPressureUnits(repairDosingSchemes(repairDrugDosing(text))),
+  );
 }

@@ -114,11 +114,13 @@ export function RecordingWave({ state, level, dark = false, className }: Recordi
   const label =
     state === 'recording'
       ? `Aufnahme läuft, Eingangspegel ${Math.round(Math.max(0, Math.min(1, level)) * 100)} Prozent`
-      : state === 'warning'
-        ? 'Aufnahme läuft, aber es wird kein Ton empfangen'
-        : state === 'error'
-          ? 'Aufnahme gestoppt, Fehler'
-          : 'Bereit zur Aufnahme';
+      : state === 'paused'
+        ? 'Aufnahme pausiert'
+        : state === 'warning'
+          ? 'Aufnahme läuft, aber es wird kein Ton empfangen'
+          : state === 'error'
+            ? 'Aufnahme gestoppt, Fehler'
+            : 'Bereit zur Aufnahme';
 
   return (
     <div
@@ -131,7 +133,12 @@ export function RecordingWave({ state, level, dark = false, className }: Recordi
         // beneath carries the message, and tinting the ribbon would fight the
         // one thing it is meant to show.
         (state === 'warning' || state === 'error') && 'opacity-40',
-        'transition-opacity duration-300',
+        // Paused sits clearly above the fault states and clearly below live, so
+        // "held on purpose" never reads as "something broke". The ribbon has
+        // already flattened on its own — no audio is arriving, because none is
+        // being captured — and this only says that the stillness is intended.
+        state === 'paused' && 'opacity-65',
+        'transition-opacity duration-500 ease-out',
         className,
       )}
     />

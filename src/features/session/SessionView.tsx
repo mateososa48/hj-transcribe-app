@@ -146,6 +146,7 @@ export function SessionView({ sessionId }: { sessionId: string }) {
     session.status === 'recording' &&
     recording.sessionId === session.id &&
     (recording.status === 'recording' ||
+      recording.status === 'paused' ||
       recording.status === 'requesting-mic' ||
       recording.status === 'stopping');
   const interrupted = session.status === 'recording' && !isLive;

@@ -17,6 +17,7 @@ export type RecordingStatus =
   | 'idle'
   | 'requesting-mic'
   | 'recording'
+  | 'paused'
   | 'stopping'
   | 'stopped'
   | 'error';
@@ -29,6 +30,16 @@ export interface RecordingState {
   startedAt: number | null;
   /** When recording stopped; the timer freezes against this, not Date.now(). */
   endedAt: number | null;
+  /**
+   * Time spent paused so far, including a pause that is still open.
+   *
+   * The clock subtracts this, so it shows captured time rather than wall time.
+   * Mirrored into state (rather than read off the recorder) because the timer
+   * re-renders from the store and must not reach into the audio layer.
+   */
+  pausedMs: number;
+  /** When the current pause began, or null. The clock freezes against it. */
+  pausedAt: number | null;
   level: number;
   /** Set when the input has gone silent for long enough to look broken. */
   inputWarning: string | null;
@@ -41,6 +52,8 @@ const INITIAL: RecordingState = {
   kind: null,
   startedAt: null,
   endedAt: null,
+  pausedMs: 0,
+  pausedAt: null,
   level: 0,
   inputWarning: null,
   error: null,
@@ -114,6 +127,7 @@ export class RecordingSession {
   reset(): void {
     if (
       this.state.status === 'recording' ||
+      this.state.status === 'paused' ||
       this.state.status === 'requesting-mic' ||
       this.state.status === 'stopping'
     ) {
@@ -144,7 +158,13 @@ export class RecordingSession {
   private async runStart(kind: SessionKind, opts?: { parentId?: string }): Promise<boolean> {
     // Let a just-finished dictation finish letting go of the microphone.
     if (this.stopping) await this.stopping;
-    if (this.state.status === 'recording' || this.state.status === 'requesting-mic') return false;
+    if (
+      this.state.status === 'recording' ||
+      this.state.status === 'paused' ||
+      this.state.status === 'requesting-mic'
+    ) {
+      return false;
+    }
 
     this.set({ ...INITIAL, status: 'requesting-mic' });
 
@@ -234,7 +254,46 @@ export class RecordingSession {
       kind,
       startedAt: session.startedAt,
       endedAt: null,
+      pausedMs: 0,
+      pausedAt: null,
       error: null,
+    });
+    return true;
+  }
+
+  /**
+   * Hold the sitting without letting go of the microphone.
+   *
+   * The stream, the wake lock and the unload guard all stay: he is still in the
+   * middle of a recording, and a pause that quietly released the microphone
+   * would fail to resume the moment another tab claimed it.
+   *
+   * The ribbon is told the live signal is gone, so it settles to a flat line
+   * rather than continuing to show a level nothing is capturing. That is the
+   * same contract as teardown — the indicator never claims to hear.
+   */
+  pause(): boolean {
+    if (this.state.status !== 'recording') return false;
+    if (!this.recorder?.pause()) return false;
+    this.emitAudio(null);
+    this.set({
+      status: 'paused',
+      level: 0,
+      inputWarning: null,
+      // Closed pauses only — the one just opened is measured by pausedAt.
+      pausedMs: this.recorder.totalPausedMs,
+      pausedAt: Date.now(),
+    });
+    return true;
+  }
+
+  resume(): boolean {
+    if (this.state.status !== 'paused') return false;
+    if (!this.recorder?.resume()) return false;
+    this.set({
+      status: 'recording',
+      pausedMs: this.recorder.totalPausedMs,
+      pausedAt: null,
     });
     return true;
   }
@@ -259,7 +318,9 @@ export class RecordingSession {
    * microphone to actually be free.
    */
   async stop(): Promise<string | null> {
-    if (this.state.status !== 'recording') return this.state.sessionId;
+    if (this.state.status !== 'recording' && this.state.status !== 'paused') {
+      return this.state.sessionId;
+    }
     // runStop sets 'stopping' synchronously, before its first await.
     const run = this.runStop();
     this.stopping = run;
@@ -274,19 +335,23 @@ export class RecordingSession {
     const { sessionId, startedAt } = this.state;
     this.set({ status: 'stopping' });
 
-    await this.recorder?.stop();
+    const recorder = this.recorder;
+    await recorder?.stop();
+    const pausedTotal = recorder?.totalPausedMs ?? this.state.pausedMs;
     await this.teardown();
 
     const endedAt = Date.now();
+    // The recorder closed any open pause inside stop(), so this is final.
+    const pausedMs = pausedTotal;
     if (sessionId) {
       await db.sessions.update(sessionId, {
         status: 'stopped',
         endedAt,
-        durationMs: startedAt ? endedAt - startedAt : 0,
+        durationMs: startedAt ? Math.max(0, endedAt - startedAt - pausedMs) : 0,
       });
     }
 
-    this.set({ status: 'stopped', level: 0, endedAt });
+    this.set({ status: 'stopped', level: 0, endedAt, pausedMs, pausedAt: null });
     return sessionId;
   }
 

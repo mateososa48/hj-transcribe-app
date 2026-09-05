@@ -35,6 +35,9 @@ const DRUGS = [
   'Metformin', 'Empagliflozin', 'Jardiance', 'Dapagliflozin', 'Forxiga',
   'Semaglutid', 'Ozempic', 'Pantoprazol', 'Amiodaron', 'Digitoxin',
   'Allopurinol', 'Levothyroxin', 'L-Thyroxin',
+  // Seen in HJ's own dictation on 2026-09-04 and absent from the boost list,
+  // which is part of why the recogniser mangled them.
+  'Tamsulosin', 'Tebonin', 'Ginkgo biloba', 'Hyaluron',
 ];
 
 const TERMS = [
@@ -70,6 +73,15 @@ const TERMS = [
   'Knie-TEP', 'Schilddrüse', 'Schilddrüsenunterfunktion', 'Pollinosis',
   'Penicillin', 'Unverträglichkeit',
 ];
+
+/**
+ * Just the preparation names.
+ *
+ * Exported so the repair layer can anchor on them. A dosing scheme dictated
+ * without a unit ("ASS 100 1-0-0") is invisible to a unit-anchored rule, and a
+ * drug name is the only other reliable anchor in the sentence.
+ */
+export const DRUG_NAMES: readonly string[] = DRUGS;
 
 /**
  * Boosted terms for every transcription request.

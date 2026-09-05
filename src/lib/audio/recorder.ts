@@ -53,12 +53,23 @@ export interface ContinuousRecorderCallbacks {
 
 export class ContinuousRecorder {
   private recorder: MediaRecorder | null = null;
-  private state: 'idle' | 'recording' | 'stopping' | 'stopped' = 'idle';
+  private state: 'idle' | 'recording' | 'paused' | 'stopping' | 'stopped' = 'idle';
   private index = 0;
   private startedAt = 0;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private inputWasSilent = false;
   readonly mimeType = pickMimeType();
+
+  /**
+   * Total time spent paused, and the moment the current pause began.
+   *
+   * Recorded duration is wall-clock MINUS this. Without it a sitting paused for
+   * ten minutes reports as ten minutes longer than the audio it produced, which
+   * would be wrong on the clock, wrong in the session row, and wrong in any
+   * cost derived from duration.
+   */
+  private pausedMs = 0;
+  private pausedAt = 0;
 
   /** In-flight onChunk writes, so stop() can wait for them. */
   private readonly pendingPersists = new Set<Promise<void>>();
@@ -69,8 +80,72 @@ export class ContinuousRecorder {
     private readonly callbacks: ContinuousRecorderCallbacks,
   ) {}
 
+  /** Time actually captured: wall clock less every pause, including a live one. */
   get elapsedMs(): number {
-    return this.startedAt ? Date.now() - this.startedAt : 0;
+    if (!this.startedAt) return 0;
+    const open = this.pausedAt ? Date.now() - this.pausedAt : 0;
+    return Math.max(0, Date.now() - this.startedAt - this.pausedMs - open);
+  }
+
+  /** Accumulated pause, including a pause that is still open. */
+  get totalPausedMs(): number {
+    return this.pausedMs + (this.pausedAt ? Date.now() - this.pausedAt : 0);
+  }
+
+  get isPaused(): boolean {
+    return this.state === 'paused';
+  }
+
+  /**
+   * Pause capture without giving up the microphone.
+   *
+   * MediaRecorder.pause() suspends `dataavailable` and resumes into the SAME
+   * container — the paused stretch is simply absent from the file, so the
+   * chunks still concatenate into one valid recording and diarization still
+   * sees a single continuous stream. Stopping and restarting would not: that
+   * makes a second file with its own header.
+   *
+   * The dead-input watch is suspended too. It exists to catch a microphone that
+   * has quietly died, and a deliberate pause is fifteen seconds of silence by
+   * design — left running it would raise "no sound is arriving" every time.
+   */
+  pause(): boolean {
+    if (this.state !== 'recording') return false;
+    const recorder = this.recorder;
+    if (!recorder || recorder.state !== 'recording') return false;
+
+    recorder.pause();
+    this.state = 'paused';
+    this.pausedAt = Date.now();
+
+    if (this.pollTimer) clearInterval(this.pollTimer);
+    this.pollTimer = null;
+    // Clear a standing warning: it describes the input, and we just stopped
+    // listening on purpose.
+    if (this.inputWasSilent) {
+      this.inputWasSilent = false;
+      this.callbacks.onInputRestored?.();
+    }
+    return true;
+  }
+
+  resume(): boolean {
+    if (this.state !== 'paused') return false;
+    const recorder = this.recorder;
+    if (!recorder || recorder.state !== 'paused') return false;
+
+    recorder.resume();
+    this.state = 'recording';
+    if (this.pausedAt) {
+      this.pausedMs += Date.now() - this.pausedAt;
+      this.pausedAt = 0;
+    }
+    // Fresh window: the monitor kept listening through the pause, so without
+    // this the deliberate silence would trip the dead-input watch immediately.
+    this.level.resetSilence();
+    this.inputWasSilent = false;
+    this.pollTimer = setInterval(this.poll, 1_000);
+    return true;
   }
 
   start(): void {
@@ -112,7 +187,14 @@ export class ContinuousRecorder {
    * (upload, transcription) can then trust what it reads.
    */
   async stop(): Promise<void> {
-    if (this.state !== 'recording') return;
+    if (this.state !== 'recording' && this.state !== 'paused') return;
+    // Close an open pause before it is lost, so durationMs stays honest even
+    // when a sitting is ended from the paused state — which is the normal way
+    // to end one, since he pauses first and then decides.
+    if (this.pausedAt) {
+      this.pausedMs += Date.now() - this.pausedAt;
+      this.pausedAt = 0;
+    }
     this.state = 'stopping';
 
     if (this.pollTimer) clearInterval(this.pollTimer);

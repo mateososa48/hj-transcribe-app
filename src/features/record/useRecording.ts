@@ -27,11 +27,15 @@ export function usePipelineState(sessionId: string | null): PipelineState {
   );
 }
 
-/** MM:SS, counting up while recording and frozen at endedAt once stopped. */
+/**
+ * MM:SS of CAPTURED time — counting while recording, frozen while paused and
+ * once stopped. The ticker only runs while it can change anything.
+ */
 export function useElapsed(
   startedAt: number | null,
   running: boolean,
-  endedAt: number | null = null,
+  frozenAt: number | null = null,
+  pausedMs = 0,
 ): string {
   const [now, setNow] = useState(() => Date.now());
 
@@ -42,5 +46,5 @@ export function useElapsed(
     return () => clearInterval(timer);
   }, [running]);
 
-  return formatElapsed(startedAt, endedAt, now, running);
+  return formatElapsed(startedAt, frozenAt, now, running, pausedMs);
 }

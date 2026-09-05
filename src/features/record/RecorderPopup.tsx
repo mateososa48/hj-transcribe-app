@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, Pause, Play, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { RecordingWave } from '@/features/record/RecordingWave';
@@ -70,13 +70,28 @@ export function RecorderPopup({
     };
   }, [parentId]);
 
+  const isPaused = recording.status === 'paused';
   const elapsed = useElapsed(
     started ? recording.startedAt : null,
     started && recording.status === 'recording',
-    recording.endedAt,
+    recording.pausedAt ?? recording.endedAt,
+    recording.pausedMs,
   );
   const orbState: OrbState =
-    recording.status === 'error' ? 'error' : recording.inputWarning ? 'warning' : 'recording';
+    recording.status === 'error'
+      ? 'error'
+      : recording.inputWarning
+        ? 'warning'
+        : isPaused
+          ? 'paused'
+          : 'recording';
+
+  // Same hold as the full recorder, in the space a floating bar has: the label
+  // lives in aria, the icon carries the state, and the key never moves.
+  function toggleHold() {
+    if (recordingSession.getState().status === 'paused') recordingSession.resume();
+    else recordingSession.pause();
+  }
   const micFailed = stage === 'recording' && recording.status === 'error';
 
   const close = useCallback(() => {
@@ -98,7 +113,11 @@ export function RecorderPopup({
   }
 
   async function discard() {
-    if (recording.status === 'recording' || recording.status === 'requesting-mic') {
+    if (
+      recording.status === 'recording' ||
+      recording.status === 'paused' ||
+      recording.status === 'requesting-mic'
+    ) {
       const childId = await recordingSession.stop();
       if (childId) await deleteSession(childId);
     } else if (childRef.current) {
@@ -123,10 +142,40 @@ export function RecorderPopup({
           <div key="rec" className="flex flex-col motion-safe:animate-in motion-safe:fade-in">
             <div className="flex items-center gap-4">
               <RecordingWave level={recording.level} state={orbState} className="h-12 w-44" />
-              <div className="text-2xl font-semibold tabular-nums tracking-tight">{elapsed}</div>
+              <div
+                className={cn(
+                  'text-2xl font-semibold tabular-nums tracking-tight transition-colors duration-300',
+                  isPaused && 'text-muted-foreground',
+                )}
+              >
+                {elapsed}
+              </div>
+              <Button
+                variant="secondary"
+                size="icon-lg"
+                aria-label={isPaused ? 'Aufnahme fortsetzen' : 'Aufnahme pausieren'}
+                disabled={!started || !(recording.status === 'recording' || isPaused)}
+                onClick={toggleHold}
+                className="rounded-full"
+              >
+                <span aria-hidden className="relative inline-flex size-4 items-center justify-center">
+                  <Pause
+                    className={cn(
+                      'absolute size-4 transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none',
+                      isPaused ? 'scale-75 opacity-0' : 'scale-100 opacity-100',
+                    )}
+                  />
+                  <Play
+                    className={cn(
+                      'absolute size-4 transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none',
+                      isPaused ? 'scale-100 opacity-100' : 'scale-75 opacity-0',
+                    )}
+                  />
+                </span>
+              </Button>
               <Button
                 size="lg"
-                disabled={!started || recording.status !== 'recording'}
+                disabled={!started || !(recording.status === 'recording' || isPaused)}
                 onClick={() => void finish()}
                 className="rounded-full"
               >

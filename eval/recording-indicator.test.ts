@@ -67,3 +67,45 @@ test('the stop key is disabled and renamed while the stop is in flight', () => {
   // A second click during the flush would start the pipeline twice.
   assert.match(html, /disabled/);
 });
+
+// ------------------------------------------------------------- paused ------
+
+test('the strip stays on screen while paused', () => {
+  // The orphaning this strip exists to prevent applies doubly to a pause: the
+  // microphone is still held and the sitting still has to be ended, but nothing
+  // is moving on screen to say so.
+  assert.equal(isRecordingVisible('paused'), true);
+});
+
+test('paused says paused, and stops claiming to capture', () => {
+  const html = renderToStaticMarkup(
+    createElement(RecordingIndicatorBar, {
+      elapsed: '04:12',
+      stopping: false,
+      paused: true,
+      onOpen: () => {},
+      onStop: () => {},
+    }),
+  );
+  assert.match(html, /Aufnahme pausiert/);
+  assert.match(html, /04:12/);
+  // The pulsing red dot means "sound is arriving right now". It must not run
+  // over a recording that is capturing nothing.
+  assert.doesNotMatch(html, /animate-ping/);
+  assert.doesNotMatch(html, /bg-red-600/);
+  // Still endable from wherever he is.
+  assert.match(html, /Aufnahme beenden/);
+});
+
+test('running still shows the live dot', () => {
+  const html = renderToStaticMarkup(
+    createElement(RecordingIndicatorBar, {
+      elapsed: '00:30',
+      stopping: false,
+      onOpen: () => {},
+      onStop: () => {},
+    }),
+  );
+  assert.match(html, /animate-ping/);
+  assert.match(html, /Aufnahme läuft/);
+});

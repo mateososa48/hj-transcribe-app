@@ -21,9 +21,14 @@ import { cn } from '@/lib/utils';
  * `stopping` keeps it visible: the stop is asynchronous (the recorder flushes
  * its last chunk and the session row is written), and vanishing at the click
  * would claim the recording was over before it was.
+ *
+ * `paused` keeps it visible for the reason the strip exists at all. A paused
+ * sitting still holds the microphone and still has to be ended; if the strip
+ * vanished on pause, the app would look idle while a consultation was open —
+ * precisely the orphaning this was built to prevent, only quieter.
  */
 export function isRecordingVisible(status: RecordingStatus): boolean {
-  return status === 'recording' || status === 'stopping';
+  return status === 'recording' || status === 'paused' || status === 'stopping';
 }
 
 /**
@@ -37,11 +42,13 @@ export function isRecordingVisible(status: RecordingStatus): boolean {
 export function RecordingIndicatorBar({
   elapsed,
   stopping,
+  paused = false,
   onOpen,
   onStop,
 }: {
   elapsed: string;
   stopping: boolean;
+  paused?: boolean;
   /** Back to the recorder screen. Safe mid-session: reset() refuses to run
    *  while the recorder is live (recording-session.ts:114). */
   onOpen: () => void;
@@ -51,7 +58,9 @@ export function RecordingIndicatorBar({
     <div
       role="status"
       aria-live="polite"
-      aria-label={`Aufnahme läuft seit ${elapsed}`}
+      aria-label={
+        paused ? `Aufnahme pausiert bei ${elapsed}` : `Aufnahme läuft seit ${elapsed}`
+      }
       data-testid="recording-indicator"
       className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card px-4 sm:px-6"
     >
@@ -62,12 +71,24 @@ export function RecordingIndicatorBar({
         onClick={onOpen}
         className="-mx-2 flex min-w-0 items-center gap-3 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
       >
-        {/* The one red thing in the app. It means exactly one condition. */}
+        {/* The one red thing in the app. It means exactly one condition —
+            sound is being captured right now. Paused, it holds the position but
+            stops claiming that: no pulse, no red, because a pulsing red dot
+            over a recording that is capturing nothing is the one lie this
+            strip must never tell. */}
         <span className="relative flex size-2.5 shrink-0" aria-hidden>
-          <span className="absolute inline-flex size-full rounded-full bg-red-500 opacity-70 motion-safe:animate-ping" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-red-600" />
+          {paused ? (
+            <span className="relative inline-flex size-2.5 rounded-full bg-muted-foreground/60" />
+          ) : (
+            <>
+              <span className="absolute inline-flex size-full rounded-full bg-red-500 opacity-70 motion-safe:animate-ping" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-red-600" />
+            </>
+          )}
         </span>
-        <span className="text-sm font-medium">Aufnahme läuft</span>
+        <span className="text-sm font-medium">
+          {paused ? 'Aufnahme pausiert' : 'Aufnahme läuft'}
+        </span>
         <span className="text-sm text-muted-foreground tabular-nums">{elapsed}</span>
       </button>
 

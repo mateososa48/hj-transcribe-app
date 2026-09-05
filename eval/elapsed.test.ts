@@ -53,3 +53,41 @@ test('falls back to now when a stopped session has no end time', () => {
   // a crash or a blank.
   assert.equal(formatElapsed(START, null, s(30), false), '00:30');
 });
+
+// ------------------------------------------------------------------ pause ---
+//
+// The clock shows CAPTURED time. A sitting paused for ten minutes must not gain
+// ten minutes — that would be wrong on screen, wrong in Session.durationMs, and
+// wrong in anything derived from duration.
+
+test('while paused the clock freezes at the moment of pausing', () => {
+  // Started at 0, ran 30 s, paused at 30 s. Two minutes later it still says 30.
+  const pausedAt = s(30);
+  assert.equal(formatElapsed(START, pausedAt, s(150), false, 0), '00:30');
+});
+
+test('after resuming, paused time is excluded', () => {
+  // Ran 30 s, paused 120 s, then running again at wall-clock 200 s.
+  // Captured = 200 - 120 = 80 s.
+  assert.equal(formatElapsed(START, null, s(200), true, 120_000), '01:20');
+});
+
+test('several pauses accumulate', () => {
+  // Two pauses totalling 90 s, wall clock at 300 s -> 210 s captured.
+  assert.equal(formatElapsed(START, null, s(300), true, 90_000), '03:30');
+});
+
+test('a session stopped from paused reports captured time, not wall time', () => {
+  // Wall clock 300 s, of which 200 s were paused.
+  assert.equal(formatElapsed(START, s(300), s(999), false, 200_000), '01:40');
+});
+
+test('pause never renders a negative time', () => {
+  // Defensive: pausedMs larger than the whole span cannot underflow the clock.
+  assert.equal(formatElapsed(START, null, s(10), true, 60_000), '00:00');
+});
+
+test('zero paused time behaves exactly as before', () => {
+  assert.equal(formatElapsed(START, null, s(65), true, 0), '01:05');
+  assert.equal(formatElapsed(START, null, s(65), true), '01:05');
+});
